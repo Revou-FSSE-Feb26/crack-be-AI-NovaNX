@@ -87,6 +87,14 @@ npm run prisma:seed
 
 `Author` and `Category` each have a one-to-many relation to `Book`.
 
+### Entity Relationship Diagram
+
+![NexRead Entity Relationship Diagram](docs/er-diagram.svg)
+
+- `Author` (1) → `Book` (N) via `Book.authorId`
+- `Category` (1) → `Book` (N) via `Book.categoryId`
+- `User` has no relations yet; authentication and user CRUD are not implemented.
+
 ## Running the Application
 
 ```bash
