@@ -162,6 +162,22 @@ npm run lint
 npm run format
 ```
 
+## Deploying to Railway
+
+The API listens on `process.env.PORT` and is otherwise stateless, so it deploys on Railway as a standard Node service:
+
+1. Create a new Railway project, add a **PostgreSQL** plugin, and create a service from this repository with **Root Directory** set to `nexread-api`.
+2. Set environment variables on the service:
+   - `DATABASE_URL` — copy from the Railway Postgres plugin (Railway can also auto-inject this via a variable reference).
+   - `FRONTEND_URL` — the deployed frontend origin, so CORS only allows that origin. Leave unset to allow any origin.
+3. Build command: `npm install && npm run build` (Railway's Nixpacks builder does this by default). `postinstall` already runs `prisma generate`.
+4. Start command: `npm run deploy:start` — this runs `prisma migrate deploy` (applies pending migrations without prompting) before starting `dist/main.js`.
+5. After the first successful deploy, run the seed once from your machine or the Railway CLI against the production `DATABASE_URL`:
+   ```bash
+   DATABASE_URL="<railway-postgres-url>" npm run prisma:seed
+   ```
+   Do not add seeding to the start command — `create()` calls are not idempotent and will fail on unique constraints on subsequent deploys.
+
 ## Project Structure
 
 ```text
