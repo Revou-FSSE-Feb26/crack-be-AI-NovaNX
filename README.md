@@ -7,9 +7,12 @@ NexRead is a backend project developed for the RevoU FSSE assignment. The API is
 ## Current Progress
 
 - Base NestJS application
-- Prisma 7 configuration and generated client
-- PostgreSQL datasource using `DATABASE_URL`
-- Initial `User` model and database migration
+- Prisma 7 configuration and generated client (CommonJS output via `moduleFormat = "cjs"`)
+- PostgreSQL datasource using `DATABASE_URL`, connected through `@prisma/adapter-pg`
+- `User`, `Author`, `Category`, and `Book` models with migrations
+- Seed data for authors, categories, and books
+- Full CRUD REST endpoints for `authors`, `categories`, and `books`, backed by a shared `PrismaService`
+- Request body validation with `class-validator` / `class-transformer` (global `ValidationPipe`)
 - Default `GET /` endpoint returning `Hello World!`
 - Unit and end-to-end tests for the default endpoint
 
@@ -21,7 +24,8 @@ Authentication and user CRUD endpoints have not been implemented yet.
 - NestJS 11
 - TypeScript
 - PostgreSQL
-- Prisma ORM 7
+- Prisma ORM 7 (`prisma-client` generator with the `pg` driver adapter)
+- class-validator and class-transformer
 - Jest and Supertest
 - ESLint and Prettier
 
@@ -57,25 +61,31 @@ Replace the placeholders with your PostgreSQL connection details. The `.env` fil
 Generate the Prisma client:
 
 ```bash
-npx prisma generate
+npm run prisma:generate
 ```
 
-Apply the existing migration in a development environment:
+Apply migrations in a development environment:
 
 ```bash
-npx prisma migrate dev
+npm run prisma:migrate
 ```
 
-The initial migration creates a `User` table with these fields:
+Seed the database with sample authors, categories, and books:
 
-| Field       | Type     | Notes                         |
-| ----------- | -------- | ----------------------------- |
-| `id`        | Integer  | Primary key, auto-incremented |
-| `fullName`  | String   | Required                      |
-| `email`     | String   | Required and unique           |
-| `password`  | String   | Required                      |
-| `createdAt` | DateTime | Defaults to the current time  |
-| `updatedAt` | DateTime | Updated automatically         |
+```bash
+npm run prisma:seed
+```
+
+### Models
+
+| Model      | Notes                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------------------------ |
+| `User`     | `id` (auto-increment), `fullName`, `email` (unique), `password`, timestamps                            |
+| `Author`   | `id` (string), `name` (unique), `booksCount`, `borrowedBooksCount`, `rating`, `avatarPath`, timestamps |
+| `Category` | `id` (string), `name` (unique), `slug` (unique), `subtitle`, `iconPath`, timestamps                    |
+| `Book`     | `id` (string), `title`, `rating`, `coverClassName`, `authorId`, `categoryId`, timestamps               |
+
+`Author` and `Category` each have a one-to-many relation to `Book`.
 
 ## Running the Application
 
@@ -93,17 +103,30 @@ npm run build
 npm run start:prod
 ```
 
-By default, the API runs at `http://localhost:3000`. The current endpoint is:
+By default, the API runs at `http://localhost:3000`.
 
-```http
-GET /
-```
+### Available Endpoints
 
-Expected response:
+| Method | Path              | Description                                   |
+| ------ | ----------------- | --------------------------------------------- |
+| GET    | `/`               | Health check (`Hello World!`)                 |
+| GET    | `/authors`        | List all authors                              |
+| GET    | `/authors/:id`    | Get a single author                           |
+| POST   | `/authors`        | Create an author                              |
+| PATCH  | `/authors/:id`    | Update an author                              |
+| DELETE | `/authors/:id`    | Delete an author                              |
+| GET    | `/categories`     | List all categories                           |
+| GET    | `/categories/:id` | Get a single category                         |
+| POST   | `/categories`     | Create a category                             |
+| PATCH  | `/categories/:id` | Update a category                             |
+| DELETE | `/categories/:id` | Delete a category                             |
+| GET    | `/books`          | List all books (includes author and category) |
+| GET    | `/books/:id`      | Get a single book                             |
+| POST   | `/books`          | Create a book                                 |
+| PATCH  | `/books/:id`      | Update a book                                 |
+| DELETE | `/books/:id`      | Delete a book                                 |
 
-```text
-Hello World!
-```
+Request bodies are validated against each resource's DTO; invalid or unknown fields are rejected/stripped by the global `ValidationPipe`.
 
 ## Testing
 
@@ -138,8 +161,15 @@ npm run format
 └── nexread-api/
 	├── prisma/
 	│   ├── migrations/       # Database migration history
+	│   ├── seed/             # Seed data and seeding modules
+	│   ├── seed.ts           # Seed entry point
 	│   └── schema.prisma     # Prisma models and datasource
-	├── src/                  # NestJS application source
+	├── src/
+	│   ├── authors/          # Authors CRUD (controller, service, module, DTOs)
+	│   ├── categories/       # Categories CRUD (controller, service, module, DTOs)
+	│   ├── books/            # Books CRUD (controller, service, module, DTOs)
+	│   ├── prisma/           # Shared PrismaService/PrismaModule
+	│   └── main.ts, app.module.ts, ...
 	├── test/                 # End-to-end tests
 	├── prisma.config.ts      # Prisma CLI configuration
 	└── package.json          # Dependencies and npm scripts
