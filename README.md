@@ -11,7 +11,8 @@ NexRead is a backend project developed for the RevoU FSSE assignment. The API is
 - PostgreSQL datasource using `DATABASE_URL`, connected through `@prisma/adapter-pg`
 - `User`, `Author`, `Category`, and `Book` models with migrations
 - Seed data for authors, categories, and books
-- Full CRUD REST endpoints for `authors`, `categories`, and `books`, backed by a shared `PrismaService`
+- Full CRUD REST endpoints for `authors`, `categories`, and `books`
+- Repository pattern: each module's service depends on an abstract `*Repository` class (a DI token), implemented by a Prisma-backed repository (`Prisma*Repository`) that wraps the shared `PrismaService`
 - Request body validation with `class-validator` / `class-transformer` (global `ValidationPipe`)
 - Default `GET /` endpoint returning `Hello World!`
 - Unit and end-to-end tests for the default endpoint
@@ -173,9 +174,9 @@ npm run format
 	│   ├── seed.ts           # Seed entry point
 	│   └── schema.prisma     # Prisma models and datasource
 	├── src/
-	│   ├── authors/          # Authors CRUD (controller, service, module, DTOs)
-	│   ├── categories/       # Categories CRUD (controller, service, module, DTOs)
-	│   ├── books/            # Books CRUD (controller, service, module, DTOs)
+	│   ├── authors/          # Authors CRUD (controller, service, module, repositories, DTOs)
+	│   ├── categories/       # Categories CRUD (controller, service, module, repositories, DTOs)
+	│   ├── books/            # Books CRUD (controller, service, module, repositories, DTOs)
 	│   ├── prisma/           # Shared PrismaService/PrismaModule
 	│   └── main.ts, app.module.ts, ...
 	├── test/                 # End-to-end tests
