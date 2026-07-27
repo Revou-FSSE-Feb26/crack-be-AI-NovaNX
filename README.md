@@ -171,7 +171,7 @@ The API listens on `process.env.PORT` and is otherwise stateless, so it deploys 
    - `DATABASE_URL` — copy from the Railway Postgres plugin (Railway can also auto-inject this via a variable reference).
    - `FRONTEND_URL` — the deployed frontend origin, so CORS only allows that origin. Leave unset to allow any origin.
 3. Build command: `npm install && npm run build` (Railway's Nixpacks builder does this by default). `postinstall` already runs `prisma generate`.
-4. Start command: `npm run deploy:start` — this runs `prisma migrate deploy` (applies pending migrations without prompting) before starting `dist/main.js`.
+4. Start command: `npm run deploy:start` — this runs `prisma migrate deploy` (applies pending migrations without prompting) before starting `dist/src/main.js`.
 5. After the first successful deploy, run the seed once from your machine or the Railway CLI against the production `DATABASE_URL`:
    ```bash
    DATABASE_URL="<railway-postgres-url>" npm run prisma:seed
