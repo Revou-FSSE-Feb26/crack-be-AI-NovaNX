@@ -1,0 +1,2166 @@
+{
+  "info": {
+    "_postman_id": "b3e6f4b0-4e6b-4c1a-9a2e-nexread0001",
+    "name": "NexRead API - Mentor Requirements Test Suite",
+    "description": "Smoke Test + Regression Test collection for the NexRead API, structured to cover the 9 mentor requirements:\n1/4. Test all API endpoints using Postman/Newman (this collection itself)\n2. Request validation\n3. CRUD endpoints for core resources\n5. JWT-based authentication (login/register)\n6. Route protection middleware (JwtAuthGuard)\n7. Error handling\n8. Data integrity & constraints/relationships\n9. Integration testing with seeded data\n\nRun with the 'Local' environment against a running dev server (npm run start:dev).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.collectionVariables.get('runId')) {",
+          "  pm.collectionVariables.set('runId', Date.now().toString());",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Response time is acceptable (< 2000ms)', function () {",
+          "  pm.expect(pm.response.responseTime).to.be.below(2000);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "runId", "value": "" },
+    { "key": "smokeAccessToken", "value": "" },
+    { "key": "accessToken", "value": "" },
+    { "key": "regressionEmail", "value": "" },
+    { "key": "authorId", "value": "" },
+    { "key": "categoryId", "value": "" },
+    { "key": "bookTestAuthorId", "value": "" },
+    { "key": "bookTestCategoryId", "value": "" },
+    { "key": "bookId", "value": "" },
+    { "key": "errAuthorId", "value": "" },
+    { "key": "errCategoryId", "value": "" },
+    { "key": "integrityAuthorId", "value": "" },
+    { "key": "integrityCategoryId", "value": "" },
+    { "key": "integrityBookId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "00 - Smoke Test",
+      "item": [
+        {
+          "name": "Health Check - GET /",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Body contains Hello World', function () {",
+                  "  pm.expect(pm.response.text()).to.include('Hello World');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Authors - GET /authors",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is an array', function () {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/authors",
+              "host": ["{{baseUrl}}"],
+              "path": ["authors"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Categories - GET /categories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is an array', function () {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Books - GET /books",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is an array', function () {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/books",
+              "host": ["{{baseUrl}}"],
+              "path": ["books"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - Smoke User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Response contains accessToken and no password', function () {",
+                  "  pm.expect(json).to.have.property('accessToken');",
+                  "  pm.expect(json.user).to.not.have.property('password');",
+                  "});",
+                  "pm.collectionVariables.set('smokeAccessToken', json.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fullName\":\"Smoke User\",\"email\":\"smoke-{{runId}}@example.com\",\"password\":\"password123\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Smoke User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response contains a valid JWT accessToken', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.accessToken).to.be.a('string');",
+                  "  pm.expect(json.accessToken.split('.').length).to.eql(3);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"smoke-{{runId}}@example.com\",\"password\":\"password123\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Regression Test",
+      "item": [
+        {
+          "name": "02 - Request Validation",
+          "item": [
+            {
+              "name": "Register - Invalid Email (400)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 400', function () {",
+                      "  pm.response.to.have.status(400);",
+                      "});",
+                      "pm.test('Error mentions email', function () {",
+                      "  pm.expect(pm.response.json().message.join(' ')).to.include('email');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"fullName\":\"Invalid Email User\",\"email\":\"not-an-email\",\"password\":\"password123\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "register"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Register - Password Too Short (400)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 400', function () {",
+                      "  pm.response.to.have.status(400);",
+                      "});",
+                      "pm.test('Error mentions password length', function () {",
+                      "  pm.expect(pm.response.json().message.join(' ')).to.include('password');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"fullName\":\"Short Password User\",\"email\":\"short-{{runId}}@example.com\",\"password\":\"123\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "register"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Register - Missing FullName (400)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 400', function () {",
+                      "  pm.response.to.have.status(400);",
+                      "});",
+                      "pm.test('Error mentions fullName', function () {",
+                      "  pm.expect(pm.response.json().message.join(' ')).to.include('fullName');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"email\":\"nofullname-{{runId}}@example.com\",\"password\":\"password123\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "register"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Register - Unknown Field Stripped (201, creates main regression user)",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.collectionVariables.set('regressionEmail', 'regression-' + pm.collectionVariables.get('runId') + '@example.com');"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 201', function () {",
+                      "  pm.response.to.have.status(201);",
+                      "});",
+                      "const json = pm.response.json();",
+                      "pm.test('Unknown field (isAdmin) is stripped, not persisted', function () {",
+                      "  pm.expect(json.user).to.not.have.property('isAdmin');",
+                      "  pm.expect(json.user).to.not.have.property('password');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"fullName\":\"Regression User\",\"email\":\"{{regressionEmail}}\",\"password\":\"password123\",\"isAdmin\":true}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "register"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "05 - JWT Authentication (Login and Register)",
+          "item": [
+            {
+              "name": "Login - Correct Credentials (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "  pm.response.to.have.status(200);",
+                      "});",
+                      "const json = pm.response.json();",
+                      "pm.test('Response contains a valid JWT and no password', function () {",
+                      "  pm.expect(json.accessToken.split('.').length).to.eql(3);",
+                      "  pm.expect(json.user).to.not.have.property('password');",
+                      "});",
+                      "pm.collectionVariables.set('accessToken', json.accessToken);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"email\":\"{{regressionEmail}}\",\"password\":\"password123\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Login - Wrong Password (401)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 401', function () {",
+                      "  pm.response.to.have.status(401);",
+                      "});",
+                      "pm.test('Generic error message (no user enumeration)', function () {",
+                      "  pm.expect(pm.response.json().message).to.eql('Invalid email or password');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"email\":\"{{regressionEmail}}\",\"password\":\"wrong-password\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Login - Nonexistent Email (401, same generic message)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 401', function () {",
+                      "  pm.response.to.have.status(401);",
+                      "});",
+                      "pm.test('Generic error message identical to wrong-password case', function () {",
+                      "  pm.expect(pm.response.json().message).to.eql('Invalid email or password');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"email\":\"does-not-exist-{{runId}}@example.com\",\"password\":\"password123\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Register - Duplicate Email (409)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 409', function () {",
+                      "  pm.response.to.have.status(409);",
+                      "});",
+                      "pm.test('Error message indicates duplicate email', function () {",
+                      "  pm.expect(pm.response.json().message).to.eql('Email is already registered');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"fullName\":\"Duplicate User\",\"email\":\"{{regressionEmail}}\",\"password\":\"password123\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "register"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "03 - CRUD Core Resources",
+          "item": [
+            {
+              "name": "Authors",
+              "item": [
+                {
+                  "name": "Create Author (201)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 201', function () {",
+                          "  pm.response.to.have.status(201);",
+                          "});",
+                          "const json = pm.response.json();",
+                          "pm.collectionVariables.set('authorId', json.id);"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\"id\":\"crud-author-{{runId}}\",\"name\":\"CRUD Author {{runId}}\"}",
+                      "options": { "raw": { "language": "json" } }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/authors",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["authors"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Author By Id (200)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 200', function () {",
+                          "  pm.response.to.have.status(200);",
+                          "});",
+                          "pm.test('Author data matches created data', function () {",
+                          "  pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('authorId'));",
+                          "});"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/authors/{{authorId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["authors", "{{authorId}}"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Update Author (200)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 200', function () {",
+                          "  pm.response.to.have.status(200);",
+                          "});",
+                          "pm.test('Name was updated', function () {",
+                          "  pm.expect(pm.response.json().name).to.eql('CRUD Author Updated ' + pm.collectionVariables.get('runId'));",
+                          "});"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\"name\":\"CRUD Author Updated {{runId}}\"}",
+                      "options": { "raw": { "language": "json" } }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/authors/{{authorId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["authors", "{{authorId}}"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Author By Id After Update (200, verify persisted)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 200', function () {",
+                          "  pm.response.to.have.status(200);",
+                          "});",
+                          "pm.test('Updated name is persisted', function () {",
+                          "  pm.expect(pm.response.json().name).to.eql('CRUD Author Updated ' + pm.collectionVariables.get('runId'));",
+                          "});"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/authors/{{authorId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["authors", "{{authorId}}"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Delete Author (200)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 200', function () {",
+                          "  pm.response.to.have.status(200);",
+                          "});"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/authors/{{authorId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["authors", "{{authorId}}"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Author By Id After Delete (404)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 404', function () {",
+                          "  pm.response.to.have.status(404);",
+                          "});"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/authors/{{authorId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["authors", "{{authorId}}"]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "Categories",
+              "item": [
+                {
+                  "name": "Create Category (201)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 201', function () {",
+                          "  pm.response.to.have.status(201);",
+                          "});",
+                          "pm.collectionVariables.set('categoryId', pm.response.json().id);"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\"id\":\"crud-category-{{runId}}\",\"name\":\"CRUD Category {{runId}}\",\"slug\":\"crud-category-{{runId}}\"}",
+                      "options": { "raw": { "language": "json" } }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/categories",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["categories"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Category By Id (200)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 200', function () {",
+                          "  pm.response.to.have.status(200);",
+                          "});"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/categories/{{categoryId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["categories", "{{categoryId}}"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Update Category (200)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 200', function () {",
+                          "  pm.response.to.have.status(200);",
+                          "});",
+                          "pm.test('Name was updated', function () {",
+                          "  pm.expect(pm.response.json().name).to.eql('CRUD Category Updated ' + pm.collectionVariables.get('runId'));",
+                          "});"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\"name\":\"CRUD Category Updated {{runId}}\"}",
+                      "options": { "raw": { "language": "json" } }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/categories/{{categoryId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["categories", "{{categoryId}}"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Category By Id After Update (200, verify persisted)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 200', function () {",
+                          "  pm.response.to.have.status(200);",
+                          "});",
+                          "pm.test('Updated name is persisted', function () {",
+                          "  pm.expect(pm.response.json().name).to.eql('CRUD Category Updated ' + pm.collectionVariables.get('runId'));",
+                          "});"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/categories/{{categoryId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["categories", "{{categoryId}}"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Delete Category (200)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 200', function () {",
+                          "  pm.response.to.have.status(200);",
+                          "});"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/categories/{{categoryId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["categories", "{{categoryId}}"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Category By Id After Delete (404)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 404', function () {",
+                          "  pm.response.to.have.status(404);",
+                          "});"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/categories/{{categoryId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["categories", "{{categoryId}}"]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "Books",
+              "item": [
+                {
+                  "name": "Setup - Create Author for Book Tests (201)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 201', function () {",
+                          "  pm.response.to.have.status(201);",
+                          "});",
+                          "pm.collectionVariables.set('bookTestAuthorId', pm.response.json().id);"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\"id\":\"book-test-author-{{runId}}\",\"name\":\"Book Test Author {{runId}}\"}",
+                      "options": { "raw": { "language": "json" } }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/authors",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["authors"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Setup - Create Category for Book Tests (201)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 201', function () {",
+                          "  pm.response.to.have.status(201);",
+                          "});",
+                          "pm.collectionVariables.set('bookTestCategoryId', pm.response.json().id);"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\"id\":\"book-test-category-{{runId}}\",\"name\":\"Book Test Category {{runId}}\",\"slug\":\"book-test-category-{{runId}}\"}",
+                      "options": { "raw": { "language": "json" } }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/categories",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["categories"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Create Book (201)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 201', function () {",
+                          "  pm.response.to.have.status(201);",
+                          "});",
+                          "const json = pm.response.json();",
+                          "pm.test('Book references correct author and category ids', function () {",
+                          "  pm.expect(json.authorId).to.eql(pm.collectionVariables.get('bookTestAuthorId'));",
+                          "  pm.expect(json.categoryId).to.eql(pm.collectionVariables.get('bookTestCategoryId'));",
+                          "});",
+                          "pm.collectionVariables.set('bookId', json.id);"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\"id\":\"crud-book-{{runId}}\",\"title\":\"CRUD Book {{runId}}\",\"authorId\":\"{{bookTestAuthorId}}\",\"categoryId\":\"{{bookTestCategoryId}}\"}",
+                      "options": { "raw": { "language": "json" } }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/books",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["books"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Book By Id (200, verify nested author/category)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 200', function () {",
+                          "  pm.response.to.have.status(200);",
+                          "});",
+                          "const json = pm.response.json();",
+                          "pm.test('Nested author and category are resolved', function () {",
+                          "  pm.expect(json.author).to.be.an('object');",
+                          "  pm.expect(json.category).to.be.an('object');",
+                          "  pm.expect(json.author.id).to.eql(pm.collectionVariables.get('bookTestAuthorId'));",
+                          "  pm.expect(json.category.id).to.eql(pm.collectionVariables.get('bookTestCategoryId'));",
+                          "});"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/books/{{bookId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["books", "{{bookId}}"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Update Book (200)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 200', function () {",
+                          "  pm.response.to.have.status(200);",
+                          "});",
+                          "pm.test('Title was updated', function () {",
+                          "  pm.expect(pm.response.json().title).to.eql('CRUD Book Updated ' + pm.collectionVariables.get('runId'));",
+                          "});"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\"title\":\"CRUD Book Updated {{runId}}\"}",
+                      "options": { "raw": { "language": "json" } }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/books/{{bookId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["books", "{{bookId}}"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Delete Book (200)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 200', function () {",
+                          "  pm.response.to.have.status(200);",
+                          "});"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/books/{{bookId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["books", "{{bookId}}"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Book By Id After Delete (404)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 404', function () {",
+                          "  pm.response.to.have.status(404);",
+                          "});"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/books/{{bookId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["books", "{{bookId}}"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Cleanup - Delete Author for Book Tests",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 200', function () {",
+                          "  pm.response.to.have.status(200);",
+                          "});"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/authors/{{bookTestAuthorId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["authors", "{{bookTestAuthorId}}"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Cleanup - Delete Category for Book Tests",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 200', function () {",
+                          "  pm.response.to.have.status(200);",
+                          "});"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/categories/{{bookTestCategoryId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["categories", "{{bookTestCategoryId}}"]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "06 - Route Protection Middleware (JwtAuthGuard)",
+          "item": [
+            {
+              "name": "POST Authors - No Token (401)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"id\":\"noauth-{{runId}}\",\"name\":\"No Auth\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/authors",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST Books - No Token (401)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"id\":\"noauth-{{runId}}\",\"title\":\"No Auth\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/books",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST Categories - No Token (401)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"id\":\"noauth-{{runId}}\",\"name\":\"No Auth\",\"slug\":\"no-auth-{{runId}}\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/categories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PATCH Author - No Token (401)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"name\":\"Hacked\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/authors/some-id",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors", "some-id"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE Book - No Token (401)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/books/some-id",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books", "some-id"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST Categories - Invalid Token (401)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer garbage.invalid.token"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"id\":\"noauth-{{runId}}\",\"name\":\"No Auth\",\"slug\":\"no-auth-{{runId}}\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/categories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET Authors - No Token, Control (200, public route)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200 (GET remains public)', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/authors",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "07 - Error Handling",
+          "item": [
+            {
+              "name": "Setup - Create Author (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.collectionVariables.set('errAuthorId', pm.response.json().id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"id\":\"errtest-author-{{runId}}\",\"name\":\"Errtest Author {{runId}}\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/authors",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Setup - Create Category (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.collectionVariables.set('errCategoryId', pm.response.json().id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"id\":\"errtest-category-{{runId}}\",\"name\":\"Errtest Category {{runId}}\",\"slug\":\"errtest-category-{{runId}}\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/categories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Book - Invalid Author/Category FK (400, not raw 500)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 400 (NOT 500)', function () {",
+                      "  pm.response.to.have.status(400);",
+                      "});",
+                      "pm.test('Clean error message, not a raw Prisma stack trace', function () {",
+                      "  pm.expect(pm.response.json().message).to.eql('One or more referenced records do not exist');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"id\":\"errtest-book-{{runId}}\",\"title\":\"FK Test\",\"authorId\":\"does-not-exist-{{runId}}\",\"categoryId\":\"does-not-exist-{{runId}}\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/books",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Author - Duplicate Name (409, not raw 500)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 409 (NOT 500)', function () {",
+                      "  pm.response.to.have.status(409);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"id\":\"errtest-author-dup-{{runId}}\",\"name\":\"Errtest Author {{runId}}\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/authors",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Author - Duplicate Id (409, not raw 500)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 409 (NOT 500)', function () {",
+                      "  pm.response.to.have.status(409);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"id\":\"errtest-author-{{runId}}\",\"name\":\"A Different Name {{runId}}\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/authors",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Author - Nonexistent Id (404)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 404', function () {",
+                      "  pm.response.to.have.status(404);",
+                      "});",
+                      "pm.test('Error message identifies the resource', function () {",
+                      "  pm.expect(pm.response.json().message).to.include('not found');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"name\":\"Whatever\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/authors/does-not-exist-{{runId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors", "does-not-exist-{{runId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Author - Nonexistent Id (404)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 404', function () {",
+                      "  pm.response.to.have.status(404);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/authors/does-not-exist-{{runId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors", "does-not-exist-{{runId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Cleanup - Delete Author",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/authors/{{errAuthorId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors", "{{errAuthorId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Cleanup - Delete Category",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/categories/{{errCategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories", "{{errCategoryId}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "08 - Data Integrity and Constraints",
+          "item": [
+            {
+              "name": "Create Category - Duplicate Slug (409, unique constraint enforced)",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Ensures a category with a known slug exists to collide with.",
+                      "pm.sendRequest({",
+                      "  url: pm.collectionVariables.get('baseUrl') + '/categories',",
+                      "  method: 'POST',",
+                      "  header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + pm.collectionVariables.get('accessToken') },",
+                      "  body: { mode: 'raw', raw: JSON.stringify({ id: 'slug-seed-' + pm.collectionVariables.get('runId'), name: 'Slug Seed ' + pm.collectionVariables.get('runId'), slug: 'integrity-slug-' + pm.collectionVariables.get('runId') }) }",
+                      "}, function () {});"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 409 (NOT 500)', function () {",
+                      "  pm.response.to.have.status(409);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"id\":\"slug-dup-{{runId}}\",\"name\":\"Slug Dup {{runId}}\",\"slug\":\"integrity-slug-{{runId}}\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/categories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Cleanup - Delete Slug Seed Category",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/categories/slug-seed-{{runId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories", "slug-seed-{{runId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Setup - Create Author (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.collectionVariables.set('integrityAuthorId', pm.response.json().id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"id\":\"integrity-author-{{runId}}\",\"name\":\"Integrity Author {{runId}}\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/authors",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Setup - Create Category (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.collectionVariables.set('integrityCategoryId', pm.response.json().id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"id\":\"integrity-category-{{runId}}\",\"name\":\"Integrity Category {{runId}}\",\"slug\":\"integrity-category-{{runId}}\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/categories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Book With Valid Relations (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.collectionVariables.set('integrityBookId', pm.response.json().id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"id\":\"integrity-book-{{runId}}\",\"title\":\"Integrity Book {{runId}}\",\"authorId\":\"{{integrityAuthorId}}\",\"categoryId\":\"{{integrityCategoryId}}\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/books",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Book - Verify Relational Integrity (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "  pm.response.to.have.status(200);",
+                      "});",
+                      "const json = pm.response.json();",
+                      "pm.test('Nested author/category ids exactly match what was linked at creation', function () {",
+                      "  pm.expect(json.author.id).to.eql(pm.collectionVariables.get('integrityAuthorId'));",
+                      "  pm.expect(json.category.id).to.eql(pm.collectionVariables.get('integrityCategoryId'));",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/books/{{integrityBookId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books", "{{integrityBookId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Cleanup - Delete Book",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/books/{{integrityBookId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books", "{{integrityBookId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Cleanup - Delete Author",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/authors/{{integrityAuthorId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors", "{{integrityAuthorId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Cleanup - Delete Category",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/categories/{{integrityCategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories", "{{integrityCategoryId}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "09 - Integration Test (Seeded Data)",
+          "item": [
+            {
+              "name": "GET Authors - Seeded Data Present (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.test('At least one seeded author exists', function () {",
+                      "  pm.expect(pm.response.json().length).to.be.above(0);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/authors",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET Categories - Seeded Data Present (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.test('At least one seeded category exists', function () {",
+                      "  pm.expect(pm.response.json().length).to.be.above(0);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/categories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET Books - Seeded Data With Resolved Relations (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "  pm.response.to.have.status(200);",
+                      "});",
+                      "const books = pm.response.json();",
+                      "pm.test('At least one seeded book exists', function () {",
+                      "  pm.expect(books.length).to.be.above(0);",
+                      "});",
+                      "pm.test('Seeded books have resolved author and category names', function () {",
+                      "  const sample = books[0];",
+                      "  pm.expect(sample.author).to.be.an('object');",
+                      "  pm.expect(sample.author.name).to.be.a('string').and.not.empty;",
+                      "  pm.expect(sample.category).to.be.an('object');",
+                      "  pm.expect(sample.category.name).to.be.a('string').and.not.empty;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/books",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -161,6 +161,26 @@ npm run test:cov
 
 Unit tests are stored alongside source files in `src/*.spec.ts`. End-to-end tests and their Jest configuration are stored in `test/`.
 
+### API testing with Postman / Newman
+
+A Postman collection covering smoke tests and a full regression suite (request validation, JWT auth, CRUD lifecycle, route protection, error handling, data integrity/constraints, and integration testing against seeded data) is available in `nexread-api/test-report/postman/`. All test result documentation and generated reports live under `nexread-api/test-report/` — see [`test-report/README.md`](nexread-api/test-report/README.md) for the full breakdown.
+
+```bash
+# Start the API first (in another terminal)
+npm run start:dev
+
+# Quick smoke test (few seconds)
+npm run test:newman:smoke
+
+# Full regression suite (all resources, auth, error handling, constraints)
+npm run test:newman:regression
+
+# Everything, with a JSON report saved to test-report/newman-reports/
+npm run test:newman
+```
+
+The collection is self-cleaning (each run creates and deletes its own test data using a unique run id) and safe to re-run repeatedly. It can also be imported directly into the Postman app together with the `test-report/postman/local.postman_environment.json` environment file.
+
 ## Code Quality
 
 ```bash
@@ -211,6 +231,7 @@ The API listens on `process.env.PORT` and is otherwise stateless, so it deploys 
 	│   ├── prisma/           # Shared PrismaService/PrismaModule
 	│   └── main.ts, app.module.ts, ...
 	├── test/                 # End-to-end tests
+	├── test-report/          # All test documentation: Postman/Newman collection, environment, and generated reports
 	├── prisma.config.ts      # Prisma CLI configuration
 	└── package.json          # Dependencies and npm scripts
 ```
