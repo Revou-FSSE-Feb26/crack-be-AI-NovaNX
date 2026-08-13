@@ -24,7 +24,7 @@ The Swagger UI documents every endpoint (request/response shapes, DTOs, status c
 - Repository pattern: each module's service depends on an abstract `*Repository` class (a DI token), implemented by a Prisma-backed repository (`Prisma*Repository`) that wraps the shared `PrismaService`
 - Request body validation with `class-validator` / `class-transformer` (global `ValidationPipe`)
 - User registration and login endpoints (`POST /auth/register`, `POST /auth/login`) that issue JWT access tokens, with passwords hashed via `bcrypt`
-- `JwtStrategy` / `JwtAuthGuard` (Passport) protect the write endpoints (`POST`/`PATCH`/`DELETE`) of `authors`, `categories`, and `books`; `GET` endpoints remain public. Swagger UI exposes a Bearer auth button for authenticated requests.
+- `JwtStrategy` / `JwtAuthGuard` (Passport) protect the write endpoints (`POST`/`PATCH`/`DELETE`) of `authors`, `categories`, and `books`; `RolesGuard` restricts them to admins, while `GET` endpoints remain public. Swagger UI exposes a Bearer auth button for authenticated requests.
 - Global `PrismaClientExceptionFilter` translates database constraint errors (unique, foreign key, record-not-found) into clean `409`/`400`/`404` responses instead of raw `500` errors
 - Role-based access control (RBAC): `User.role` (`USER` / `ADMIN`), included in the JWT payload, enforced via a `RolesGuard` + `@Roles()` decorator
 - `GET/PATCH/DELETE /users/:id` endpoints allow a user to manage their own account, or an admin to manage any account; `GET /users` (list) and `PATCH /users/:id/role` (promote/demote) are admin-only. The `role` field can never be set through the self-service update DTO (or through registration) — only through the dedicated admin-only role endpoint — to prevent privilege-escalation via mass assignment
@@ -139,26 +139,26 @@ By default, the API runs at `http://localhost:3000`. The interactive Swagger API
 | POST   | `/auth/login`     | Authenticate a user and return a JWT              | No                  |
 | GET    | `/authors`        | List all authors                                  | No                  |
 | GET    | `/authors/:id`    | Get a single author                               | No                  |
-| POST   | `/authors`        | Create an author                                  | Yes (Bearer)        |
-| PATCH  | `/authors/:id`    | Update an author                                  | Yes (Bearer)        |
-| DELETE | `/authors/:id`    | Delete an author                                  | Yes (Bearer)        |
+| POST   | `/authors`        | Create an author                                  | Yes (Admin only)    |
+| PATCH  | `/authors/:id`    | Update an author                                  | Yes (Admin only)    |
+| DELETE | `/authors/:id`    | Delete an author                                  | Yes (Admin only)    |
 | GET    | `/categories`     | List all categories                               | No                  |
 | GET    | `/categories/:id` | Get a single category                             | No                  |
-| POST   | `/categories`     | Create a category                                 | Yes (Bearer)        |
-| PATCH  | `/categories/:id` | Update a category                                 | Yes (Bearer)        |
-| DELETE | `/categories/:id` | Delete a category                                 | Yes (Bearer)        |
+| POST   | `/categories`     | Create a category                                 | Yes (Admin only)    |
+| PATCH  | `/categories/:id` | Update a category                                 | Yes (Admin only)    |
+| DELETE | `/categories/:id` | Delete a category                                 | Yes (Admin only)    |
 | GET    | `/books`          | List all books (includes author and category)     | No                  |
 | GET    | `/books/:id`      | Get a single book                                 | No                  |
-| POST   | `/books`          | Create a book                                     | Yes (Bearer)        |
-| PATCH  | `/books/:id`      | Update a book                                     | Yes (Bearer)        |
-| DELETE | `/books/:id`      | Delete a book                                     | Yes (Bearer)        |
+| POST   | `/books`          | Create a book                                     | Yes (Admin only)    |
+| PATCH  | `/books/:id`      | Update a book                                     | Yes (Admin only)    |
+| DELETE | `/books/:id`      | Delete a book                                     | Yes (Admin only)    |
 | GET    | `/users`          | List all users                                    | Yes (Admin only)    |
 | GET    | `/users/:id`      | Get a single user                                 | Yes (Self or Admin) |
 | PATCH  | `/users/:id`      | Update a user's own profile (name/email/password) | Yes (Self or Admin) |
 | PATCH  | `/users/:id/role` | Promote/demote a user's role                      | Yes (Admin only)    |
 | DELETE | `/users/:id`      | Delete a user                                     | Yes (Self or Admin) |
 
-Routes marked "Yes (Bearer)" require an `Authorization: Bearer <accessToken>` header with a token obtained from `POST /auth/login` (or `/auth/register`); unauthenticated requests receive `401 Unauthorized`. "Self or Admin" means the token's user must either match the `:id` in the path or have the `ADMIN` role, otherwise the request receives `403 Forbidden`. "Admin only" routes always require the `ADMIN` role regardless of `:id`. The `role` field can never be changed through `PATCH /users/:id` — only through the dedicated `PATCH /users/:id/role` admin endpoint. Request bodies are validated against each resource's DTO; invalid or unknown fields are rejected/stripped by the global `ValidationPipe`.
+Protected routes require an `Authorization: Bearer <accessToken>` header with a token obtained from `POST /auth/login` (or `/auth/register`); unauthenticated requests receive `401 Unauthorized`. "Self or Admin" means the token's user must either match the `:id` in the path or have the `ADMIN` role, otherwise the request receives `403 Forbidden`. "Admin only" routes always require the `ADMIN` role regardless of `:id`; authenticated users with the `USER` role receive `403 Forbidden`. The `role` field can never be changed through `PATCH /users/:id` — only through the dedicated `PATCH /users/:id/role` admin endpoint. Request bodies are validated against each resource's DTO; invalid or unknown fields are rejected/stripped by the global `ValidationPipe`.
 
 ## Testing
 
