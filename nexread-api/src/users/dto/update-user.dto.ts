@@ -15,13 +15,13 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
  * endpoint instead.
  */
 export class UpdateUserDto {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ format: 'email' })
   @IsOptional()
   @IsString()
   @IsNotEmpty()
   fullName?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ minLength: 8 })
   @IsOptional()
   @IsEmail()
   email?: string;

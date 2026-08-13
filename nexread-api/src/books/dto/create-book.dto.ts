@@ -26,7 +26,7 @@ export class CreateBookDto {
   @Max(5)
   rating?: number;
 
-  @ApiPropertyOptional({ nullable: true })
+  @ApiPropertyOptional({ type: String, nullable: true })
   @IsOptional()
   @IsString()
   coverClassName?: string | null;

@@ -35,7 +35,7 @@ export class UpdateAuthorDto {
   @Max(5)
   rating?: number;
 
-  @ApiPropertyOptional({ nullable: true })
+  @ApiPropertyOptional({ type: String, nullable: true })
   @IsOptional()
   @IsString()
   avatarPath?: string | null;
