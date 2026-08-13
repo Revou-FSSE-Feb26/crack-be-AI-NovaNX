@@ -183,6 +183,9 @@ Unit tests are stored alongside source files in `src/*.spec.ts`. End-to-end test
 
 A Postman collection covering smoke tests and a full regression suite (request validation, JWT auth, CRUD lifecycle, route protection, error handling, data integrity/constraints, and integration testing against seeded data) is available in `nexread-api/test-report/postman/`. All test result documentation and generated reports live under `nexread-api/test-report/` — see [`test-report/README.md`](nexread-api/test-report/README.md) for the full breakdown.
 
+The Newman runner reads the seeded admin credentials from `.env` and injects them at runtime, so secrets are never stored in the committed collection. Run `npm run prisma:seed:admin` first if the configured admin account does not exist.
+By default it uses the `baseUrl` from the committed local Postman environment. Set `NEWMAN_BASE_URL` at runtime to test the same collection against staging or Railway without editing that file, for example `NEWMAN_BASE_URL=https://your-api.example.com npm run test:newman:smoke`.
+
 ```bash
 # Start the API first (in another terminal)
 npm run start:dev

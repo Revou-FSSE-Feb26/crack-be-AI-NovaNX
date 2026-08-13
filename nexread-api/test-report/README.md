@@ -18,24 +18,28 @@ Besides the Jest unit tests (`src/**/*.spec.ts`) and end-to-end tests (`test/`),
 
 | Folder in collection                  | Covers                                                                         |
 | ------------------------------------- | ------------------------------------------------------------------------------ |
-| `00 - Smoke Test`                     | Health check, list endpoints, register/login a smoke-test user                 |
+| `00 - Smoke Test`                     | Health, public lists, auth token rotation/logout, and automatic user cleanup   |
 | `02 - Request Validation`             | Invalid email, short password, missing required field, unknown-field stripping |
 | `03 - CRUD Core Resources`            | Full create/read/update/delete lifecycle for Authors, Categories, Books        |
-| `05 - JWT Authentication`             | Correct login, wrong password, unknown email, duplicate email registration     |
+| `05 - JWT Authentication`             | Login failures, user/admin token pairs, rotation, and refresh replay rejection |
 | `06 - Route Protection Middleware`    | 401 on protected routes without a token, 200 on public `GET` routes            |
 | `07 - Error Handling`                 | Invalid foreign key, duplicate unique fields, 404 on nonexistent records       |
 | `08 - Data Integrity and Constraints` | Unique constraint violations, relational integrity of created records          |
 | `09 - Integration Test (Seeded Data)` | Sanity checks against the seeded Authors/Categories/Books                      |
+| `10 - Session Cleanup`                | Logout revocation and cleanup of temporary users                               |
 
 Mentor requirements #1 ("test all API endpoints") and #4 ("use Postman/Newman for automated testing") aren't a dedicated folder — they're satisfied by the collection as a whole, since every folder above exercises real endpoints through Postman/Newman.
 
 The collection is self-cleaning: every run generates a unique `runId` and any records it creates are deleted by the end of the run, so it's safe to re-run repeatedly without manual database cleanup.
 
-User management (`/users`) and role-based access control (admin-only vs. self-only) are currently exercised manually (see the RBAC verification performed during development); they are not yet part of the automated Postman collection.
+Catalog mutations authenticate with the seeded admin account, while temporary users exercise self-service deletion. The remaining user-list/profile/role-management variants are covered separately from the catalog regression flow.
 
 ## Running the tests
 
 From `nexread-api/`, with the dev server running (`npm run start:dev`) in another terminal:
+
+The Newman runner loads `ADMIN_SEED_EMAIL` and `ADMIN_SEED_PASSWORD` from `.env` without copying credentials into the committed Postman environment. These variables must identify an existing seeded admin for regression runs; smoke runs do not require them.
+Set `NEWMAN_BASE_URL` to override the local environment's `baseUrl` for a staging or Railway run without modifying committed collection files (for example, `NEWMAN_BASE_URL=https://your-api.example.com npm run test:newman:smoke`).
 
 ```bash
 # Quick smoke test (HTML report: newman-reports/newman-smoke-report.html)

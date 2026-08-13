@@ -30,21 +30,106 @@
     }
   ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:3000" },
-    { "key": "runId", "value": "" },
-    { "key": "smokeAccessToken", "value": "" },
-    { "key": "accessToken", "value": "" },
-    { "key": "regressionEmail", "value": "" },
-    { "key": "authorId", "value": "" },
-    { "key": "categoryId", "value": "" },
-    { "key": "bookTestAuthorId", "value": "" },
-    { "key": "bookTestCategoryId", "value": "" },
-    { "key": "bookId", "value": "" },
-    { "key": "errAuthorId", "value": "" },
-    { "key": "errCategoryId", "value": "" },
-    { "key": "integrityAuthorId", "value": "" },
-    { "key": "integrityCategoryId", "value": "" },
-    { "key": "integrityBookId", "value": "" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "runId",
+      "value": ""
+    },
+    {
+      "key": "smokeAccessToken",
+      "value": ""
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "regressionEmail",
+      "value": ""
+    },
+    {
+      "key": "authorId",
+      "value": ""
+    },
+    {
+      "key": "categoryId",
+      "value": ""
+    },
+    {
+      "key": "bookTestAuthorId",
+      "value": ""
+    },
+    {
+      "key": "bookTestCategoryId",
+      "value": ""
+    },
+    {
+      "key": "bookId",
+      "value": ""
+    },
+    {
+      "key": "errAuthorId",
+      "value": ""
+    },
+    {
+      "key": "errCategoryId",
+      "value": ""
+    },
+    {
+      "key": "integrityAuthorId",
+      "value": ""
+    },
+    {
+      "key": "integrityCategoryId",
+      "value": ""
+    },
+    {
+      "key": "integrityBookId",
+      "value": ""
+    },
+    {
+      "key": "smokeRefreshToken",
+      "value": ""
+    },
+    {
+      "key": "smokeUserId",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "oldRefreshToken",
+      "value": ""
+    },
+    {
+      "key": "regressionUserId",
+      "value": ""
+    },
+    {
+      "key": "adminEmail",
+      "value": ""
+    },
+    {
+      "key": "adminPassword",
+      "value": ""
+    },
+    {
+      "key": "adminAccessToken",
+      "value": ""
+    },
+    {
+      "key": "adminRefreshToken",
+      "value": ""
+    },
+    {
+      "key": "adminOldRefreshToken",
+      "value": ""
+    }
   ],
   "item": [
     {
@@ -73,8 +158,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/",
-              "host": ["{{baseUrl}}"],
-              "path": [""]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
             }
           },
           "response": []
@@ -102,8 +191,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/authors",
-              "host": ["{{baseUrl}}"],
-              "path": ["authors"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "authors"
+              ]
             }
           },
           "response": []
@@ -131,8 +224,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/categories",
-              "host": ["{{baseUrl}}"],
-              "path": ["categories"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "categories"
+              ]
             }
           },
           "response": []
@@ -160,8 +257,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/books",
-              "host": ["{{baseUrl}}"],
-              "path": ["books"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "books"
+              ]
             }
           },
           "response": []
@@ -174,31 +275,46 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code is 201', function () {",
-                  "  pm.response.to.have.status(201);",
-                  "});",
+                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
                   "const json = pm.response.json();",
-                  "pm.test('Response contains accessToken and no password', function () {",
-                  "  pm.expect(json).to.have.property('accessToken');",
+                  "pm.test('Response contains an access/refresh pair and no password', function () {",
+                  "  pm.expect(json.accessToken).to.be.a('string');",
+                  "  pm.expect(json.refreshToken).to.be.a('string');",
                   "  pm.expect(json.user).to.not.have.property('password');",
                   "});",
-                  "pm.collectionVariables.set('smokeAccessToken', json.accessToken);"
+                  "pm.collectionVariables.set('smokeAccessToken', json.accessToken);",
+                  "pm.collectionVariables.set('smokeRefreshToken', json.refreshToken);",
+                  "pm.collectionVariables.set('smokeUserId', json.user.id);"
                 ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\"fullName\":\"Smoke User\",\"email\":\"smoke-{{runId}}@example.com\",\"password\":\"password123\"}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
             }
           },
           "response": []
@@ -211,30 +327,205 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
-                  "pm.test('Response contains a valid JWT accessToken', function () {",
-                  "  const json = pm.response.json();",
-                  "  pm.expect(json.accessToken).to.be.a('string');",
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Response contains valid JWT access and refresh tokens', function () {",
                   "  pm.expect(json.accessToken.split('.').length).to.eql(3);",
-                  "});"
+                  "  pm.expect(json.refreshToken.split('.').length).to.eql(3);",
+                  "});",
+                  "pm.collectionVariables.set('smokeAccessToken', json.accessToken);",
+                  "pm.collectionVariables.set('smokeRefreshToken', json.refreshToken);"
                 ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\"email\":\"smoke-{{runId}}@example.com\",\"password\":\"password123\"}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh - Rotate Smoke Token (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('A new access/refresh pair is returned', function () {",
+                  "  pm.expect(json.accessToken).to.be.a('string');",
+                  "  pm.expect(json.refreshToken).to.be.a('string');",
+                  "});",
+                  "pm.collectionVariables.set('smokeAccessToken', json.accessToken);",
+                  "pm.collectionVariables.set('smokeRefreshToken', json.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"refreshToken\":\"{{smokeRefreshToken}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout - Revoke Smoke Refresh Token (204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{smokeAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh - Revoked Smoke Token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"refreshToken\":\"{{smokeRefreshToken}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cleanup - Delete Smoke User (204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{smokeAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{smokeUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{smokeUserId}}"
+              ]
             }
           },
           "response": []
@@ -268,17 +559,29 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"fullName\":\"Invalid Email User\",\"email\":\"not-an-email\",\"password\":\"password123\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/auth/register",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "register"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
                 }
               },
               "response": []
@@ -304,17 +607,29 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"fullName\":\"Short Password User\",\"email\":\"short-{{runId}}@example.com\",\"password\":\"123\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/auth/register",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "register"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
                 }
               },
               "response": []
@@ -340,17 +655,29 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"email\":\"nofullname-{{runId}}@example.com\",\"password\":\"password123\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/auth/register",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "register"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
                 }
               },
               "response": []
@@ -379,7 +706,8 @@
                       "pm.test('Unknown field (isAdmin) is stripped, not persisted', function () {",
                       "  pm.expect(json.user).to.not.have.property('isAdmin');",
                       "  pm.expect(json.user).to.not.have.property('password');",
-                      "});"
+                      "});",
+                      "pm.collectionVariables.set('regressionUserId', json.user.id);"
                     ]
                   }
                 }
@@ -387,17 +715,29 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"fullName\":\"Regression User\",\"email\":\"{{regressionEmail}}\",\"password\":\"password123\",\"isAdmin\":true}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/auth/register",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "register"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
                 }
               },
               "response": []
@@ -415,15 +755,16 @@
                   "script": {
                     "type": "text/javascript",
                     "exec": [
-                      "pm.test('Status code is 200', function () {",
-                      "  pm.response.to.have.status(200);",
-                      "});",
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
                       "const json = pm.response.json();",
-                      "pm.test('Response contains a valid JWT and no password', function () {",
+                      "pm.test('Response contains valid access/refresh tokens and no password', function () {",
                       "  pm.expect(json.accessToken.split('.').length).to.eql(3);",
+                      "  pm.expect(json.refreshToken.split('.').length).to.eql(3);",
                       "  pm.expect(json.user).to.not.have.property('password');",
                       "});",
-                      "pm.collectionVariables.set('accessToken', json.accessToken);"
+                      "pm.collectionVariables.set('accessToken', json.accessToken);",
+                      "pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                      "pm.collectionVariables.set('oldRefreshToken', json.refreshToken);"
                     ]
                   }
                 }
@@ -431,17 +772,29 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"email\":\"{{regressionEmail}}\",\"password\":\"password123\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/auth/login",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "login"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
                 }
               },
               "response": []
@@ -467,17 +820,29 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"email\":\"{{regressionEmail}}\",\"password\":\"wrong-password\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/auth/login",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "login"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
                 }
               },
               "response": []
@@ -503,17 +868,29 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"email\":\"does-not-exist-{{runId}}@example.com\",\"password\":\"password123\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/auth/login",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "login"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
                 }
               },
               "response": []
@@ -539,17 +916,260 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"fullName\":\"Duplicate User\",\"email\":\"{{regressionEmail}}\",\"password\":\"password123\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/auth/register",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "register"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Refresh User - Rotate Token (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test('Refresh returns a new token pair', function () {",
+                      "  pm.expect(json.refreshToken).to.not.eql(pm.collectionVariables.get('oldRefreshToken'));",
+                      "});",
+                      "pm.collectionVariables.set('accessToken', json.accessToken);",
+                      "pm.collectionVariables.set('refreshToken', json.refreshToken);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/refresh",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "refresh"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"refreshToken\":\"{{refreshToken}}\"}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Refresh User - Replay Old Token (401)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/refresh",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "refresh"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"refreshToken\":\"{{oldRefreshToken}}\"}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Login Admin - Store Admin Token Pair (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test('Authenticated account has ADMIN role', function () {",
+                      "  pm.expect(json.user.role).to.eql('ADMIN');",
+                      "});",
+                      "pm.collectionVariables.set('adminAccessToken', json.accessToken);",
+                      "pm.collectionVariables.set('adminRefreshToken', json.refreshToken);",
+                      "pm.collectionVariables.set('adminOldRefreshToken', json.refreshToken);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"email\":\"{{adminEmail}}\",\"password\":\"{{adminPassword}}\"}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Refresh Admin - Rotate Token (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.collectionVariables.set('adminAccessToken', json.accessToken);",
+                      "pm.collectionVariables.set('adminRefreshToken', json.refreshToken);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/refresh",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "refresh"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"refreshToken\":\"{{adminRefreshToken}}\"}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Refresh Admin - Replay Old Token (401)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/refresh",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "refresh"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"refreshToken\":\"{{adminOldRefreshToken}}\"}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 }
               },
               "response": []
@@ -582,21 +1202,32 @@
                   "request": {
                     "method": "POST",
                     "header": [
-                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
                       {
                         "key": "Authorization",
-                        "value": "Bearer {{accessToken}}"
+                        "value": "Bearer {{adminAccessToken}}"
                       }
                     ],
                     "body": {
                       "mode": "raw",
                       "raw": "{\"id\":\"crud-author-{{runId}}\",\"name\":\"CRUD Author {{runId}}\"}",
-                      "options": { "raw": { "language": "json" } }
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
                     },
                     "url": {
                       "raw": "{{baseUrl}}/authors",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["authors"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "authors"
+                      ]
                     }
                   },
                   "response": []
@@ -624,8 +1255,13 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/authors/{{authorId}}",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["authors", "{{authorId}}"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "authors",
+                        "{{authorId}}"
+                      ]
                     }
                   },
                   "response": []
@@ -651,21 +1287,33 @@
                   "request": {
                     "method": "PATCH",
                     "header": [
-                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
                       {
                         "key": "Authorization",
-                        "value": "Bearer {{accessToken}}"
+                        "value": "Bearer {{adminAccessToken}}"
                       }
                     ],
                     "body": {
                       "mode": "raw",
                       "raw": "{\"name\":\"CRUD Author Updated {{runId}}\"}",
-                      "options": { "raw": { "language": "json" } }
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
                     },
                     "url": {
                       "raw": "{{baseUrl}}/authors/{{authorId}}",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["authors", "{{authorId}}"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "authors",
+                        "{{authorId}}"
+                      ]
                     }
                   },
                   "response": []
@@ -693,8 +1341,13 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/authors/{{authorId}}",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["authors", "{{authorId}}"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "authors",
+                        "{{authorId}}"
+                      ]
                     }
                   },
                   "response": []
@@ -719,13 +1372,18 @@
                     "header": [
                       {
                         "key": "Authorization",
-                        "value": "Bearer {{accessToken}}"
+                        "value": "Bearer {{adminAccessToken}}"
                       }
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/authors/{{authorId}}",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["authors", "{{authorId}}"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "authors",
+                        "{{authorId}}"
+                      ]
                     }
                   },
                   "response": []
@@ -750,8 +1408,13 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/authors/{{authorId}}",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["authors", "{{authorId}}"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "authors",
+                        "{{authorId}}"
+                      ]
                     }
                   },
                   "response": []
@@ -780,21 +1443,32 @@
                   "request": {
                     "method": "POST",
                     "header": [
-                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
                       {
                         "key": "Authorization",
-                        "value": "Bearer {{accessToken}}"
+                        "value": "Bearer {{adminAccessToken}}"
                       }
                     ],
                     "body": {
                       "mode": "raw",
                       "raw": "{\"id\":\"crud-category-{{runId}}\",\"name\":\"CRUD Category {{runId}}\",\"slug\":\"crud-category-{{runId}}\"}",
-                      "options": { "raw": { "language": "json" } }
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
                     },
                     "url": {
                       "raw": "{{baseUrl}}/categories",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["categories"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "categories"
+                      ]
                     }
                   },
                   "response": []
@@ -819,8 +1493,13 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/categories/{{categoryId}}",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["categories", "{{categoryId}}"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "categories",
+                        "{{categoryId}}"
+                      ]
                     }
                   },
                   "response": []
@@ -846,21 +1525,33 @@
                   "request": {
                     "method": "PATCH",
                     "header": [
-                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
                       {
                         "key": "Authorization",
-                        "value": "Bearer {{accessToken}}"
+                        "value": "Bearer {{adminAccessToken}}"
                       }
                     ],
                     "body": {
                       "mode": "raw",
                       "raw": "{\"name\":\"CRUD Category Updated {{runId}}\"}",
-                      "options": { "raw": { "language": "json" } }
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
                     },
                     "url": {
                       "raw": "{{baseUrl}}/categories/{{categoryId}}",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["categories", "{{categoryId}}"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "categories",
+                        "{{categoryId}}"
+                      ]
                     }
                   },
                   "response": []
@@ -888,8 +1579,13 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/categories/{{categoryId}}",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["categories", "{{categoryId}}"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "categories",
+                        "{{categoryId}}"
+                      ]
                     }
                   },
                   "response": []
@@ -914,13 +1610,18 @@
                     "header": [
                       {
                         "key": "Authorization",
-                        "value": "Bearer {{accessToken}}"
+                        "value": "Bearer {{adminAccessToken}}"
                       }
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/categories/{{categoryId}}",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["categories", "{{categoryId}}"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "categories",
+                        "{{categoryId}}"
+                      ]
                     }
                   },
                   "response": []
@@ -945,8 +1646,13 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/categories/{{categoryId}}",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["categories", "{{categoryId}}"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "categories",
+                        "{{categoryId}}"
+                      ]
                     }
                   },
                   "response": []
@@ -975,21 +1681,32 @@
                   "request": {
                     "method": "POST",
                     "header": [
-                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
                       {
                         "key": "Authorization",
-                        "value": "Bearer {{accessToken}}"
+                        "value": "Bearer {{adminAccessToken}}"
                       }
                     ],
                     "body": {
                       "mode": "raw",
                       "raw": "{\"id\":\"book-test-author-{{runId}}\",\"name\":\"Book Test Author {{runId}}\"}",
-                      "options": { "raw": { "language": "json" } }
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
                     },
                     "url": {
                       "raw": "{{baseUrl}}/authors",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["authors"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "authors"
+                      ]
                     }
                   },
                   "response": []
@@ -1013,21 +1730,32 @@
                   "request": {
                     "method": "POST",
                     "header": [
-                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
                       {
                         "key": "Authorization",
-                        "value": "Bearer {{accessToken}}"
+                        "value": "Bearer {{adminAccessToken}}"
                       }
                     ],
                     "body": {
                       "mode": "raw",
                       "raw": "{\"id\":\"book-test-category-{{runId}}\",\"name\":\"Book Test Category {{runId}}\",\"slug\":\"book-test-category-{{runId}}\"}",
-                      "options": { "raw": { "language": "json" } }
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
                     },
                     "url": {
                       "raw": "{{baseUrl}}/categories",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["categories"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "categories"
+                      ]
                     }
                   },
                   "response": []
@@ -1056,21 +1784,32 @@
                   "request": {
                     "method": "POST",
                     "header": [
-                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
                       {
                         "key": "Authorization",
-                        "value": "Bearer {{accessToken}}"
+                        "value": "Bearer {{adminAccessToken}}"
                       }
                     ],
                     "body": {
                       "mode": "raw",
                       "raw": "{\"id\":\"crud-book-{{runId}}\",\"title\":\"CRUD Book {{runId}}\",\"authorId\":\"{{bookTestAuthorId}}\",\"categoryId\":\"{{bookTestCategoryId}}\"}",
-                      "options": { "raw": { "language": "json" } }
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
                     },
                     "url": {
                       "raw": "{{baseUrl}}/books",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["books"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "books"
+                      ]
                     }
                   },
                   "response": []
@@ -1102,8 +1841,13 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/books/{{bookId}}",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["books", "{{bookId}}"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "books",
+                        "{{bookId}}"
+                      ]
                     }
                   },
                   "response": []
@@ -1129,21 +1873,33 @@
                   "request": {
                     "method": "PATCH",
                     "header": [
-                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
                       {
                         "key": "Authorization",
-                        "value": "Bearer {{accessToken}}"
+                        "value": "Bearer {{adminAccessToken}}"
                       }
                     ],
                     "body": {
                       "mode": "raw",
                       "raw": "{\"title\":\"CRUD Book Updated {{runId}}\"}",
-                      "options": { "raw": { "language": "json" } }
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
                     },
                     "url": {
                       "raw": "{{baseUrl}}/books/{{bookId}}",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["books", "{{bookId}}"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "books",
+                        "{{bookId}}"
+                      ]
                     }
                   },
                   "response": []
@@ -1168,13 +1924,18 @@
                     "header": [
                       {
                         "key": "Authorization",
-                        "value": "Bearer {{accessToken}}"
+                        "value": "Bearer {{adminAccessToken}}"
                       }
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/books/{{bookId}}",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["books", "{{bookId}}"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "books",
+                        "{{bookId}}"
+                      ]
                     }
                   },
                   "response": []
@@ -1199,8 +1960,13 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/books/{{bookId}}",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["books", "{{bookId}}"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "books",
+                        "{{bookId}}"
+                      ]
                     }
                   },
                   "response": []
@@ -1225,13 +1991,18 @@
                     "header": [
                       {
                         "key": "Authorization",
-                        "value": "Bearer {{accessToken}}"
+                        "value": "Bearer {{adminAccessToken}}"
                       }
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/authors/{{bookTestAuthorId}}",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["authors", "{{bookTestAuthorId}}"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "authors",
+                        "{{bookTestAuthorId}}"
+                      ]
                     }
                   },
                   "response": []
@@ -1256,13 +2027,18 @@
                     "header": [
                       {
                         "key": "Authorization",
-                        "value": "Bearer {{accessToken}}"
+                        "value": "Bearer {{adminAccessToken}}"
                       }
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/categories/{{bookTestCategoryId}}",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["categories", "{{bookTestCategoryId}}"]
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "categories",
+                        "{{bookTestCategoryId}}"
+                      ]
                     }
                   },
                   "response": []
@@ -1290,17 +2066,28 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"id\":\"noauth-{{runId}}\",\"name\":\"No Auth\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/authors",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["authors"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "authors"
+                  ]
                 }
               },
               "response": []
@@ -1321,17 +2108,28 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"id\":\"noauth-{{runId}}\",\"title\":\"No Auth\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/books",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["books"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "books"
+                  ]
                 }
               },
               "response": []
@@ -1352,17 +2150,28 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"id\":\"noauth-{{runId}}\",\"name\":\"No Auth\",\"slug\":\"no-auth-{{runId}}\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/categories",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["categories"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "categories"
+                  ]
                 }
               },
               "response": []
@@ -1383,17 +2192,29 @@
               "request": {
                 "method": "PATCH",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"name\":\"Hacked\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/authors/some-id",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["authors", "some-id"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "authors",
+                    "some-id"
+                  ]
                 }
               },
               "response": []
@@ -1416,8 +2237,13 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/books/some-id",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["books", "some-id"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "books",
+                    "some-id"
+                  ]
                 }
               },
               "response": []
@@ -1438,7 +2264,10 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
                   {
                     "key": "Authorization",
                     "value": "Bearer garbage.invalid.token"
@@ -1447,12 +2276,20 @@
                 "body": {
                   "mode": "raw",
                   "raw": "{\"id\":\"noauth-{{runId}}\",\"name\":\"No Auth\",\"slug\":\"no-auth-{{runId}}\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/categories",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["categories"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "categories"
+                  ]
                 }
               },
               "response": []
@@ -1475,8 +2312,12 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/authors",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["authors"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "authors"
+                  ]
                 }
               },
               "response": []
@@ -1503,18 +2344,32 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" },
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"id\":\"errtest-author-{{runId}}\",\"name\":\"Errtest Author {{runId}}\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/authors",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["authors"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "authors"
+                  ]
                 }
               },
               "response": []
@@ -1536,18 +2391,32 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" },
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"id\":\"errtest-category-{{runId}}\",\"name\":\"Errtest Category {{runId}}\",\"slug\":\"errtest-category-{{runId}}\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/categories",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["categories"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "categories"
+                  ]
                 }
               },
               "response": []
@@ -1573,18 +2442,32 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" },
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"id\":\"errtest-book-{{runId}}\",\"title\":\"FK Test\",\"authorId\":\"does-not-exist-{{runId}}\",\"categoryId\":\"does-not-exist-{{runId}}\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/books",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["books"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "books"
+                  ]
                 }
               },
               "response": []
@@ -1607,18 +2490,32 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" },
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"id\":\"errtest-author-dup-{{runId}}\",\"name\":\"Errtest Author {{runId}}\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/authors",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["authors"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "authors"
+                  ]
                 }
               },
               "response": []
@@ -1641,18 +2538,32 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" },
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"id\":\"errtest-author-{{runId}}\",\"name\":\"A Different Name {{runId}}\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/authors",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["authors"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "authors"
+                  ]
                 }
               },
               "response": []
@@ -1678,18 +2589,33 @@
               "request": {
                 "method": "PATCH",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" },
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"name\":\"Whatever\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/authors/does-not-exist-{{runId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["authors", "does-not-exist-{{runId}}"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "authors",
+                    "does-not-exist-{{runId}}"
+                  ]
                 }
               },
               "response": []
@@ -1712,12 +2638,20 @@
               "request": {
                 "method": "DELETE",
                 "header": [
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/authors/does-not-exist-{{runId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["authors", "does-not-exist-{{runId}}"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "authors",
+                    "does-not-exist-{{runId}}"
+                  ]
                 }
               },
               "response": []
@@ -1738,12 +2672,20 @@
               "request": {
                 "method": "DELETE",
                 "header": [
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/authors/{{errAuthorId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["authors", "{{errAuthorId}}"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "authors",
+                    "{{errAuthorId}}"
+                  ]
                 }
               },
               "response": []
@@ -1764,12 +2706,20 @@
               "request": {
                 "method": "DELETE",
                 "header": [
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/categories/{{errCategoryId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["categories", "{{errCategoryId}}"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "categories",
+                    "{{errCategoryId}}"
+                  ]
                 }
               },
               "response": []
@@ -1789,9 +2739,9 @@
                     "exec": [
                       "// Ensures a category with a known slug exists to collide with.",
                       "pm.sendRequest({",
-                      "  url: pm.collectionVariables.get('baseUrl') + '/categories',",
+                      "  url: pm.variables.get('baseUrl') + '/categories',",
                       "  method: 'POST',",
-                      "  header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + pm.collectionVariables.get('accessToken') },",
+                      "  header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + pm.collectionVariables.get('adminAccessToken') },",
                       "  body: { mode: 'raw', raw: JSON.stringify({ id: 'slug-seed-' + pm.collectionVariables.get('runId'), name: 'Slug Seed ' + pm.collectionVariables.get('runId'), slug: 'integrity-slug-' + pm.collectionVariables.get('runId') }) }",
                       "}, function () {});"
                     ]
@@ -1812,18 +2762,32 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" },
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"id\":\"slug-dup-{{runId}}\",\"name\":\"Slug Dup {{runId}}\",\"slug\":\"integrity-slug-{{runId}}\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/categories",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["categories"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "categories"
+                  ]
                 }
               },
               "response": []
@@ -1844,12 +2808,20 @@
               "request": {
                 "method": "DELETE",
                 "header": [
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/categories/slug-seed-{{runId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["categories", "slug-seed-{{runId}}"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "categories",
+                    "slug-seed-{{runId}}"
+                  ]
                 }
               },
               "response": []
@@ -1871,18 +2843,32 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" },
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"id\":\"integrity-author-{{runId}}\",\"name\":\"Integrity Author {{runId}}\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/authors",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["authors"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "authors"
+                  ]
                 }
               },
               "response": []
@@ -1904,18 +2890,32 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" },
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"id\":\"integrity-category-{{runId}}\",\"name\":\"Integrity Category {{runId}}\",\"slug\":\"integrity-category-{{runId}}\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/categories",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["categories"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "categories"
+                  ]
                 }
               },
               "response": []
@@ -1937,18 +2937,32 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" },
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\"id\":\"integrity-book-{{runId}}\",\"title\":\"Integrity Book {{runId}}\",\"authorId\":\"{{integrityAuthorId}}\",\"categoryId\":\"{{integrityCategoryId}}\"}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/books",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["books"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "books"
+                  ]
                 }
               },
               "response": []
@@ -1978,8 +2992,13 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/books/{{integrityBookId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["books", "{{integrityBookId}}"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "books",
+                    "{{integrityBookId}}"
+                  ]
                 }
               },
               "response": []
@@ -2000,12 +3019,20 @@
               "request": {
                 "method": "DELETE",
                 "header": [
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/books/{{integrityBookId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["books", "{{integrityBookId}}"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "books",
+                    "{{integrityBookId}}"
+                  ]
                 }
               },
               "response": []
@@ -2026,12 +3053,20 @@
               "request": {
                 "method": "DELETE",
                 "header": [
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/authors/{{integrityAuthorId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["authors", "{{integrityAuthorId}}"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "authors",
+                    "{{integrityAuthorId}}"
+                  ]
                 }
               },
               "response": []
@@ -2052,12 +3087,20 @@
               "request": {
                 "method": "DELETE",
                 "header": [
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/categories/{{integrityCategoryId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["categories", "{{integrityCategoryId}}"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "categories",
+                    "{{integrityCategoryId}}"
+                  ]
                 }
               },
               "response": []
@@ -2088,8 +3131,12 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/authors",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["authors"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "authors"
+                  ]
                 }
               },
               "response": []
@@ -2115,8 +3162,12 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/categories",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["categories"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "categories"
+                  ]
                 }
               },
               "response": []
@@ -2152,8 +3203,205 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/books",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["books"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "books"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "10 - Session Cleanup",
+          "item": [
+            {
+              "name": "Logout Admin - Revoke Refresh Token (204)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 204', function () { pm.response.to.have.status(204); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "logout"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Refresh Admin After Logout (401)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/refresh",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "refresh"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"refreshToken\":\"{{adminRefreshToken}}\"}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Logout Regression User (204)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 204', function () { pm.response.to.have.status(204); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "logout"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Refresh Regression User After Logout (401)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/refresh",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "refresh"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"refreshToken\":\"{{refreshToken}}\"}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Regression User (204)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 204', function () { pm.response.to.have.status(204); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/users/{{regressionUserId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "users",
+                    "{{regressionUserId}}"
+                  ]
                 }
               },
               "response": []
