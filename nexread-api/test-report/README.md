@@ -9,7 +9,7 @@ test-report/
 ├── postman/
 │   ├── nexread-api.postman_collection.json   # Smoke + Regression test collection
 │   └── local.postman_environment.json        # Environment (baseUrl, etc.) for local runs
-└── newman-reports/                           # Generated JSON reports (git-ignored, created on npm run test:newman*)
+└── newman-reports/                           # Generated JSON + HTML reports (git-ignored, created on npm run test:newman*)
 ```
 
 ## What is covered
@@ -38,17 +38,21 @@ User management (`/users`) and role-based access control (admin-only vs. self-on
 From `nexread-api/`, with the dev server running (`npm run start:dev`) in another terminal:
 
 ```bash
-# Quick smoke test
+# Quick smoke test (HTML report: newman-reports/newman-smoke-report.html)
 npm run test:newman:smoke
 
-# Full regression suite
+# Full regression suite (JSON + HTML: newman-regression-report.json / .html)
 npm run test:newman:regression
 
-# Everything, with a JSON report saved to test-report/newman-reports/
+# Everything, with JSON + HTML reports saved to test-report/newman-reports/
 npm run test:newman
 ```
 
+Each script also renders a self-contained HTML report (via [`newman-reporter-htmlextra`](https://github.com/DannyDainton/newman-reporter-htmlextra)) into `newman-reports/`, open it directly in a browser to view a readable pass/fail breakdown per request, including full request/response details. The JSON reports are only produced by `test:newman` and `test:newman:regression`.
+
 The collection can also be imported directly into the Postman desktop app together with `postman/local.postman_environment.json`.
+
+> **Note on dependencies:** `newman-reporter-htmlextra` pulls in older versions of Handlebars/lodash/underscore that `npm audit` flags. In practice these are the same transitive dependencies already required by `newman` itself (via `postman-runtime`) to execute collection scripts, so removing the reporter does not meaningfully reduce the audit findings — it is a pre-existing baseline of this dev-only tooling, not something introduced by adding HTML reports. It never ships to production (`npm run build` / `start:prod` do not include it).
 
 ## Other test documentation
 
