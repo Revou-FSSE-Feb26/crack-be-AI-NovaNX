@@ -8,6 +8,9 @@ import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import type { JwtPayload } from './interfaces/jwt-payload.interface';
 
+const INVALID_USER_PASSWORD_HASH =
+  '$2b$10$p9NJ2tbgVzuWmv49wbco6.SmcL01psbWlN4RbbyUVSeU28gAr0QCy';
+
 @Injectable()
 export class AuthService {
   private readonly refreshSecret: string;
@@ -39,14 +42,12 @@ export class AuthService {
 
   async login(email: string, password: string) {
     const user = await this.usersService.findByEmail(email);
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      user?.password ?? INVALID_USER_PASSWORD_HASH,
+    );
 
-    if (!user) {
-      throw new UnauthorizedException('Invalid email or password');
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
+    if (!user || !isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password');
     }
 

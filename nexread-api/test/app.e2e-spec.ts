@@ -10,6 +10,11 @@ type AuthTokenPair = {
   refreshToken: string;
 };
 
+type HealthResponse = {
+  status: string;
+  timestamp: string;
+};
+
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
@@ -36,6 +41,39 @@ describe('AppController (e2e)', () => {
       .get('/')
       .expect(200)
       .expect('Hello World!');
+  });
+
+  it('reports liveness and database readiness', async () => {
+    const liveness = await request(app.getHttpServer())
+      .get('/health/live')
+      .expect('Cache-Control', 'no-store')
+      .expect(200);
+    const readiness = await request(app.getHttpServer())
+      .get('/health/ready')
+      .expect('Cache-Control', 'no-store')
+      .expect(200);
+
+    const livenessBody = liveness.body as HealthResponse;
+    const readinessBody = readiness.body as HealthResponse;
+
+    expect(livenessBody).toMatchObject({ status: 'ok' });
+    expect(readinessBody).toMatchObject({ status: 'ok' });
+    expect(livenessBody.timestamp).toEqual(expect.any(String));
+    expect(readinessBody.timestamp).toEqual(expect.any(String));
+  });
+
+  it('rate limits repeated login attempts', async () => {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email: 'missing@example.com', password: 'strong-password' })
+        .expect(401);
+    }
+
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: 'missing@example.com', password: 'strong-password' })
+      .expect(429);
   });
 
   it('rotates and revokes refresh tokens', async () => {

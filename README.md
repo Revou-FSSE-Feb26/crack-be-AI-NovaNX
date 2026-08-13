@@ -26,6 +26,9 @@ The Swagger UI documents every endpoint (request/response shapes, DTOs, status c
 - User registration and login issue short-lived JWT access tokens plus rotating refresh tokens. Only a bcrypt hash of the latest refresh token is stored; `POST /auth/refresh` rotates it and `POST /auth/logout` revokes it.
 - `JwtStrategy` / `JwtAuthGuard` (Passport) protect the write endpoints (`POST`/`PATCH`/`DELETE`) of `authors`, `categories`, and `books`; `RolesGuard` restricts them to admins, while `GET` endpoints remain public. Swagger UI exposes a Bearer auth button for authenticated requests.
 - Global `PrismaClientExceptionFilter` translates database constraint errors (unique, foreign key, record-not-found) into clean `409`/`400`/`404` responses instead of raw `500` errors
+- Production hardening with Helmet security headers, per-IP global/auth rate limits, trusted-proxy handling, request IDs, structured JSON logs, centralized startup environment validation, and graceful shutdown hooks
+- Separate `GET /health/live` and database-aware `GET /health/ready` probes; Railway only promotes a deployment after the readiness probe succeeds
+- GitHub Actions production gate covering dependency audit, migrations, lint, build, unit tests, e2e tests, and the complete Newman regression suite against an isolated PostgreSQL service
 - Role-based access control (RBAC): `User.role` (`USER` / `ADMIN`), included in the JWT payload, enforced via a `RolesGuard` + `@Roles()` decorator
 - `GET/PATCH/DELETE /users/:id` endpoints allow a user to manage their own account, or an admin to manage any account; `GET /users` (list) and `PATCH /users/:id/role` (promote/demote) are admin-only. The `role` field can never be set through the self-service update DTO (or through registration) — only through the dedicated admin-only role endpoint — to prevent privilege-escalation via mass assignment
 - Default `GET /` endpoint returning `Hello World!`
@@ -69,11 +72,18 @@ JWT_SECRET="replace-with-a-long-random-secret"
 JWT_EXPIRES_IN="15m"
 JWT_REFRESH_SECRET="replace-with-a-different-long-random-secret"
 JWT_REFRESH_EXPIRES_IN="7d"
+RATE_LIMIT_TTL_MS="60000"
+RATE_LIMIT_MAX="120"
+AUTH_REGISTER_RATE_LIMIT_MAX="10"
+AUTH_LOGIN_RATE_LIMIT_MAX="10"
+AUTH_REFRESH_RATE_LIMIT_MAX="20"
 ADMIN_SEED_EMAIL="admin@example.com"
 ADMIN_SEED_PASSWORD="replace-with-a-strong-password"
 ```
 
 Replace the placeholders with your PostgreSQL connection details. `JWT_SECRET` signs access tokens; `JWT_REFRESH_SECRET` is a separate required secret for refresh tokens and must not reuse the access-token secret. `JWT_EXPIRES_IN` is optional (defaults to `15m`) and `JWT_REFRESH_EXPIRES_IN` is optional (defaults to `7d`); both accept [`ms`](https://github.com/vercel/ms) durations such as `15m`, `1h`, or `7d`. `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` are optional — if set, `npm run prisma:seed` creates (or promotes/updates) that account as an `ADMIN`; if unset, the admin seed step is skipped with a warning instead of falling back to an insecure default credential. The `.env` file is ignored by Git and must not be committed.
+
+Startup fails fast when required URLs/secrets or optional duration/rate-limit values are invalid. Production JWT secrets must be different and contain at least 32 characters. Rate limits default to 120 requests/minute globally, 10 registrations/minute, 10 login attempts/minute, and 20 refresh attempts/minute per client IP. The built-in throttler store is suitable for the current single API replica; configure shared storage such as Redis before scaling to multiple replicas.
 
 ## Database Setup
 
@@ -137,6 +147,8 @@ By default, the API runs at `http://localhost:3000`. The interactive Swagger API
 | Method | Path              | Description                                       | Auth required       |
 | ------ | ----------------- | ------------------------------------------------- | ------------------- |
 | GET    | `/`               | Health check (`Hello World!`)                     | No                  |
+| GET    | `/health/live`     | Process liveness probe                            | No                  |
+| GET    | `/health/ready`    | API and database readiness probe                  | No                  |
 | POST   | `/auth/register`  | Register a new user                               | No                  |
 | POST   | `/auth/login`     | Authenticate and return an access/refresh pair    | No                  |
 | POST   | `/auth/refresh`   | Rotate a refresh token and return a new pair      | No (refresh token)  |
@@ -218,20 +230,31 @@ The API listens on `process.env.PORT` and is otherwise stateless, so it deploys 
 
 1. Create a new Railway project, add a **PostgreSQL** plugin, and create a service from this repository with **Root Directory** set to `nexread-api`.
 2. Set environment variables on the service:
+   - `NODE_ENV=production` — enables structured JSON logging and production secret-strength validation.
    - `DATABASE_URL` — copy from the Railway Postgres plugin (Railway can also auto-inject this via a variable reference).
    - `FRONTEND_URL` — the deployed frontend origin, so CORS only allows that origin. Leave unset to allow any origin.
    - `JWT_SECRET` — a long random secret used to sign/verify JWT access tokens. Required.
    - `JWT_EXPIRES_IN` — optional access token lifetime (defaults to `15m`).
    - `JWT_REFRESH_SECRET` — a different long random secret used to sign/verify refresh tokens. Required.
    - `JWT_REFRESH_EXPIRES_IN` — optional refresh token lifetime (defaults to `7d`).
+   - `RATE_LIMIT_TTL_MS` / `RATE_LIMIT_MAX` — optional global throttling window and request limit (defaults: `60000` / `120`).
+   - `AUTH_REGISTER_RATE_LIMIT_MAX`, `AUTH_LOGIN_RATE_LIMIT_MAX`, `AUTH_REFRESH_RATE_LIMIT_MAX` — optional per-auth-endpoint limits (defaults: `10`, `10`, `20` per minute).
    - `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` — optional; set these to create/promote an admin account the next time the seed script runs. Use a strong, unique password distinct from your local `.env`.
-3. Build command: `npm install && npm run build` (Railway's Nixpacks builder does this by default). `postinstall` already runs `prisma generate`.
+3. Railway installs dependencies, runs `npm run build`, and then prunes dev-only tooling from the runtime image. `postinstall` already runs `prisma generate`; the production Prisma CLI remains available for migrations.
 4. Start command: `npm run deploy:start` — this runs `prisma migrate deploy` (applies pending migrations without prompting) before starting `dist/src/main.js`.
 5. After the first successful deploy, run the seed once from your machine or the Railway CLI against the production `DATABASE_URL`:
    ```bash
    DATABASE_URL="<railway-postgres-url>" npm run prisma:seed
    ```
    Do not add seeding to the start command — `create()` calls are not idempotent and will fail on unique constraints on subsequent deploys.
+
+### Production operations checklist
+
+- Configure external uptime monitoring against `/health/ready`; `/health/live` is intended only to distinguish a running process from a dependency failure.
+- Enable Railway PostgreSQL daily and weekly backups (or PITR where required), document the responsible operator, and perform a restore drill before accepting irreplaceable user data. Backup schedules and alert recipients are account-level operational choices and are intentionally not created by application code.
+- Enable Railway CPU, memory, disk, and deployment notifications or connect an error/observability service. Application logs are emitted as structured JSON in production and include a non-sensitive request ID, method, path, status, and duration.
+- Protect `main` with the `NexRead API CI` required status check. It rejects production dependency vulnerabilities at high/critical severity and runs the full test suite before merge.
+- Rotate JWT/admin credentials periodically and immediately after suspected exposure. Never copy Railway secrets into source control or CI logs.
 
 ## Project Structure
 

@@ -1,0 +1,107 @@
+name: NexRead API CI
+
+on:
+  pull_request:
+    paths:
+      - "nexread-api/**"
+      - ".github/workflows/api-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "nexread-api/**"
+      - ".github/workflows/api-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: nexread-api
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/nexread_test
+      JWT_SECRET: ci-access-secret-that-is-at-least-32-characters
+      JWT_REFRESH_SECRET: ci-refresh-secret-that-is-different-and-long
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      ADMIN_SEED_EMAIL: ci-admin@example.com
+      ADMIN_SEED_PASSWORD: ci-only-strong-admin-password
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: nexread_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d nexread_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: nexread-api/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Apply database migrations
+        run: npm run prisma:migrate:deploy
+
+      - name: Seed isolated CI database
+        run: npm run prisma:seed
+
+      - name: Lint
+        run: npm run lint:check
+
+      - name: Build
+        run: npm run build
+
+      - name: Unit tests
+        run: npm test -- --runInBand
+
+      - name: End-to-end tests
+        run: npm run test:e2e
+
+      - name: Start API for Newman
+        run: |
+          npm run start:prod > /tmp/nexread-api.log 2>&1 &
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:3000/health/ready > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/nexread-api.log
+          exit 1
+
+      - name: Newman API regression
+        run: npm run test:newman
+
+      - name: Upload Newman reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-reports
+          path: nexread-api/test-report/newman-reports/
+          if-no-files-found: ignore
+          retention-days: 14

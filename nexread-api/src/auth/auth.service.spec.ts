@@ -104,4 +104,12 @@ describe('AuthService refresh tokens', () => {
       'Invalid or expired refresh token',
     );
   });
+
+  it('uses the same generic login failure for an unknown email', async () => {
+    usersService.findByEmail.mockResolvedValueOnce(null);
+
+    await expect(
+      authService.login('missing@example.com', 'strong-password'),
+    ).rejects.toThrow('Invalid email or password');
+  });
 });

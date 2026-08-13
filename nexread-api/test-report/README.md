@@ -18,7 +18,7 @@ Besides the Jest unit tests (`src/**/*.spec.ts`) and end-to-end tests (`test/`),
 
 | Folder in collection                  | Covers                                                                         |
 | ------------------------------------- | ------------------------------------------------------------------------------ |
-| `00 - Smoke Test`                     | Health, public lists, auth token rotation/logout, and automatic user cleanup   |
+| `00 - Smoke Test`                     | Root/liveness/readiness, public lists, auth rotation/logout, and user cleanup  |
 | `02 - Request Validation`             | Invalid email, short password, missing required field, unknown-field stripping |
 | `03 - CRUD Core Resources`            | Full create/read/update/delete lifecycle for Authors, Categories, Books        |
 | `05 - JWT Authentication`             | Login failures, user/admin token pairs, rotation, and refresh replay rejection |

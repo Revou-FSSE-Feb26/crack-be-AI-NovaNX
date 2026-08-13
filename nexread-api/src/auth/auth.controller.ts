@@ -16,9 +16,12 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { seconds, Throttle } from '@nestjs/throttler';
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
+import { positiveIntegerFromEnvironment } from '../config/environment';
 import { AuthService } from './auth.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { LoginDto } from './dto/login.dto';
@@ -28,11 +31,21 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import type { AuthenticatedRequest } from './interfaces/authenticated-request.interface';
 
 @ApiTags('auth')
+@ApiTooManyRequestsResponse({
+  description: 'Too many requests from this client',
+  type: ErrorResponseDto,
+})
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @Throttle({
+    default: {
+      limit: positiveIntegerFromEnvironment('AUTH_REGISTER_RATE_LIMIT_MAX', 10),
+      ttl: seconds(60),
+    },
+  })
   @ApiOperation({ summary: 'Register a user and issue a token pair' })
   @ApiCreatedResponse({
     description: 'User registered successfully',
@@ -52,6 +65,12 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
+  @Throttle({
+    default: {
+      limit: positiveIntegerFromEnvironment('AUTH_LOGIN_RATE_LIMIT_MAX', 10),
+      ttl: seconds(60),
+    },
+  })
   @ApiOperation({ summary: 'Authenticate a user and issue a token pair' })
   @ApiOkResponse({
     description: 'Authentication succeeded',
@@ -71,6 +90,12 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
+  @Throttle({
+    default: {
+      limit: positiveIntegerFromEnvironment('AUTH_REFRESH_RATE_LIMIT_MAX', 20),
+      ttl: seconds(60),
+    },
+  })
   @ApiOperation({
     summary: 'Rotate a refresh token and issue a new token pair',
   })
