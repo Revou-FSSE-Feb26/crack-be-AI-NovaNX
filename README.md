@@ -16,6 +16,7 @@ NexRead is a backend project developed for the RevoU FSSE assignment. The API is
 - Request body validation with `class-validator` / `class-transformer` (global `ValidationPipe`)
 - User registration and login endpoints (`POST /auth/register`, `POST /auth/login`) that issue JWT access tokens, with passwords hashed via `bcrypt`
 - `JwtStrategy` / `JwtAuthGuard` (Passport) protect the write endpoints (`POST`/`PATCH`/`DELETE`) of `authors`, `categories`, and `books`; `GET` endpoints remain public. Swagger UI exposes a Bearer auth button for authenticated requests.
+- Global `PrismaClientExceptionFilter` translates database constraint errors (unique, foreign key, record-not-found) into clean `409`/`400`/`404` responses instead of raw `500` errors
 - Role-based access control (RBAC): `User.role` (`USER` / `ADMIN`), included in the JWT payload, enforced via a `RolesGuard` + `@Roles()` decorator
 - `GET/PATCH/DELETE /users/:id` endpoints allow a user to manage their own account, or an admin to manage any account; `GET /users` (list) and `PATCH /users/:id/role` (promote/demote) are admin-only. The `role` field can never be set through the self-service update DTO (or through registration) — only through the dedicated admin-only role endpoint — to prevent privilege-escalation via mass assignment
 - Default `GET /` endpoint returning `Hello World!`
@@ -206,6 +207,7 @@ The API listens on `process.env.PORT` and is otherwise stateless, so it deploys 
 	│   ├── authors/          # Authors CRUD (controller, service, module, repositories, DTOs)
 	│   ├── categories/       # Categories CRUD (controller, service, module, repositories, DTOs)
 	│   ├── books/            # Books CRUD (controller, service, module, repositories, DTOs)
+	│   ├── common/           # Cross-cutting concerns (e.g. Prisma exception filter)
 	│   ├── prisma/           # Shared PrismaService/PrismaModule
 	│   └── main.ts, app.module.ts, ...
 	├── test/                 # End-to-end tests
