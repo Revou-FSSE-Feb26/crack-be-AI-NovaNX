@@ -14,10 +14,12 @@ NexRead is a backend project developed for the RevoU FSSE assignment. The API is
 - Full CRUD REST endpoints for `authors`, `categories`, and `books`
 - Repository pattern: each module's service depends on an abstract `*Repository` class (a DI token), implemented by a Prisma-backed repository (`Prisma*Repository`) that wraps the shared `PrismaService`
 - Request body validation with `class-validator` / `class-transformer` (global `ValidationPipe`)
+- User registration and login endpoints (`POST /auth/register`, `POST /auth/login`) that issue JWT access tokens, with passwords hashed via `bcrypt`
+- `JwtStrategy` / `JwtAuthGuard` (Passport) protect the write endpoints (`POST`/`PATCH`/`DELETE`) of `authors`, `categories`, and `books`; `GET` endpoints remain public. Swagger UI exposes a Bearer auth button for authenticated requests.
 - Default `GET /` endpoint returning `Hello World!`
 - Unit and end-to-end tests for the default endpoint
 
-Authentication and user CRUD endpoints have not been implemented yet.
+User CRUD endpoints (list/update/delete users) have not been implemented yet.
 
 ## Tech Stack
 
@@ -53,9 +55,11 @@ Create a `.env` file inside `nexread-api`:
 
 ```env
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public"
+JWT_SECRET="replace-with-a-long-random-secret"
+JWT_EXPIRES_IN="1d"
 ```
 
-Replace the placeholders with your PostgreSQL connection details. The `.env` file is ignored by Git and must not be committed.
+Replace the placeholders with your PostgreSQL connection details. `JWT_SECRET` is required for signing/verifying access tokens; `JWT_EXPIRES_IN` is optional (defaults to `1d`) and accepts [`ms`](https://github.com/vercel/ms) style durations (e.g. `15m`, `1h`, `7d`). The `.env` file is ignored by Git and must not be committed.
 
 ## Database Setup
 
@@ -94,7 +98,7 @@ npm run prisma:seed
 
 - `Author` (1) → `Book` (N) via `Book.authorId`
 - `Category` (1) → `Book` (N) via `Book.categoryId`
-- `User` has no relations yet; authentication and user CRUD are not implemented.
+- `User` has no relations yet; user CRUD endpoints (beyond registration) are not implemented.
 
 ## Running the Application
 
@@ -116,26 +120,28 @@ By default, the API runs at `http://localhost:3000`.
 
 ### Available Endpoints
 
-| Method | Path              | Description                                   |
-| ------ | ----------------- | --------------------------------------------- |
-| GET    | `/`               | Health check (`Hello World!`)                 |
-| GET    | `/authors`        | List all authors                              |
-| GET    | `/authors/:id`    | Get a single author                           |
-| POST   | `/authors`        | Create an author                              |
-| PATCH  | `/authors/:id`    | Update an author                              |
-| DELETE | `/authors/:id`    | Delete an author                              |
-| GET    | `/categories`     | List all categories                           |
-| GET    | `/categories/:id` | Get a single category                         |
-| POST   | `/categories`     | Create a category                             |
-| PATCH  | `/categories/:id` | Update a category                             |
-| DELETE | `/categories/:id` | Delete a category                             |
-| GET    | `/books`          | List all books (includes author and category) |
-| GET    | `/books/:id`      | Get a single book                             |
-| POST   | `/books`          | Create a book                                 |
-| PATCH  | `/books/:id`      | Update a book                                 |
-| DELETE | `/books/:id`      | Delete a book                                 |
+| Method | Path              | Description                                   | Auth required |
+| ------ | ----------------- | --------------------------------------------- | ------------- |
+| GET    | `/`               | Health check (`Hello World!`)                 | No            |
+| POST   | `/auth/register`  | Register a new user                           | No            |
+| POST   | `/auth/login`     | Authenticate a user and return a JWT          | No            |
+| GET    | `/authors`        | List all authors                              | No            |
+| GET    | `/authors/:id`    | Get a single author                           | No            |
+| POST   | `/authors`        | Create an author                              | Yes (Bearer)  |
+| PATCH  | `/authors/:id`    | Update an author                              | Yes (Bearer)  |
+| DELETE | `/authors/:id`    | Delete an author                              | Yes (Bearer)  |
+| GET    | `/categories`     | List all categories                           | No            |
+| GET    | `/categories/:id` | Get a single category                         | No            |
+| POST   | `/categories`     | Create a category                             | Yes (Bearer)  |
+| PATCH  | `/categories/:id` | Update a category                             | Yes (Bearer)  |
+| DELETE | `/categories/:id` | Delete a category                             | Yes (Bearer)  |
+| GET    | `/books`          | List all books (includes author and category) | No            |
+| GET    | `/books/:id`      | Get a single book                             | No            |
+| POST   | `/books`          | Create a book                                 | Yes (Bearer)  |
+| PATCH  | `/books/:id`      | Update a book                                 | Yes (Bearer)  |
+| DELETE | `/books/:id`      | Delete a book                                 | Yes (Bearer)  |
 
-Request bodies are validated against each resource's DTO; invalid or unknown fields are rejected/stripped by the global `ValidationPipe`.
+Routes marked "Yes (Bearer)" require an `Authorization: Bearer <accessToken>` header with a token obtained from `POST /auth/login` (or `/auth/register`); unauthenticated requests receive `401 Unauthorized`. Request bodies are validated against each resource's DTO; invalid or unknown fields are rejected/stripped by the global `ValidationPipe`.
 
 ## Testing
 
@@ -170,6 +176,8 @@ The API listens on `process.env.PORT` and is otherwise stateless, so it deploys 
 2. Set environment variables on the service:
    - `DATABASE_URL` — copy from the Railway Postgres plugin (Railway can also auto-inject this via a variable reference).
    - `FRONTEND_URL` — the deployed frontend origin, so CORS only allows that origin. Leave unset to allow any origin.
+   - `JWT_SECRET` — a long random secret used to sign/verify JWT access tokens. Required.
+   - `JWT_EXPIRES_IN` — optional access token lifetime (defaults to `1d`).
 3. Build command: `npm install && npm run build` (Railway's Nixpacks builder does this by default). `postinstall` already runs `prisma generate`.
 4. Start command: `npm run deploy:start` — this runs `prisma migrate deploy` (applies pending migrations without prompting) before starting `dist/src/main.js`.
 5. After the first successful deploy, run the seed once from your machine or the Railway CLI against the production `DATABASE_URL`:
@@ -190,6 +198,8 @@ The API listens on `process.env.PORT` and is otherwise stateless, so it deploys 
 	│   ├── seed.ts           # Seed entry point
 	│   └── schema.prisma     # Prisma models and datasource
 	├── src/
+	│   ├── auth/             # Auth (register/login, JWT strategy/guard, DTOs)
+	│   ├── users/            # Users (service, repositories, DTOs) used by auth
 	│   ├── authors/          # Authors CRUD (controller, service, module, repositories, DTOs)
 	│   ├── categories/       # Categories CRUD (controller, service, module, repositories, DTOs)
 	│   ├── books/            # Books CRUD (controller, service, module, repositories, DTOs)

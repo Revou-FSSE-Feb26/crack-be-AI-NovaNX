@@ -20,6 +20,7 @@ async function bootstrap() {
     .setTitle('NexRead API')
     .setDescription('API documentation for the NexRead library catalog service')
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api', app, swaggerDocument);
