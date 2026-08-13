@@ -2,7 +2,7 @@
   "moduleFileExtensions": ["js", "json", "ts"],
   "rootDir": ".",
   "testEnvironment": "node",
-  "setupFiles": ["dotenv/config"],
+  "setupFiles": ["<rootDir>/setup-env.ts"],
   "testRegex": ".e2e-spec.ts$",
   "moduleNameMapper": {
     "^(\\.{1,2}/.*)\\.js$": "$1"

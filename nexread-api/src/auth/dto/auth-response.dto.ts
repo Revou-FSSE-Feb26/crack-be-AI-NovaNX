@@ -22,6 +22,12 @@ export class AuthResponseDto {
   })
   accessToken: string;
 
+  @ApiProperty({
+    description: 'Single-use rotating token for POST /auth/refresh',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  refreshToken: string;
+
   @ApiProperty({ type: AuthUserResponseDto })
   user: AuthUserResponseDto;
 }

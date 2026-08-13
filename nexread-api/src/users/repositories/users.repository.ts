@@ -19,7 +19,16 @@ export abstract class UsersRepository {
   abstract findAll(): Promise<UserModel[]>;
   abstract update(
     id: number,
-    data: Partial<{ fullName: string; email: string; password: string }>,
+    data: Partial<{
+      fullName: string;
+      email: string;
+      password: string;
+      refreshTokenHash: string | null;
+    }>,
+  ): Promise<UserModel>;
+  abstract updateRefreshTokenHash(
+    id: number,
+    refreshTokenHash: string | null,
   ): Promise<UserModel>;
   abstract updateRole(id: number, role: Role): Promise<UserModel>;
   abstract delete(id: number): Promise<UserModel>;

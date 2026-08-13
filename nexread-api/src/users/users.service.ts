@@ -76,6 +76,7 @@ export class UsersService {
       fullName: updateUserDto.fullName,
       email: updateUserDto.email,
       password: hashedPassword,
+      refreshTokenHash: hashedPassword ? null : undefined,
     });
 
     return toSafeUser(updated);
@@ -85,6 +86,10 @@ export class UsersService {
     await this.findExistingOrThrow(id);
     const updated = await this.usersRepository.updateRole(id, role);
     return toSafeUser(updated);
+  }
+
+  updateRefreshTokenHash(id: number, refreshTokenHash: string | null) {
+    return this.usersRepository.updateRefreshTokenHash(id, refreshTokenHash);
   }
 
   async remove(id: number) {

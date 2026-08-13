@@ -57,5 +57,5 @@ The collection can also be imported directly into the Postman desktop app togeth
 ## Other test documentation
 
 - Unit tests: `npm test` (source: `src/**/*.spec.ts`)
-- End-to-end tests: `npm run test:e2e` (source: `test/`)
+- End-to-end tests: `npm run test:e2e` (source: `test/`; covers the health endpoint plus refresh-token rotation, replay rejection, and logout revocation)
 - Coverage report: `npm run test:cov` (output: `coverage/`, git-ignored)

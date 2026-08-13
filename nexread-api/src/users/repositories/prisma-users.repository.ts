@@ -33,13 +33,31 @@ export class PrismaUsersRepository implements UsersRepository {
 
   update(
     id: number,
-    data: Partial<{ fullName: string; email: string; password: string }>,
+    data: Partial<{
+      fullName: string;
+      email: string;
+      password: string;
+      refreshTokenHash: string | null;
+    }>,
   ): Promise<UserModel> {
     return this.prisma.user.update({ where: { id }, data });
   }
 
+  updateRefreshTokenHash(
+    id: number,
+    refreshTokenHash: string | null,
+  ): Promise<UserModel> {
+    return this.prisma.user.update({
+      where: { id },
+      data: { refreshTokenHash },
+    });
+  }
+
   updateRole(id: number, role: Role): Promise<UserModel> {
-    return this.prisma.user.update({ where: { id }, data: { role } });
+    return this.prisma.user.update({
+      where: { id },
+      data: { role, refreshTokenHash: null },
+    });
   }
 
   delete(id: number): Promise<UserModel> {

@@ -1,6 +1,6 @@
 import type { UserModel } from '../../../generated/prisma/models';
 
-export type SafeUser = Omit<UserModel, 'password'>;
+export type SafeUser = Omit<UserModel, 'password' | 'refreshTokenHash'>;
 
 /**
  * Maps a `User` record to a response-safe shape, allowlisting the fields

@@ -23,7 +23,7 @@ The Swagger UI documents every endpoint (request/response shapes, DTOs, status c
 - Full CRUD REST endpoints for `authors`, `categories`, and `books`
 - Repository pattern: each module's service depends on an abstract `*Repository` class (a DI token), implemented by a Prisma-backed repository (`Prisma*Repository`) that wraps the shared `PrismaService`
 - Request body validation with `class-validator` / `class-transformer` (global `ValidationPipe`)
-- User registration and login endpoints (`POST /auth/register`, `POST /auth/login`) that issue JWT access tokens, with passwords hashed via `bcrypt`
+- User registration and login issue short-lived JWT access tokens plus rotating refresh tokens. Only a bcrypt hash of the latest refresh token is stored; `POST /auth/refresh` rotates it and `POST /auth/logout` revokes it.
 - `JwtStrategy` / `JwtAuthGuard` (Passport) protect the write endpoints (`POST`/`PATCH`/`DELETE`) of `authors`, `categories`, and `books`; `RolesGuard` restricts them to admins, while `GET` endpoints remain public. Swagger UI exposes a Bearer auth button for authenticated requests.
 - Global `PrismaClientExceptionFilter` translates database constraint errors (unique, foreign key, record-not-found) into clean `409`/`400`/`404` responses instead of raw `500` errors
 - Role-based access control (RBAC): `User.role` (`USER` / `ADMIN`), included in the JWT payload, enforced via a `RolesGuard` + `@Roles()` decorator
@@ -66,12 +66,14 @@ Create a `.env` file inside `nexread-api`:
 ```env
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public"
 JWT_SECRET="replace-with-a-long-random-secret"
-JWT_EXPIRES_IN="1d"
+JWT_EXPIRES_IN="15m"
+JWT_REFRESH_SECRET="replace-with-a-different-long-random-secret"
+JWT_REFRESH_EXPIRES_IN="7d"
 ADMIN_SEED_EMAIL="admin@example.com"
 ADMIN_SEED_PASSWORD="replace-with-a-strong-password"
 ```
 
-Replace the placeholders with your PostgreSQL connection details. `JWT_SECRET` is required for signing/verifying access tokens; `JWT_EXPIRES_IN` is optional (defaults to `1d`) and accepts [`ms`](https://github.com/vercel/ms) style durations (e.g. `15m`, `1h`, `7d`). `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` are optional — if set, `npm run prisma:seed` creates (or promotes/updates) that account as an `ADMIN`; if unset, the admin seed step is skipped with a warning instead of falling back to a hardcoded default credential. The `.env` file is ignored by Git and must not be committed.
+Replace the placeholders with your PostgreSQL connection details. `JWT_SECRET` signs access tokens; `JWT_REFRESH_SECRET` is a separate required secret for refresh tokens and must not reuse the access-token secret. `JWT_EXPIRES_IN` is optional (defaults to `15m`) and `JWT_REFRESH_EXPIRES_IN` is optional (defaults to `7d`); both accept [`ms`](https://github.com/vercel/ms) durations such as `15m`, `1h`, or `7d`. `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` are optional — if set, `npm run prisma:seed` creates (or promotes/updates) that account as an `ADMIN`; if unset, the admin seed step is skipped with a warning instead of falling back to an insecure default credential. The `.env` file is ignored by Git and must not be committed.
 
 ## Database Setup
 
@@ -136,7 +138,9 @@ By default, the API runs at `http://localhost:3000`. The interactive Swagger API
 | ------ | ----------------- | ------------------------------------------------- | ------------------- |
 | GET    | `/`               | Health check (`Hello World!`)                     | No                  |
 | POST   | `/auth/register`  | Register a new user                               | No                  |
-| POST   | `/auth/login`     | Authenticate a user and return a JWT              | No                  |
+| POST   | `/auth/login`     | Authenticate and return an access/refresh pair    | No                  |
+| POST   | `/auth/refresh`   | Rotate a refresh token and return a new pair      | No (refresh token)  |
+| POST   | `/auth/logout`    | Revoke the current user's refresh token           | Yes (Bearer)        |
 | GET    | `/authors`        | List all authors                                  | No                  |
 | GET    | `/authors/:id`    | Get a single author                               | No                  |
 | POST   | `/authors`        | Create an author                                  | Yes (Admin only)    |
@@ -158,7 +162,7 @@ By default, the API runs at `http://localhost:3000`. The interactive Swagger API
 | PATCH  | `/users/:id/role` | Promote/demote a user's role                      | Yes (Admin only)    |
 | DELETE | `/users/:id`      | Delete a user                                     | Yes (Self or Admin) |
 
-Protected routes require an `Authorization: Bearer <accessToken>` header with a token obtained from `POST /auth/login` (or `/auth/register`); unauthenticated requests receive `401 Unauthorized`. "Self or Admin" means the token's user must either match the `:id` in the path or have the `ADMIN` role, otherwise the request receives `403 Forbidden`. "Admin only" routes always require the `ADMIN` role regardless of `:id`; authenticated users with the `USER` role receive `403 Forbidden`. The `role` field can never be changed through `PATCH /users/:id` — only through the dedicated `PATCH /users/:id/role` admin endpoint. Request bodies are validated against each resource's DTO; invalid or unknown fields are rejected/stripped by the global `ValidationPipe`.
+Protected routes require an `Authorization: Bearer <accessToken>` header with a token obtained from `POST /auth/login`, `/auth/register`, or `/auth/refresh`; unauthenticated requests receive `401 Unauthorized`. When the access token expires, send `{ "refreshToken": "..." }` to `POST /auth/refresh`, replace both locally stored tokens with the returned pair, and retry the original request once. Refresh tokens are rotated, so a previously used token is rejected. Only one refresh-token session is active per user; a new login invalidates the previous refresh token. `POST /auth/logout` revokes the stored refresh token, while the short-lived access token remains valid until its expiry; the frontend must discard both tokens immediately. Password and role changes also revoke the refresh token. "Self or Admin" means the token's user must either match the `:id` in the path or have the `ADMIN` role, otherwise the request receives `403 Forbidden`. "Admin only" routes always require the `ADMIN` role regardless of `:id`; authenticated users with the `USER` role receive `403 Forbidden`. The `role` field can never be changed through `PATCH /users/:id` — only through the dedicated `PATCH /users/:id/role` admin endpoint. Request bodies are validated against each resource's DTO; invalid or unknown fields are rejected/stripped by the global `ValidationPipe`.
 
 ## Testing
 
@@ -214,7 +218,9 @@ The API listens on `process.env.PORT` and is otherwise stateless, so it deploys 
    - `DATABASE_URL` — copy from the Railway Postgres plugin (Railway can also auto-inject this via a variable reference).
    - `FRONTEND_URL` — the deployed frontend origin, so CORS only allows that origin. Leave unset to allow any origin.
    - `JWT_SECRET` — a long random secret used to sign/verify JWT access tokens. Required.
-   - `JWT_EXPIRES_IN` — optional access token lifetime (defaults to `1d`).
+   - `JWT_EXPIRES_IN` — optional access token lifetime (defaults to `15m`).
+   - `JWT_REFRESH_SECRET` — a different long random secret used to sign/verify refresh tokens. Required.
+   - `JWT_REFRESH_EXPIRES_IN` — optional refresh token lifetime (defaults to `7d`).
    - `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` — optional; set these to create/promote an admin account the next time the seed script runs. Use a strong, unique password distinct from your local `.env`.
 3. Build command: `npm install && npm run build` (Railway's Nixpacks builder does this by default). `postinstall` already runs `prisma generate`.
 4. Start command: `npm run deploy:start` — this runs `prisma migrate deploy` (applies pending migrations without prompting) before starting `dist/src/main.js`.

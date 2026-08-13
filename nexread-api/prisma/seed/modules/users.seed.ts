@@ -34,7 +34,11 @@ export async function seedAdminUser(prisma: PrismaClient): Promise<void> {
 
   await prisma.user.upsert({
     where: { email },
-    update: { password: hashedPassword, role: Role.ADMIN },
+    update: {
+      password: hashedPassword,
+      role: Role.ADMIN,
+      refreshTokenHash: null,
+    },
     create: {
       fullName: 'NexRead Admin',
       email,
