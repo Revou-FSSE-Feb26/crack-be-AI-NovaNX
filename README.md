@@ -132,31 +132,31 @@ By default, the API runs at `http://localhost:3000`. The interactive Swagger API
 
 ### Available Endpoints
 
-| Method | Path              | Description                                   | Auth required |
-| ------ | ----------------- | --------------------------------------------- | ------------- |
-| GET    | `/`               | Health check (`Hello World!`)                 | No            |
-| POST   | `/auth/register`  | Register a new user                           | No            |
-| POST   | `/auth/login`     | Authenticate a user and return a JWT          | No            |
-| GET    | `/authors`        | List all authors                              | No            |
-| GET    | `/authors/:id`    | Get a single author                           | No            |
-| POST   | `/authors`        | Create an author                              | Yes (Bearer)  |
-| PATCH  | `/authors/:id`    | Update an author                              | Yes (Bearer)  |
-| DELETE | `/authors/:id`    | Delete an author                              | Yes (Bearer)  |
-| GET    | `/categories`     | List all categories                           | No            |
-| GET    | `/categories/:id` | Get a single category                         | No            |
-| POST   | `/categories`     | Create a category                             | Yes (Bearer)  |
-| PATCH  | `/categories/:id` | Update a category                             | Yes (Bearer)  |
-| DELETE | `/categories/:id` | Delete a category                             | Yes (Bearer)  |
-| GET    | `/books`          | List all books (includes author and category) | No            |
-| GET    | `/books/:id`      | Get a single book                             | No            |
-| POST   | `/books`          | Create a book                                 | Yes (Bearer)  |
-| PATCH  | `/books/:id`      | Update a book                                 | Yes (Bearer)  |
-| DELETE | `/books/:id`      | Delete a book                                 | Yes (Bearer)  |
-| GET    | `/users`          | List all users                                | Yes (Admin only) |
-| GET    | `/users/:id`      | Get a single user                             | Yes (Self or Admin) |
+| Method | Path              | Description                                       | Auth required       |
+| ------ | ----------------- | ------------------------------------------------- | ------------------- |
+| GET    | `/`               | Health check (`Hello World!`)                     | No                  |
+| POST   | `/auth/register`  | Register a new user                               | No                  |
+| POST   | `/auth/login`     | Authenticate a user and return a JWT              | No                  |
+| GET    | `/authors`        | List all authors                                  | No                  |
+| GET    | `/authors/:id`    | Get a single author                               | No                  |
+| POST   | `/authors`        | Create an author                                  | Yes (Bearer)        |
+| PATCH  | `/authors/:id`    | Update an author                                  | Yes (Bearer)        |
+| DELETE | `/authors/:id`    | Delete an author                                  | Yes (Bearer)        |
+| GET    | `/categories`     | List all categories                               | No                  |
+| GET    | `/categories/:id` | Get a single category                             | No                  |
+| POST   | `/categories`     | Create a category                                 | Yes (Bearer)        |
+| PATCH  | `/categories/:id` | Update a category                                 | Yes (Bearer)        |
+| DELETE | `/categories/:id` | Delete a category                                 | Yes (Bearer)        |
+| GET    | `/books`          | List all books (includes author and category)     | No                  |
+| GET    | `/books/:id`      | Get a single book                                 | No                  |
+| POST   | `/books`          | Create a book                                     | Yes (Bearer)        |
+| PATCH  | `/books/:id`      | Update a book                                     | Yes (Bearer)        |
+| DELETE | `/books/:id`      | Delete a book                                     | Yes (Bearer)        |
+| GET    | `/users`          | List all users                                    | Yes (Admin only)    |
+| GET    | `/users/:id`      | Get a single user                                 | Yes (Self or Admin) |
 | PATCH  | `/users/:id`      | Update a user's own profile (name/email/password) | Yes (Self or Admin) |
-| PATCH  | `/users/:id/role` | Promote/demote a user's role                  | Yes (Admin only) |
-| DELETE | `/users/:id`      | Delete a user                                 | Yes (Self or Admin) |
+| PATCH  | `/users/:id/role` | Promote/demote a user's role                      | Yes (Admin only)    |
+| DELETE | `/users/:id`      | Delete a user                                     | Yes (Self or Admin) |
 
 Routes marked "Yes (Bearer)" require an `Authorization: Bearer <accessToken>` header with a token obtained from `POST /auth/login` (or `/auth/register`); unauthenticated requests receive `401 Unauthorized`. "Self or Admin" means the token's user must either match the `:id` in the path or have the `ADMIN` role, otherwise the request receives `403 Forbidden`. "Admin only" routes always require the `ADMIN` role regardless of `:id`. The `role` field can never be changed through `PATCH /users/:id` — only through the dedicated `PATCH /users/:id/role` admin endpoint. Request bodies are validated against each resource's DTO; invalid or unknown fields are rejected/stripped by the global `ValidationPipe`.
 
