@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import type { Role } from '../../generated/prisma/enums';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 
@@ -13,7 +14,12 @@ export class AuthService {
 
   async register(registerDto: RegisterDto) {
     const user = await this.usersService.create(registerDto);
-    return this.buildAuthResponse(user.id, user.email, user.fullName);
+    return this.buildAuthResponse(
+      user.id,
+      user.email,
+      user.fullName,
+      user.role,
+    );
   }
 
   async login(email: string, password: string) {
@@ -29,11 +35,21 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    return this.buildAuthResponse(user.id, user.email, user.fullName);
+    return this.buildAuthResponse(
+      user.id,
+      user.email,
+      user.fullName,
+      user.role,
+    );
   }
 
-  private buildAuthResponse(userId: number, email: string, fullName: string) {
-    const accessToken = this.jwtService.sign({ sub: userId, email });
+  private buildAuthResponse(
+    userId: number,
+    email: string,
+    fullName: string,
+    role: Role,
+  ) {
+    const accessToken = this.jwtService.sign({ sub: userId, email, role });
 
     return {
       accessToken,
@@ -41,6 +57,7 @@ export class AuthService {
         id: userId,
         fullName,
         email,
+        role,
       },
     };
   }

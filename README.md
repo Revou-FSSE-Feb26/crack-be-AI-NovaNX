@@ -16,10 +16,10 @@ NexRead is a backend project developed for the RevoU FSSE assignment. The API is
 - Request body validation with `class-validator` / `class-transformer` (global `ValidationPipe`)
 - User registration and login endpoints (`POST /auth/register`, `POST /auth/login`) that issue JWT access tokens, with passwords hashed via `bcrypt`
 - `JwtStrategy` / `JwtAuthGuard` (Passport) protect the write endpoints (`POST`/`PATCH`/`DELETE`) of `authors`, `categories`, and `books`; `GET` endpoints remain public. Swagger UI exposes a Bearer auth button for authenticated requests.
+- Role-based access control (RBAC): `User.role` (`USER` / `ADMIN`), included in the JWT payload, enforced via a `RolesGuard` + `@Roles()` decorator
+- `GET/PATCH/DELETE /users/:id` endpoints allow a user to manage their own account, or an admin to manage any account; `GET /users` (list) and `PATCH /users/:id/role` (promote/demote) are admin-only. The `role` field can never be set through the self-service update DTO (or through registration) — only through the dedicated admin-only role endpoint — to prevent privilege-escalation via mass assignment
 - Default `GET /` endpoint returning `Hello World!`
 - Unit and end-to-end tests for the default endpoint
-
-User CRUD endpoints (list/update/delete users) have not been implemented yet.
 
 ## Tech Stack
 
@@ -57,9 +57,11 @@ Create a `.env` file inside `nexread-api`:
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public"
 JWT_SECRET="replace-with-a-long-random-secret"
 JWT_EXPIRES_IN="1d"
+ADMIN_SEED_EMAIL="admin@example.com"
+ADMIN_SEED_PASSWORD="replace-with-a-strong-password"
 ```
 
-Replace the placeholders with your PostgreSQL connection details. `JWT_SECRET` is required for signing/verifying access tokens; `JWT_EXPIRES_IN` is optional (defaults to `1d`) and accepts [`ms`](https://github.com/vercel/ms) style durations (e.g. `15m`, `1h`, `7d`). The `.env` file is ignored by Git and must not be committed.
+Replace the placeholders with your PostgreSQL connection details. `JWT_SECRET` is required for signing/verifying access tokens; `JWT_EXPIRES_IN` is optional (defaults to `1d`) and accepts [`ms`](https://github.com/vercel/ms) style durations (e.g. `15m`, `1h`, `7d`). `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` are optional — if set, `npm run prisma:seed` creates (or promotes/updates) that account as an `ADMIN`; if unset, the admin seed step is skipped with a warning instead of falling back to a hardcoded default credential. The `.env` file is ignored by Git and must not be committed.
 
 ## Database Setup
 
@@ -178,6 +180,7 @@ The API listens on `process.env.PORT` and is otherwise stateless, so it deploys 
    - `FRONTEND_URL` — the deployed frontend origin, so CORS only allows that origin. Leave unset to allow any origin.
    - `JWT_SECRET` — a long random secret used to sign/verify JWT access tokens. Required.
    - `JWT_EXPIRES_IN` — optional access token lifetime (defaults to `1d`).
+   - `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` — optional; set these to create/promote an admin account the next time the seed script runs. Use a strong, unique password distinct from your local `.env`.
 3. Build command: `npm install && npm run build` (Railway's Nixpacks builder does this by default). `postinstall` already runs `prisma generate`.
 4. Start command: `npm run deploy:start` — this runs `prisma migrate deploy` (applies pending migrations without prompting) before starting `dist/src/main.js`.
 5. After the first successful deploy, run the seed once from your machine or the Railway CLI against the production `DATABASE_URL`:
@@ -198,8 +201,8 @@ The API listens on `process.env.PORT` and is otherwise stateless, so it deploys 
 	│   ├── seed.ts           # Seed entry point
 	│   └── schema.prisma     # Prisma models and datasource
 	├── src/
-	│   ├── auth/             # Auth (register/login, JWT strategy/guard, DTOs)
-	│   ├── users/            # Users (service, repositories, DTOs) used by auth
+	│   ├── auth/             # Auth (register/login, JWT strategy/guard, RBAC guards/decorators, DTOs)
+	│   ├── users/            # Users CRUD (controller, service, repositories, DTOs) — admin/self-only access
 	│   ├── authors/          # Authors CRUD (controller, service, module, repositories, DTOs)
 	│   ├── categories/       # Categories CRUD (controller, service, module, repositories, DTOs)
 	│   ├── books/            # Books CRUD (controller, service, module, repositories, DTOs)

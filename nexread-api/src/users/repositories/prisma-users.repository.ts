@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { Role } from '../../../generated/prisma/enums';
 import type { UserModel } from '../../../generated/prisma/models';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersRepository } from './users.repository';
@@ -24,5 +25,24 @@ export class PrismaUsersRepository implements UsersRepository {
 
   findById(id: number): Promise<UserModel | null> {
     return this.prisma.user.findUnique({ where: { id } });
+  }
+
+  findAll(): Promise<UserModel[]> {
+    return this.prisma.user.findMany({ orderBy: { id: 'asc' } });
+  }
+
+  update(
+    id: number,
+    data: Partial<{ fullName: string; email: string; password: string }>,
+  ): Promise<UserModel> {
+    return this.prisma.user.update({ where: { id }, data });
+  }
+
+  updateRole(id: number, role: Role): Promise<UserModel> {
+    return this.prisma.user.update({ where: { id }, data: { role } });
+  }
+
+  delete(id: number): Promise<UserModel> {
+    return this.prisma.user.delete({ where: { id } });
   }
 }

@@ -4,6 +4,7 @@ import { PrismaClient } from '../generated/prisma/client';
 import { seedAuthors } from './seed/modules/authors.seed';
 import { seedBooks } from './seed/modules/books.seed';
 import { seedCategories } from './seed/modules/categories.seed';
+import { seedAdminUser } from './seed/modules/users.seed';
 
 const connectionString = process.env['DATABASE_URL'];
 
@@ -18,6 +19,7 @@ async function main(): Promise<void> {
   await seedAuthors(prisma);
   await seedCategories(prisma);
   await seedBooks(prisma);
+  await seedAdminUser(prisma);
 }
 
 main()

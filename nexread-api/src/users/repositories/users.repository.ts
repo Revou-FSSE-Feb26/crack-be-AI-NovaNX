@@ -1,3 +1,4 @@
+import type { Role } from '../../../generated/prisma/enums';
 import type { UserModel } from '../../../generated/prisma/models';
 
 /**
@@ -15,4 +16,11 @@ export abstract class UsersRepository {
   }): Promise<UserModel>;
   abstract findByEmail(email: string): Promise<UserModel | null>;
   abstract findById(id: number): Promise<UserModel | null>;
+  abstract findAll(): Promise<UserModel[]>;
+  abstract update(
+    id: number,
+    data: Partial<{ fullName: string; email: string; password: string }>,
+  ): Promise<UserModel>;
+  abstract updateRole(id: number, role: Role): Promise<UserModel>;
+  abstract delete(id: number): Promise<UserModel>;
 }
