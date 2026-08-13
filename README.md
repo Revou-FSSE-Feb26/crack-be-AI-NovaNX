@@ -4,6 +4,15 @@
 
 NexRead is a backend project developed for the RevoU FSSE assignment. The API is built with NestJS, TypeScript, PostgreSQL, and Prisma ORM.
 
+## Live Deployment
+
+The API is deployed on [Railway](https://railway.app) and publicly reachable at:
+
+- **Base URL**: https://crack-be-ai-novanx-production.up.railway.app
+- **API reference (Swagger UI)**: https://crack-be-ai-novanx-production.up.railway.app/api
+
+The Swagger UI documents every endpoint (request/response shapes, DTOs, status codes) and includes an **Authorize** button to try protected routes with a JWT obtained from `POST /auth/login`.
+
 ## Current Progress
 
 - Base NestJS application
@@ -101,7 +110,7 @@ npm run prisma:seed
 
 - `Author` (1) → `Book` (N) via `Book.authorId`
 - `Category` (1) → `Book` (N) via `Book.categoryId`
-- `User` has no relations yet; user CRUD endpoints (beyond registration) are not implemented.
+- `User` has no relations to other models; it has its own CRUD endpoints under `/users` (see below), separate from `/auth/register` and `/auth/login`.
 
 ## Running the Application
 
@@ -119,7 +128,7 @@ npm run build
 npm run start:prod
 ```
 
-By default, the API runs at `http://localhost:3000`.
+By default, the API runs at `http://localhost:3000`. The interactive Swagger API reference is available at `http://localhost:3000/api` (see [Live Deployment](#live-deployment) for the hosted equivalent).
 
 ### Available Endpoints
 
@@ -143,8 +152,13 @@ By default, the API runs at `http://localhost:3000`.
 | POST   | `/books`          | Create a book                                 | Yes (Bearer)  |
 | PATCH  | `/books/:id`      | Update a book                                 | Yes (Bearer)  |
 | DELETE | `/books/:id`      | Delete a book                                 | Yes (Bearer)  |
+| GET    | `/users`          | List all users                                | Yes (Admin only) |
+| GET    | `/users/:id`      | Get a single user                             | Yes (Self or Admin) |
+| PATCH  | `/users/:id`      | Update a user's own profile (name/email/password) | Yes (Self or Admin) |
+| PATCH  | `/users/:id/role` | Promote/demote a user's role                  | Yes (Admin only) |
+| DELETE | `/users/:id`      | Delete a user                                 | Yes (Self or Admin) |
 
-Routes marked "Yes (Bearer)" require an `Authorization: Bearer <accessToken>` header with a token obtained from `POST /auth/login` (or `/auth/register`); unauthenticated requests receive `401 Unauthorized`. Request bodies are validated against each resource's DTO; invalid or unknown fields are rejected/stripped by the global `ValidationPipe`.
+Routes marked "Yes (Bearer)" require an `Authorization: Bearer <accessToken>` header with a token obtained from `POST /auth/login` (or `/auth/register`); unauthenticated requests receive `401 Unauthorized`. "Self or Admin" means the token's user must either match the `:id` in the path or have the `ADMIN` role, otherwise the request receives `403 Forbidden`. "Admin only" routes always require the `ADMIN` role regardless of `:id`. The `role` field can never be changed through `PATCH /users/:id` — only through the dedicated `PATCH /users/:id/role` admin endpoint. Request bodies are validated against each resource's DTO; invalid or unknown fields are rejected/stripped by the global `ValidationPipe`.
 
 ## Testing
 
