@@ -21,7 +21,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:e2e": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config ./test/jest-e2e.json",
     "test:newman": "newman run test-report/postman/nexread-api.postman_collection.json -e test-report/postman/local.postman_environment.json --reporters cli,json,htmlextra --reporter-json-export test-report/newman-reports/newman-report.json --reporter-htmlextra-export test-report/newman-reports/newman-report.html",
     "test:newman:smoke": "newman run test-report/postman/nexread-api.postman_collection.json -e test-report/postman/local.postman_environment.json --folder \"00 - Smoke Test\" --reporters cli,htmlextra --reporter-htmlextra-export test-report/newman-reports/newman-smoke-report.html",
     "test:newman:regression": "newman run test-report/postman/nexread-api.postman_collection.json -e test-report/postman/local.postman_environment.json --folder \"Regression Test\" --reporters cli,json,htmlextra --reporter-json-export test-report/newman-reports/newman-regression-report.json --reporter-htmlextra-export test-report/newman-reports/newman-regression-report.html",
@@ -90,6 +90,9 @@
     ],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
