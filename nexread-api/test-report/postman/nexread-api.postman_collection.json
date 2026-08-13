@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "b3e6f4b0-4e6b-4c1a-9a2e-nexread0001",
     "name": "NexRead API - Mentor Requirements Test Suite",
-    "description": "Smoke Test + Regression Test collection for the NexRead API, structured to cover the 9 mentor requirements:\n1/4. Test all API endpoints using Postman/Newman (this collection itself)\n2. Request validation\n3. CRUD endpoints for core resources\n5. JWT-based authentication (login/register)\n6. Route protection middleware (JwtAuthGuard)\n7. Error handling\n8. Data integrity & constraints/relationships\n9. Integration testing with seeded data\n\nRun with the 'Local' environment against a running dev server (npm run start:dev).",
+    "description": "Smoke Test + Regression Test collection for the NexRead API, structured to cover the 9 mentor requirements:\n1. Test all API endpoints\n2. Request validation\n3. CRUD endpoints for core resources\n4. Use Postman/Newman for automated testing (this collection itself)\n5. JWT-based authentication (login/register)\n6. Route protection middleware (JwtAuthGuard)\n7. Error handling\n8. Data integrity & constraints/relationships\n9. Integration testing with seeded data\n\nRun with the 'Local' environment against a running dev server (npm run start:dev).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
