@@ -17,5 +17,9 @@ The application uses PrismaService against PostgreSQL. These are the principal q
 | 11  | Cross-resource engagement ranking     | Rank authors from book ratings plus review and loan activity                                    | `PrismaAuthorsRepository.findPopular`                                 |
 | 12  | Search and relation-scoped pagination | Search authors and expose paginated books constrained to one author                             | `PrismaAuthorsRepository.findAll` and `AuthorsService.findBooks`      |
 | 13  | Referential delete/archive policy     | Reject authors with visible books, hard-delete unused authors, and archive historical authors   | `AuthorsService.remove` and `PrismaAuthorsRepository.deleteOrArchive` |
+| 14  | Atomic multi-resource checkout        | Validate every cart item, decrement inventory, create loans, update authors, and clear the cart | `PrismaLoansRepository.borrowFromCart`                                |
+| 15  | Compound uniqueness                   | Prevent duplicate books in one user's persistent cart                                           | `CartItem.userId_bookId`                                              |
+| 16  | Status/search pagination              | Filter user/admin loans by lifecycle state and search related books or users                    | `PrismaLoansRepository.findByUser/findAll`                            |
+| 17  | Cross-resource ranking                | Return the five most borrowed books with aggregate loan counts                                  | `PrismaAdminRepository.getDashboard`                                  |
 
 The application intentionally keeps these queries in Prisma-backed repositories. Services contain business rules, while controllers only handle HTTP concerns and authorization.

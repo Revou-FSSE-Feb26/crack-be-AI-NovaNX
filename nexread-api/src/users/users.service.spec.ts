@@ -15,6 +15,7 @@ describe('UsersService', () => {
       findByEmail: jest.fn(),
       findById: jest.fn(),
       findAll: jest.fn(),
+      getLoanStatistics: jest.fn(),
       update: jest.fn(),
       updateRefreshTokenHash: jest.fn(),
       updateRole: jest.fn(),

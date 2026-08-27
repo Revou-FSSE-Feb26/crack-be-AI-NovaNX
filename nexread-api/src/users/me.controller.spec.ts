@@ -4,7 +4,7 @@ import { UsersService } from './users.service';
 
 describe('MeController', () => {
   const usersService = {
-    findOne: jest.fn(),
+    findMe: jest.fn(),
     update: jest.fn(),
     changePassword: jest.fn(),
     remove: jest.fn(),
@@ -23,7 +23,7 @@ describe('MeController', () => {
     await controller.updateMe(request, update);
     await controller.removeMe(request);
 
-    expect(usersService.findOne).toHaveBeenCalledWith(42);
+    expect(usersService.findMe).toHaveBeenCalledWith(42);
     expect(usersService.update).toHaveBeenCalledWith(42, update);
     expect(usersService.remove).toHaveBeenCalledWith(42);
   });

@@ -1,11 +1,15 @@
 import { Module } from '@nestjs/common';
-import { BookReviewsController, ReviewsController } from './reviews.controller';
+import {
+  BookReviewsController,
+  MeReviewsController,
+  ReviewsController,
+} from './reviews.controller';
 import { ReviewsService } from './reviews.service';
 import { PrismaReviewsRepository } from './repositories/prisma-reviews.repository';
 import { ReviewsRepository } from './repositories/reviews.repository';
 
 @Module({
-  controllers: [BookReviewsController, ReviewsController],
+  controllers: [BookReviewsController, ReviewsController, MeReviewsController],
   providers: [
     ReviewsService,
     { provide: ReviewsRepository, useClass: PrismaReviewsRepository },

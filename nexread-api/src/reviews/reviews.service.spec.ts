@@ -30,6 +30,7 @@ describe('ReviewsService', () => {
       findById: jest.fn(),
       findByUserAndBook: jest.fn(),
       findByBook: jest.fn(),
+      findByUser: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),

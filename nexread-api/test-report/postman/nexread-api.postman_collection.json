@@ -1777,6 +1777,260 @@
                   "response": []
                 },
                 {
+                  "name": "Add Book to Cart (201)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
+                          "pm.collectionVariables.set('cartItemId', pm.response.json().id);"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\"bookId\":\"{{bookId}}\"}",
+                      "options": { "raw": { "language": "json" } }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/cart/items",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["cart", "items"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get My Cart (200)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                          "pm.expect(pm.response.json()).to.be.an('array').and.not.empty;"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/cart",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["cart"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Cart Checkout Payload (200)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                          "pm.expect(pm.response.json().totalItems).to.eql(1);"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/cart/checkout",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["cart", "checkout"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Remove Cart Item (204)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 204', function () { pm.response.to.have.status(204); });"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/cart/items/{{cartItemId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["cart", "items", "{{cartItemId}}"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Re-add Book to Cart (201)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\"bookId\":\"{{bookId}}\"}",
+                      "options": { "raw": { "language": "json" } }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/cart/items",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["cart", "items"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Clear Cart (204)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 204', function () { pm.response.to.have.status(204); });"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/cart",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["cart"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Checkout Empty Cart (400)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 400', function () { pm.response.to.have.status(400); });"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      { "key": "Content-Type", "value": "application/json" },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\"durationDays\":3}",
+                      "options": { "raw": { "language": "json" } }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/loans/from-cart",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["loans", "from-cart"]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Empty Cart (200)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                          "pm.expect(pm.response.json()).to.be.an('array').that.is.empty;"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/cart",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["cart"]
+                    }
+                  },
+                  "response": []
+                },
+                {
                   "name": "Delete Book (200)",
                   "event": [
                     {
@@ -3090,7 +3344,9 @@
                     "type": "text/javascript",
                     "exec": [
                       "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                      "pm.expect(pm.response.json()).to.be.an('array');"
+                      "const response = pm.response.json();",
+                      "pm.expect(response.data).to.be.an('array');",
+                      "pm.expect(response.meta).to.include.keys('page', 'limit', 'total', 'totalPages');"
                     ]
                   }
                 }
@@ -3258,6 +3514,39 @@
                   "raw": "{{baseUrl}}/reviews/{{reviewId}}",
                   "host": ["{{baseUrl}}"],
                   "path": ["reviews", "{{reviewId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List My Reviews (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "const response = pm.response.json();",
+                      "pm.expect(response.data).to.be.an('array').and.not.empty;",
+                      "pm.expect(response.meta).to.include.keys('page', 'limit', 'total', 'totalPages');"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me/reviews?page=1&limit=5",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["me", "reviews"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "5" }
+                  ]
                 }
               },
               "response": []
@@ -3451,9 +3740,9 @@
                     "type": "text/javascript",
                     "exec": [
                       "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                      "const loans = pm.response.json();",
-                      "pm.expect(loans).to.be.an('array');",
-                      "if (loans.length) { pm.expect(loans[0].user).not.to.have.property('password'); pm.expect(loans[0].user).not.to.have.property('refreshTokenHash'); }"
+                      "const response = pm.response.json();",
+                      "pm.expect(response.data).to.be.an('array');",
+                      "if (response.data.length) { pm.expect(response.data[0].user).not.to.have.property('password'); pm.expect(response.data[0].user).not.to.have.property('refreshTokenHash'); }"
                     ]
                   }
                 }
@@ -3470,6 +3759,78 @@
                   "raw": "{{baseUrl}}/admin/loans",
                   "host": ["{{baseUrl}}"],
                   "path": ["admin", "loans"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Admin Search Users (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "const response = pm.response.json();",
+                      "pm.expect(response.data).to.be.an('array');",
+                      "pm.expect(response.meta).to.include.keys('page', 'limit', 'total', 'totalPages');"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/users?page=1&limit=5",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["users"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "5" }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Admin List Overdue Loans (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "const response = pm.response.json();",
+                      "pm.expect(response.data).to.be.an('array');",
+                      "pm.expect(response.meta).to.include.keys('page', 'limit', 'total', 'totalPages');"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/loans/overdue?page=1&limit=5",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "loans", "overdue"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "5" }
+                  ]
                 }
               },
               "response": []

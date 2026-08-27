@@ -25,7 +25,7 @@ import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-requ
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserResponseDto } from './dto/user-response.dto';
+import { MeProfileResponseDto, UserResponseDto } from './dto/user-response.dto';
 import { UsersService } from './users.service';
 
 @ApiTags('Me')
@@ -40,17 +40,17 @@ export class MeController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get the authenticated user profile' })
+  @ApiOperation({ summary: 'Get profile and loan statistics' })
   @ApiOkResponse({
     description: 'Authenticated user returned without the password field',
-    type: UserResponseDto,
+    type: MeProfileResponseDto,
   })
   @ApiNotFoundResponse({
     description: 'Authenticated user was not found',
     type: ErrorResponseDto,
   })
   findMe(@Req() request: AuthenticatedRequest) {
-    return this.usersService.findOne(request.user.userId);
+    return this.usersService.findMe(request.user.userId);
   }
 
   @Patch()

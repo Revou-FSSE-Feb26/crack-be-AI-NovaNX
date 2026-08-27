@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { BookListItemResponseDto } from '../../books/dto/book-response.dto';
 
 export class ReviewUserResponseDto {
   @ApiProperty({ example: 1 })
@@ -32,4 +33,31 @@ export class ReviewResponseDto {
 
   @ApiProperty({ type: String, format: 'date-time' })
   updatedAt: Date;
+}
+
+export class MyReviewResponseDto extends ReviewResponseDto {
+  @ApiProperty({ type: () => BookListItemResponseDto })
+  book: BookListItemResponseDto;
+}
+
+export class ReviewPaginationMetaDto {
+  @ApiProperty({ example: 1 })
+  page: number;
+
+  @ApiProperty({ example: 10 })
+  limit: number;
+
+  @ApiProperty({ example: 8 })
+  total: number;
+
+  @ApiProperty({ example: 1 })
+  totalPages: number;
+}
+
+export class PaginatedMyReviewsResponseDto {
+  @ApiProperty({ type: [MyReviewResponseDto] })
+  data: MyReviewResponseDto[];
+
+  @ApiProperty({ type: ReviewPaginationMetaDto })
+  meta: ReviewPaginationMetaDto;
 }

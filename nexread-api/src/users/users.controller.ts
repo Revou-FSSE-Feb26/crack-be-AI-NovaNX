@@ -8,6 +8,7 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -27,7 +28,11 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
-import { UserResponseDto } from './dto/user-response.dto';
+import { QueryUsersDto } from './dto/query-users.dto';
+import {
+  PaginatedUsersResponseDto,
+  UserResponseDto,
+} from './dto/user-response.dto';
 import { UsersService } from './users.service';
 
 @ApiTags('Admin')
@@ -47,13 +52,13 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List all users (admin only)' })
+  @ApiOperation({ summary: 'Search and paginate users (admin only)' })
   @ApiOkResponse({
     description: 'Users returned without password fields',
-    type: [UserResponseDto],
+    type: PaginatedUsersResponseDto,
   })
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Query() query: QueryUsersDto) {
+    return this.usersService.findAll(query);
   }
 
   @Get(':id')

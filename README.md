@@ -120,6 +120,7 @@ npm run prisma:seed
 | `Book`     | `id`, title, derived rating, total/available copies, soft-delete marker, author/category foreign keys, timestamps |
 | `Loan`     | `id`, user/book foreign keys, status, borrowed/due/returned dates                                                 |
 | `Review`   | `id`, user/book foreign keys, rating 1–5, optional comment; unique per user/book                                  |
+| `CartItem` | Persistent user/book cart entry; unique per user/book and removed automatically with its user or book             |
 
 `Author` and `Category` each have a one-to-many relation to `Book`; `User` and `Book` each have one-to-many relations to `Loan` and `Review`. See [`nexread-api/docs/database-queries.md`](nexread-api/docs/database-queries.md) for concrete relational/query techniques used by the application.
 
@@ -174,7 +175,7 @@ By default, the API runs at `http://localhost:3000`. The interactive Swagger API
 | GET    | `/categories/:id`              | Get a single category                           | No                 |
 | POST   | `/categories`                  | Create a category                               | Yes (Admin only)   |
 | PATCH  | `/categories/:id`              | Update a category                               | Yes (Admin only)   |
-| DELETE | `/categories/:id`              | Delete a category                               | Yes (Admin only)   |
+| DELETE | `/categories/:id`              | Delete only when no books reference it          | Yes (Admin only)   |
 | GET    | `/books`                       | Paginated/filterable books with author/category | No                 |
 | GET    | `/books/recommend`             | Paginated recommendations ordered by rating     | No                 |
 | GET    | `/books/:id`                   | Book detail with inventory and reviews          | No                 |
@@ -185,19 +186,29 @@ By default, the API runs at `http://localhost:3000`. The interactive Swagger API
 | POST   | `/books/:bookId/reviews`       | Review a book once                              | Yes                |
 | PATCH  | `/reviews/:id`                 | Update own review (or moderate as admin)        | Yes                |
 | DELETE | `/reviews/:id`                 | Delete own review (or moderate as admin)        | Yes                |
-| GET    | `/me`                          | Get the authenticated user's profile            | Yes                |
+| GET    | `/me`                          | Get profile and loan statistics                 | Yes                |
+| GET    | `/me/reviews`                  | Paginated reviews written by the user           | Yes                |
 | PATCH  | `/me`                          | Update the authenticated user's name/email      | Yes                |
 | PATCH  | `/me/password`                 | Change the authenticated user's password        | Yes                |
 | DELETE | `/me`                          | Delete the authenticated user's account         | Yes                |
-| GET    | `/users`                       | List all users                                  | Yes (Admin only)   |
+| GET    | `/users`                       | Search and paginate all users                   | Yes (Admin only)   |
 | GET    | `/users/:id`                   | Get a user by id                                | Yes (Admin only)   |
 | PATCH  | `/users/:id/role`              | Promote/demote a user's role                    | Yes (Admin only)   |
 | DELETE | `/users/:id`                   | Delete a user                                   | Yes (Admin only)   |
 | POST   | `/loans`                       | Borrow an available book                        | Yes                |
-| GET    | `/loans`                       | List the authenticated user's loans             | Yes                |
-| PATCH  | `/loans/:id/return`            | Return the authenticated user's loan            | Yes                |
-| GET    | `/admin/loans`                 | List every loan                                 | Yes (Admin only)   |
-| GET    | `/admin/dashboard`             | Aggregate operational metrics                   | Yes (Admin only)   |
+| GET    | `/loans`                       | Filter and paginate authenticated user loans    | Yes                |
+| POST   | `/loans/from-cart`             | Atomically borrow all books in the cart         | Yes                |
+| PATCH  | `/loans/:id/return`            | Return a loan as its borrower or an admin       | Yes                |
+| GET    | `/cart`                        | List books in the authenticated user's cart     | Yes                |
+| GET    | `/cart/checkout`               | Get checkout user and book information          | Yes                |
+| POST   | `/cart/items`                  | Add an available book to the cart               | Yes                |
+| DELETE | `/cart/items/:id`              | Remove one cart item                            | Yes                |
+| DELETE | `/cart`                        | Clear the authenticated user's cart             | Yes                |
+| POST   | `/admin/loans`                 | Create a loan for a user                        | Yes (Admin only)   |
+| GET    | `/admin/loans`                 | Search, filter, and paginate every loan         | Yes (Admin only)   |
+| GET    | `/admin/loans/overdue`         | List overdue active loans                       | Yes (Admin only)   |
+| PATCH  | `/admin/loans/:id`             | Change a due date or return a loan              | Yes (Admin only)   |
+| GET    | `/admin/dashboard`             | Metrics including top borrowed books            | Yes (Admin only)   |
 | GET    | `/admin/authors/statistics`    | Book count/rating per author                    | Yes (Admin only)   |
 | GET    | `/admin/categories/statistics` | Book count including empty categories           | Yes (Admin only)   |
 

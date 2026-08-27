@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { LoanStatus } from '../../../generated/prisma/enums';
-import { BookDetailResponseDto } from '../../books/dto/book-response.dto';
+import { BookListItemResponseDto } from '../../books/dto/book-response.dto';
 import { UserResponseDto } from '../../users/dto/user-response.dto';
 
 export class LoanResponseDto {
@@ -25,11 +25,41 @@ export class LoanResponseDto {
   @ApiPropertyOptional({ type: String, format: 'date-time', nullable: true })
   returnedAt!: Date | null;
 
-  @ApiProperty({ type: BookDetailResponseDto })
-  book!: BookDetailResponseDto;
+  @ApiProperty({ type: BookListItemResponseDto })
+  book!: BookListItemResponseDto;
 }
 
 export class AdminLoanResponseDto extends LoanResponseDto {
   @ApiProperty({ type: UserResponseDto })
   user!: UserResponseDto;
+}
+
+export class LoanPaginationMetaDto {
+  @ApiProperty({ example: 1 })
+  page: number;
+
+  @ApiProperty({ example: 10 })
+  limit: number;
+
+  @ApiProperty({ example: 24 })
+  total: number;
+
+  @ApiProperty({ example: 3 })
+  totalPages: number;
+}
+
+export class PaginatedLoansResponseDto {
+  @ApiProperty({ type: [LoanResponseDto] })
+  data: LoanResponseDto[];
+
+  @ApiProperty({ type: LoanPaginationMetaDto })
+  meta: LoanPaginationMetaDto;
+}
+
+export class PaginatedAdminLoansResponseDto {
+  @ApiProperty({ type: [AdminLoanResponseDto] })
+  data: AdminLoanResponseDto[];
+
+  @ApiProperty({ type: LoanPaginationMetaDto })
+  meta: LoanPaginationMetaDto;
 }

@@ -9,6 +9,7 @@ import type { Role } from '../../generated/prisma/enums';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { QueryUsersDto } from './dto/query-users.dto';
 import { UsersRepository } from './repositories/users.repository';
 import { toSafeUser } from './utils/to-safe-user';
 
@@ -47,14 +48,30 @@ export class UsersService {
     return this.usersRepository.findById(id);
   }
 
-  async findAll() {
-    const users = await this.usersRepository.findAll();
-    return users.map(toSafeUser);
+  async findAll(query: QueryUsersDto) {
+    const result = await this.usersRepository.findAll(query);
+    return {
+      data: result.data.map(toSafeUser),
+      meta: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: Math.ceil(result.total / result.limit),
+      },
+    };
   }
 
   async findOne(id: number) {
     const user = await this.findExistingOrThrow(id);
     return toSafeUser(user);
+  }
+
+  async findMe(id: number) {
+    const user = await this.findExistingOrThrow(id);
+    return {
+      ...toSafeUser(user),
+      loanStatistics: await this.usersRepository.getLoanStatistics(id),
+    };
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {

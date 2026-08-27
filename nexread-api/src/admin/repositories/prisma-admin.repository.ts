@@ -36,6 +36,19 @@ export class PrismaAdminRepository implements AdminRepository {
       }),
     ]);
 
+    const topLoanGroups = await this.prisma.loan.groupBy({
+      by: ['bookId'],
+      _count: { bookId: true },
+      orderBy: { _count: { bookId: 'desc' } },
+      take: 5,
+    });
+
+    const topBooks = await this.prisma.book.findMany({
+      where: { id: { in: topLoanGroups.map((item) => item.bookId) } },
+      select: { id: true, title: true },
+    });
+    const bookById = new Map(topBooks.map((book) => [book.id, book]));
+
     return {
       users,
       authors,
@@ -44,6 +57,10 @@ export class PrismaAdminRepository implements AdminRepository {
       availableBooks,
       activeLoans,
       overdueLoans,
+      topBorrowedBooks: topLoanGroups.flatMap((item) => {
+        const book = bookById.get(item.bookId);
+        return book ? [{ ...book, borrowCount: item._count.bookId }] : [];
+      }),
     };
   }
 

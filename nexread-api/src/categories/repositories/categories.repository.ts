@@ -13,6 +13,7 @@ export abstract class CategoriesRepository {
   abstract create(data: CreateCategoryDto): Promise<CategoryModel>;
   abstract findAll(): Promise<CategoryModel[]>;
   abstract findById(id: string): Promise<CategoryModel | null>;
+  abstract countBooks(id: string): Promise<number>;
   abstract update(id: string, data: UpdateCategoryDto): Promise<CategoryModel>;
   abstract delete(id: string): Promise<CategoryModel>;
 }

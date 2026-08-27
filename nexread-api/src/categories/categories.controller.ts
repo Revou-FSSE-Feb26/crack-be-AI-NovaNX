@@ -130,7 +130,7 @@ export class CategoriesController {
     description: 'Deleted category',
     type: CategoryResponseDto,
   })
-  @ApiBadRequestResponse({
+  @ApiConflictResponse({
     description: 'Category is still referenced by one or more books',
     type: ErrorResponseDto,
   })

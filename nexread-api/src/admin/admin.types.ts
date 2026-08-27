@@ -6,6 +6,13 @@ export interface DashboardSummary {
   availableBooks: number;
   activeLoans: number;
   overdueLoans: number;
+  topBorrowedBooks: TopBorrowedBook[];
+}
+
+export interface TopBorrowedBook {
+  id: string;
+  title: string;
+  borrowCount: number;
 }
 
 export interface AuthorStatistic {

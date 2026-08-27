@@ -5,6 +5,7 @@ import type {
   LoanModel,
   UserModel,
 } from '../../../generated/prisma/models';
+import type { QueryLoansDto } from '../dto/query-loans.dto';
 
 export type LoanWithBook = LoanModel & {
   book: BookModel & { author: AuthorModel; category: CategoryModel };
@@ -12,16 +13,30 @@ export type LoanWithBook = LoanModel & {
 
 export type SafeLoanUser = Omit<UserModel, 'password' | 'refreshTokenHash'>;
 export type LoanWithRelations = LoanWithBook & { user: SafeLoanUser };
+export type PaginatedLoans<T> = {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+};
 
 export abstract class LoansRepository {
   abstract findBookById(id: string): Promise<BookModel | null>;
+  abstract userExists(id: number): Promise<boolean>;
   abstract findById(id: number): Promise<LoanWithRelations | null>;
-  abstract findByUser(userId: number): Promise<LoanWithBook[]>;
-  abstract findAll(): Promise<LoanWithRelations[]>;
+  abstract findByUser(
+    userId: number,
+    query?: QueryLoansDto,
+  ): Promise<PaginatedLoans<LoanWithBook>>;
+  abstract findAll(
+    query?: QueryLoansDto,
+  ): Promise<PaginatedLoans<LoanWithRelations>>;
   abstract borrow(
     userId: number,
     book: BookModel,
     dueAt: Date,
   ): Promise<LoanWithBook>;
   abstract returnLoan(loan: LoanWithRelations): Promise<LoanWithBook>;
+  abstract updateDueAt(id: number, dueAt: Date): Promise<LoanWithRelations>;
+  abstract borrowFromCart(userId: number, dueAt: Date): Promise<LoanWithBook[]>;
 }

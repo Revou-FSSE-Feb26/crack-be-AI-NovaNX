@@ -14,6 +14,7 @@ import { HealthModule } from './health/health.module';
 import { LoansModule } from './loans/loans.module';
 import { AdminModule } from './admin/admin.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { CartModule } from './cart/cart.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     LoansModule,
     AdminModule,
     ReviewsModule,
+    CartModule,
   ],
   controllers: [AppController],
   providers: [

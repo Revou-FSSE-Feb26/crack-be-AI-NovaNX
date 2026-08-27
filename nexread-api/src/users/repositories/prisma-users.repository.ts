@@ -2,7 +2,13 @@ import { Injectable } from '@nestjs/common';
 import type { Role } from '../../../generated/prisma/enums';
 import type { UserModel } from '../../../generated/prisma/models';
 import { PrismaService } from '../../prisma/prisma.service';
-import { UsersRepository } from './users.repository';
+import { LoanStatus } from '../../../generated/prisma/enums';
+import type { QueryUsersDto } from '../dto/query-users.dto';
+import {
+  UsersRepository,
+  type LoanStatistics,
+  type PaginatedUsers,
+} from './users.repository';
 
 /**
  * Prisma-backed implementation of `UsersRepository`.
@@ -27,8 +33,48 @@ export class PrismaUsersRepository implements UsersRepository {
     return this.prisma.user.findUnique({ where: { id } });
   }
 
-  findAll(): Promise<UserModel[]> {
-    return this.prisma.user.findMany({ orderBy: { id: 'asc' } });
+  async findAll(query: QueryUsersDto = {}): Promise<PaginatedUsers> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const where = query.q
+      ? {
+          OR: [
+            { fullName: { contains: query.q, mode: 'insensitive' as const } },
+            { email: { contains: query.q, mode: 'insensitive' as const } },
+          ],
+        }
+      : {};
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        where,
+        orderBy: { id: 'asc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+    return { data, total, page, limit };
+  }
+
+  async getLoanStatistics(id: number): Promise<LoanStatistics> {
+    const now = new Date();
+    const [total, active, returned, overdue] = await this.prisma.$transaction([
+      this.prisma.loan.count({ where: { userId: id } }),
+      this.prisma.loan.count({
+        where: { userId: id, status: LoanStatus.ACTIVE },
+      }),
+      this.prisma.loan.count({
+        where: { userId: id, status: LoanStatus.RETURNED },
+      }),
+      this.prisma.loan.count({
+        where: {
+          userId: id,
+          status: LoanStatus.ACTIVE,
+          dueAt: { lt: now },
+        },
+      }),
+    ]);
+    return { total, active, returned, overdue };
   }
 
   update(
@@ -85,6 +131,7 @@ export class PrismaUsersRepository implements UsersRepository {
       });
       await transaction.loan.deleteMany({ where: { userId: id } });
       await transaction.review.deleteMany({ where: { userId: id } });
+      await transaction.cartItem.deleteMany({ where: { userId: id } });
 
       for (const { bookId } of reviewedBooks) {
         const aggregate = await transaction.review.aggregate({

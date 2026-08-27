@@ -7,6 +7,7 @@ import {
 import { Role } from '../../generated/prisma/enums';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
+import { QueryReviewsDto } from './dto/query-reviews.dto';
 import { ReviewsRepository } from './repositories/reviews.repository';
 
 @Injectable()
@@ -16,6 +17,19 @@ export class ReviewsService {
   async findByBook(bookId: string) {
     await this.findBookOrThrow(bookId);
     return this.reviewsRepository.findByBook(bookId);
+  }
+
+  async findMine(userId: number, query: QueryReviewsDto) {
+    const result = await this.reviewsRepository.findByUser(userId, query);
+    return {
+      data: result.data,
+      meta: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: Math.ceil(result.total / result.limit),
+      },
+    };
   }
 
   async create(userId: number, bookId: string, data: CreateReviewDto) {

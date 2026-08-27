@@ -6,6 +6,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -28,7 +29,14 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
 import { CreateLoanDto } from './dto/create-loan.dto';
-import { AdminLoanResponseDto, LoanResponseDto } from './dto/loan-response.dto';
+import { AdminCreateLoanDto, AdminUpdateLoanDto } from './dto/admin-loan.dto';
+import { CheckoutCartDto } from './dto/checkout-cart.dto';
+import {
+  LoanResponseDto,
+  PaginatedAdminLoansResponseDto,
+  PaginatedLoansResponseDto,
+} from './dto/loan-response.dto';
+import { QueryLoansDto } from './dto/query-loans.dto';
 import { LoansService } from './loans.service';
 
 @ApiTags('Loans')
@@ -65,14 +73,35 @@ export class LoansController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List loans for the authenticated user' })
-  @ApiOkResponse({ type: [LoanResponseDto] })
-  findMine(@Req() request: AuthenticatedRequest) {
-    return this.loansService.findMine(request.user.userId);
+  @ApiOperation({ summary: 'Filter and paginate authenticated user loans' })
+  @ApiOkResponse({ type: PaginatedLoansResponseDto })
+  findMine(
+    @Req() request: AuthenticatedRequest,
+    @Query() query: QueryLoansDto,
+  ) {
+    return this.loansService.findMine(request.user.userId, query);
+  }
+
+  @Post('from-cart')
+  @ApiOperation({ summary: 'Atomically borrow every available cart book' })
+  @ApiCreatedResponse({ type: [LoanResponseDto] })
+  @ApiBadRequestResponse({
+    description: 'Cart is empty or duration is invalid',
+    type: ErrorResponseDto,
+  })
+  @ApiConflictResponse({
+    description: 'One or more cart books cannot be borrowed',
+    type: ErrorResponseDto,
+  })
+  checkoutCart(
+    @Req() request: AuthenticatedRequest,
+    @Body() data: CheckoutCartDto,
+  ) {
+    return this.loansService.checkoutCart(request.user.userId, data);
   }
 
   @Patch(':id/return')
-  @ApiOperation({ summary: 'Return one of the authenticated user loans' })
+  @ApiOperation({ summary: 'Return a loan as its borrower or an admin' })
   @ApiOkResponse({ type: LoanResponseDto })
   @ApiNotFoundResponse({
     description: 'Loan was not found',
@@ -86,11 +115,15 @@ export class LoansController {
     description: 'Loan has already been returned',
     type: ErrorResponseDto,
   })
-  returnMine(
+  returnLoan(
     @Req() request: AuthenticatedRequest,
     @Param('id', ParseIntPipe) id: number,
   ) {
-    return this.loansService.returnMine(request.user.userId, id);
+    return this.loansService.returnLoan(
+      request.user.userId,
+      request.user.role,
+      id,
+    );
   }
 }
 
@@ -102,9 +135,19 @@ export class LoansController {
 export class AdminLoansController {
   constructor(private readonly loansService: LoansService) {}
 
+  @Post()
+  @ApiOperation({ summary: 'Create a loan for a user (admin only)' })
+  @ApiCreatedResponse({ type: LoanResponseDto })
+  @ApiBadRequestResponse({ type: ErrorResponseDto })
+  @ApiNotFoundResponse({ type: ErrorResponseDto })
+  @ApiConflictResponse({ type: ErrorResponseDto })
+  create(@Body() data: AdminCreateLoanDto) {
+    return this.loansService.adminBorrow(data);
+  }
+
   @Get()
-  @ApiOperation({ summary: 'List all loans (admin only)' })
-  @ApiOkResponse({ type: [AdminLoanResponseDto] })
+  @ApiOperation({ summary: 'Search, filter, and paginate all loans' })
+  @ApiOkResponse({ type: PaginatedAdminLoansResponseDto })
   @ApiUnauthorizedResponse({
     description: 'Bearer token is missing or invalid',
     type: ErrorResponseDto,
@@ -113,7 +156,27 @@ export class AdminLoansController {
     description: 'Authenticated user is not an admin',
     type: ErrorResponseDto,
   })
-  findAll() {
-    return this.loansService.findAll();
+  findAll(@Query() query: QueryLoansDto) {
+    return this.loansService.findAll(query);
+  }
+
+  @Get('overdue')
+  @ApiOperation({ summary: 'List overdue active loans (admin only)' })
+  @ApiOkResponse({ type: PaginatedAdminLoansResponseDto })
+  findOverdue(@Query() query: QueryLoansDto) {
+    return this.loansService.findOverdue(query);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Change a loan due date or return it' })
+  @ApiOkResponse({ type: LoanResponseDto })
+  @ApiBadRequestResponse({ type: ErrorResponseDto })
+  @ApiNotFoundResponse({ type: ErrorResponseDto })
+  @ApiConflictResponse({ type: ErrorResponseDto })
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() data: AdminUpdateLoanDto,
+  ) {
+    return this.loansService.adminUpdate(id, data);
   }
 }

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CategoriesRepository } from './repositories/categories.repository';
@@ -32,6 +36,11 @@ export class CategoriesService {
 
   async remove(id: string) {
     await this.findOne(id);
+    if ((await this.categoriesRepository.countBooks(id)) > 0) {
+      throw new ConflictException(
+        'Category cannot be deleted while books are still associated',
+      );
+    }
     return this.categoriesRepository.delete(id);
   }
 }

@@ -1,5 +1,20 @@
 import type { Role } from '../../../generated/prisma/enums';
 import type { UserModel } from '../../../generated/prisma/models';
+import type { QueryUsersDto } from '../dto/query-users.dto';
+
+export type PaginatedUsers = {
+  data: UserModel[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export type LoanStatistics = {
+  total: number;
+  active: number;
+  returned: number;
+  overdue: number;
+};
 
 /**
  * Repository contract for `User` persistence.
@@ -16,7 +31,8 @@ export abstract class UsersRepository {
   }): Promise<UserModel>;
   abstract findByEmail(email: string): Promise<UserModel | null>;
   abstract findById(id: number): Promise<UserModel | null>;
-  abstract findAll(): Promise<UserModel[]>;
+  abstract findAll(query?: QueryUsersDto): Promise<PaginatedUsers>;
+  abstract getLoanStatistics(id: number): Promise<LoanStatistics>;
   abstract update(
     id: number,
     data: Partial<{

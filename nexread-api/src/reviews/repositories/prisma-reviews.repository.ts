@@ -3,7 +3,12 @@ import type { BookModel } from '../../../generated/prisma/models';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { CreateReviewDto } from '../dto/create-review.dto';
 import type { UpdateReviewDto } from '../dto/update-review.dto';
-import { ReviewsRepository, type ReviewWithUser } from './reviews.repository';
+import type { QueryReviewsDto } from '../dto/query-reviews.dto';
+import {
+  ReviewsRepository,
+  type PaginatedMyReviews,
+  type ReviewWithUser,
+} from './reviews.repository';
 
 const userFields = { id: true, fullName: true } as const;
 
@@ -34,6 +39,29 @@ export class PrismaReviewsRepository implements ReviewsRepository {
       include: { user: { select: userFields } },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async findByUser(
+    userId: number,
+    query: QueryReviewsDto = {},
+  ): Promise<PaginatedMyReviews> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const where = { userId };
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.review.findMany({
+        where,
+        include: {
+          user: { select: userFields },
+          book: { include: { author: true, category: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.review.count({ where }),
+    ]);
+    return { data, total, page, limit };
   }
 
   create(

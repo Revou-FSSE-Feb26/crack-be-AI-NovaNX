@@ -24,6 +24,10 @@ export class PrismaCategoriesRepository implements CategoriesRepository {
     return this.prisma.category.findUnique({ where: { id } });
   }
 
+  countBooks(id: string): Promise<number> {
+    return this.prisma.book.count({ where: { categoryId: id } });
+  }
+
   update(id: string, data: UpdateCategoryDto): Promise<CategoryModel> {
     return this.prisma.category.update({ where: { id }, data });
   }
