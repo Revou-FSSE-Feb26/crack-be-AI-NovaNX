@@ -1,4 +1,5 @@
 import {
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -40,4 +41,10 @@ export class CreateBookDto {
   @IsString()
   @IsNotEmpty()
   categoryId: string;
+
+  @ApiPropertyOptional({ minimum: 1, default: 1, example: 3 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  totalCopies?: number;
 }

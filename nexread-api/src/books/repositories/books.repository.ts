@@ -16,6 +16,13 @@ export type BookWithRelations = BookModel & {
   category: CategoryModel;
 };
 
+export type PaginatedBooks = {
+  data: BookWithRelations[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
 /**
  * Repository contract for `Book` persistence.
  *
@@ -25,8 +32,10 @@ export type BookWithRelations = BookModel & {
  */
 export abstract class BooksRepository {
   abstract create(data: CreateBookDto): Promise<BookModel>;
-  abstract findAll(query?: QueryBooksDto): Promise<BookWithRelations[]>;
-  abstract findById(id: string): Promise<BookWithRelations | null>;
+  abstract findAll(query?: QueryBooksDto): Promise<PaginatedBooks>;
+  abstract findRecommended(query?: QueryBooksDto): Promise<PaginatedBooks>;
+  abstract findById(id: string): Promise<unknown>;
+  abstract countActiveLoans(id: string): Promise<number>;
   abstract update(id: string, data: UpdateBookDto): Promise<BookModel>;
-  abstract delete(id: string): Promise<BookModel>;
+  abstract deleteOrArchive(id: string): Promise<BookModel>;
 }

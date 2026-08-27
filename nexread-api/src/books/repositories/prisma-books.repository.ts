@@ -1,10 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
+import { LoanStatus } from '../../../generated/prisma/enums';
 import type { BookModel } from '../../../generated/prisma/models';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { CreateBookDto } from '../dto/create-book.dto';
 import type { QueryBooksDto } from '../dto/query-books.dto';
 import type { UpdateBookDto } from '../dto/update-book.dto';
-import { BooksRepository, type BookWithRelations } from './books.repository';
+import { BooksRepository, type PaginatedBooks } from './books.repository';
+
+const safeReviewUserFields = {
+  id: true,
+  fullName: true,
+} as const;
 
 /**
  * Prisma-backed implementation of `BooksRepository`.
@@ -15,7 +21,10 @@ export class PrismaBooksRepository implements BooksRepository {
 
   create(data: CreateBookDto): Promise<BookModel> {
     return this.prisma.$transaction(async (transaction) => {
-      const book = await transaction.book.create({ data });
+      const totalCopies = data.totalCopies ?? 1;
+      const book = await transaction.book.create({
+        data: { ...data, totalCopies, availableCopies: totalCopies },
+      });
       await transaction.author.update({
         where: { id: data.authorId },
         data: { booksCount: { increment: 1 } },
@@ -24,30 +33,63 @@ export class PrismaBooksRepository implements BooksRepository {
     });
   }
 
-  findAll(query: QueryBooksDto = {}): Promise<BookWithRelations[]> {
+  async findAll(query: QueryBooksDto = {}): Promise<PaginatedBooks> {
     const sortBy = query.sortBy ?? 'createdAt';
     const order = query.order ?? 'desc';
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const where = this.bookWhere(query);
 
-    return this.prisma.book.findMany({
-      where: {
-        title: query.title
-          ? { contains: query.title, mode: 'insensitive' }
-          : undefined,
-        authorId: query.authorId,
-        categoryId: query.categoryId,
-        rating:
-          query.minRating === undefined ? undefined : { gte: query.minRating },
-        isAvailable: query.available,
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.book.findMany({
+        where,
+        include: { author: true, category: true },
+        orderBy: { [sortBy]: order },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.book.count({ where }),
+    ]);
+
+    return { data, total, page, limit };
+  }
+
+  async findRecommended(query: QueryBooksDto = {}): Promise<PaginatedBooks> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const where = this.bookWhere(query);
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.book.findMany({
+        where,
+        include: { author: true, category: true },
+        orderBy: [{ rating: 'desc' }, { createdAt: 'desc' }],
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.book.count({ where }),
+    ]);
+
+    return { data, total, page, limit };
+  }
+
+  findById(id: string) {
+    return this.prisma.book.findFirst({
+      where: { id, deletedAt: null },
+      include: {
+        author: true,
+        category: true,
+        reviews: {
+          include: { user: { select: safeReviewUserFields } },
+          orderBy: { createdAt: 'desc' },
+        },
+        _count: { select: { reviews: true } },
       },
-      include: { author: true, category: true },
-      orderBy: { [sortBy]: order },
     });
   }
 
-  findById(id: string): Promise<BookWithRelations | null> {
-    return this.prisma.book.findUnique({
-      where: { id },
-      include: { author: true, category: true },
+  countActiveLoans(id: string): Promise<number> {
+    return this.prisma.loan.count({
+      where: { bookId: id, status: LoanStatus.ACTIVE },
     });
   }
 
@@ -56,7 +98,30 @@ export class PrismaBooksRepository implements BooksRepository {
       const existing = await transaction.book.findUniqueOrThrow({
         where: { id },
       });
-      const book = await transaction.book.update({ where: { id }, data });
+      const { totalCopies, ...bookData } = data;
+      let inventoryData = {};
+
+      if (totalCopies !== undefined) {
+        const activeLoans = await transaction.loan.count({
+          where: { bookId: id, status: LoanStatus.ACTIVE },
+        });
+        if (totalCopies < activeLoans) {
+          throw new ConflictException(
+            `totalCopies cannot be lower than ${activeLoans} active loans`,
+          );
+        }
+        const availableCopies = totalCopies - activeLoans;
+        inventoryData = {
+          totalCopies,
+          availableCopies,
+          isAvailable: availableCopies > 0,
+        };
+      }
+
+      const book = await transaction.book.update({
+        where: { id },
+        data: { ...bookData, ...inventoryData },
+      });
 
       if (data.authorId && data.authorId !== existing.authorId) {
         await transaction.author.update({
@@ -73,14 +138,44 @@ export class PrismaBooksRepository implements BooksRepository {
     });
   }
 
-  delete(id: string): Promise<BookModel> {
+  deleteOrArchive(id: string): Promise<BookModel> {
     return this.prisma.$transaction(async (transaction) => {
-      const book = await transaction.book.delete({ where: { id } });
+      const historicalReferences = await transaction.book.findUniqueOrThrow({
+        where: { id },
+        select: { _count: { select: { loans: true, reviews: true } } },
+      });
+      const hasHistory =
+        historicalReferences._count.loans > 0 ||
+        historicalReferences._count.reviews > 0;
+      const book = hasHistory
+        ? await transaction.book.update({
+            where: { id },
+            data: {
+              deletedAt: new Date(),
+              isAvailable: false,
+              availableCopies: 0,
+            },
+          })
+        : await transaction.book.delete({ where: { id } });
       await transaction.author.update({
         where: { id: book.authorId },
         data: { booksCount: { decrement: 1 } },
       });
       return book;
     });
+  }
+
+  private bookWhere(query: QueryBooksDto) {
+    return {
+      deletedAt: null,
+      title: query.title
+        ? { contains: query.title, mode: 'insensitive' as const }
+        : undefined,
+      authorId: query.authorId,
+      categoryId: query.categoryId,
+      rating:
+        query.minRating === undefined ? undefined : { gte: query.minRating },
+      isAvailable: query.available,
+    };
   }
 }

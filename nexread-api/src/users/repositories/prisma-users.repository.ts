@@ -62,19 +62,41 @@ export class PrismaUsersRepository implements UsersRepository {
 
   delete(id: number): Promise<UserModel> {
     return this.prisma.$transaction(async (transaction) => {
-      const activeLoans = await transaction.loan.findMany({
+      const activeLoans = await transaction.loan.groupBy({
+        by: ['bookId'],
         where: { userId: id, status: 'ACTIVE' },
-        select: { bookId: true },
+        _count: { _all: true },
       });
 
-      if (activeLoans.length > 0) {
-        await transaction.book.updateMany({
-          where: { id: { in: activeLoans.map((loan) => loan.bookId) } },
-          data: { isAvailable: true },
+      for (const loanGroup of activeLoans) {
+        await transaction.book.update({
+          where: { id: loanGroup.bookId },
+          data: {
+            availableCopies: { increment: loanGroup._count._all },
+            isAvailable: true,
+          },
         });
       }
 
+      const reviewedBooks = await transaction.review.findMany({
+        where: { userId: id },
+        distinct: ['bookId'],
+        select: { bookId: true },
+      });
       await transaction.loan.deleteMany({ where: { userId: id } });
+      await transaction.review.deleteMany({ where: { userId: id } });
+
+      for (const { bookId } of reviewedBooks) {
+        const aggregate = await transaction.review.aggregate({
+          where: { bookId },
+          _avg: { rating: true },
+        });
+        await transaction.book.update({
+          where: { id: bookId },
+          data: { rating: aggregate._avg.rating ?? 0 },
+        });
+      }
+
       return transaction.user.delete({ where: { id } });
     });
   }

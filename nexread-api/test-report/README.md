@@ -22,6 +22,7 @@ Besides the Jest unit tests (`src/**/*.spec.ts`) and end-to-end tests (`test/`),
 | `02 - Request Validation`             | Invalid email, short password, missing required field, unknown-field stripping |
 | `03 - CRUD Core Resources`            | Full create/read/update/delete lifecycle for Authors, Categories, Books        |
 | Jest e2e loan scenario                | Atomic borrow/return, unavailable conflict, filters, dashboard, and statistics |
+| `10 - Loans and Admin Analytics`      | Pagination, recommendations, Reviews lifecycle, inventory, loans, and analytics |
 | `05 - JWT Authentication`             | Login failures, user/admin token pairs, rotation, and refresh replay rejection |
 | `06 - Route Protection Middleware`    | 401 on protected routes without a token, 200 on public `GET` routes            |
 | `07 - Error Handling`                 | Invalid foreign key, duplicate unique fields, 404 on nonexistent records       |

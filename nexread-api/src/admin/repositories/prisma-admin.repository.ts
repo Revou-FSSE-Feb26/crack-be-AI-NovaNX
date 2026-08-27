@@ -26,8 +26,10 @@ export class PrismaAdminRepository implements AdminRepository {
       this.prisma.user.count(),
       this.prisma.author.count(),
       this.prisma.category.count(),
-      this.prisma.book.count(),
-      this.prisma.book.count({ where: { isAvailable: true } }),
+      this.prisma.book.count({ where: { deletedAt: null } }),
+      this.prisma.book.count({
+        where: { deletedAt: null, isAvailable: true },
+      }),
       this.prisma.loan.count({ where: { status: LoanStatus.ACTIVE } }),
       this.prisma.loan.count({
         where: { status: LoanStatus.ACTIVE, dueAt: { lt: now } },
@@ -53,6 +55,7 @@ export class PrismaAdminRepository implements AdminRepository {
       }),
       this.prisma.book.groupBy({
         by: ['authorId'],
+        where: { deletedAt: null },
         _count: { _all: true },
         _avg: { rating: true },
       }),
@@ -77,7 +80,9 @@ export class PrismaAdminRepository implements AdminRepository {
         id: true,
         name: true,
         slug: true,
-        _count: { select: { books: true } },
+        _count: {
+          select: { books: { where: { deletedAt: null } } },
+        },
       },
       orderBy: { name: 'asc' },
     });

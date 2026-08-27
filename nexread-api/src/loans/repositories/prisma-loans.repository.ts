@@ -27,7 +27,7 @@ export class PrismaLoansRepository implements LoansRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   findBookById(id: string): Promise<BookModel | null> {
-    return this.prisma.book.findUnique({ where: { id } });
+    return this.prisma.book.findFirst({ where: { id, deletedAt: null } });
   }
 
   findById(id: number): Promise<LoanWithRelations | null> {
@@ -60,12 +60,17 @@ export class PrismaLoansRepository implements LoansRepository {
 
   borrow(userId: number, book: BookModel, dueAt: Date): Promise<LoanWithBook> {
     return this.prisma.$transaction(async (transaction) => {
-      const availabilityUpdate = await transaction.book.updateMany({
-        where: { id: book.id, isAvailable: true },
-        data: { isAvailable: false },
-      });
+      const updatedCopies = await transaction.$executeRaw`
+        UPDATE "Book"
+        SET "availableCopies" = "availableCopies" - 1,
+            "isAvailable" = ("availableCopies" - 1) > 0,
+            "updatedAt" = NOW()
+        WHERE "id" = ${book.id}
+          AND "deletedAt" IS NULL
+          AND "availableCopies" > 0
+      `;
 
-      if (availabilityUpdate.count !== 1) {
+      if (updatedCopies !== 1) {
         throw new ConflictException('Book is currently unavailable');
       }
 
@@ -95,10 +100,14 @@ export class PrismaLoansRepository implements LoansRepository {
         throw new ConflictException('Loan has already been returned');
       }
 
-      await transaction.book.update({
+      const returnedBook = await transaction.book.update({
         where: { id: loan.bookId },
-        data: { isAvailable: true },
+        data: { availableCopies: { increment: 1 }, isAvailable: true },
       });
+
+      if (returnedBook.availableCopies > returnedBook.totalCopies) {
+        throw new ConflictException('Book inventory is already fully returned');
+      }
 
       const updated = await transaction.loan.findUniqueOrThrow({
         where: { id: loan.id },

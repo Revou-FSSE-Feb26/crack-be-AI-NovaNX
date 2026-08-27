@@ -13,6 +13,7 @@ import { positiveIntegerFromEnvironment } from './config/environment';
 import { HealthModule } from './health/health.module';
 import { LoansModule } from './loans/loans.module';
 import { AdminModule } from './admin/admin.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { AdminModule } from './admin/admin.module';
     HealthModule,
     LoansModule,
     AdminModule,
+    ReviewsModule,
   ],
   controllers: [AppController],
   providers: [

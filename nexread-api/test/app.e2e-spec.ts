@@ -180,7 +180,11 @@ describe('AppController (e2e)', () => {
     const password = 'strong-password';
 
     await prisma.author.create({
-      data: { id: authorId, name: `Loan Author ${testResourceSuffix}` },
+      data: {
+        id: authorId,
+        name: `Loan Author ${testResourceSuffix}`,
+        booksCount: 1,
+      },
     });
     await prisma.category.create({
       data: {
@@ -196,6 +200,8 @@ describe('AppController (e2e)', () => {
         rating: 4.7,
         authorId,
         categoryId,
+        totalCopies: 2,
+        availableCopies: 2,
       },
     });
 
@@ -214,6 +220,13 @@ describe('AppController (e2e)', () => {
     const loan = borrowing.body as { id: number; status: string };
     expect(loan.status).toBe('ACTIVE');
 
+    const secondBorrowing = await request(app.getHttpServer())
+      .post('/loans')
+      .set('Authorization', authorization)
+      .send({ bookId })
+      .expect(201);
+    const secondLoan = secondBorrowing.body as { id: number; status: string };
+
     await request(app.getHttpServer())
       .post('/loans')
       .set('Authorization', authorization)
@@ -221,10 +234,64 @@ describe('AppController (e2e)', () => {
       .expect(409);
 
     await request(app.getHttpServer())
-      .get(`/books?title=atomic&available=false&minRating=4`)
+      .get(`/books?title=atomic&available=false&minRating=4&page=1&limit=1`)
       .expect(200)
-      .expect(({ body }: { body: Array<{ id: string }> }) => {
-        expect(body.some((book) => book.id === bookId)).toBe(true);
+      .expect(
+        ({
+          body,
+        }: {
+          body: {
+            data: Array<{ id: string; availableCopies: number }>;
+            meta: { page: number; limit: number; total: number };
+          };
+        }) => {
+          expect(body.data).toContainEqual(
+            expect.objectContaining({ id: bookId, availableCopies: 0 }),
+          );
+          expect(body.meta).toMatchObject({ page: 1, limit: 1, total: 1 });
+        },
+      );
+
+    await request(app.getHttpServer())
+      .get('/books/recommend?page=1&limit=5')
+      .expect(200)
+      .expect(({ body }: { body: { data: unknown[]; meta: object } }) => {
+        expect(body.data).toBeInstanceOf(Array);
+        expect(body.meta).toBeDefined();
+      });
+
+    const createdReview = await request(app.getHttpServer())
+      .post(`/books/${bookId}/reviews`)
+      .set('Authorization', authorization)
+      .send({ rating: 5, comment: 'Excellent inventory test' })
+      .expect(201);
+    const review = createdReview.body as { id: number };
+
+    await request(app.getHttpServer())
+      .post(`/books/${bookId}/reviews`)
+      .set('Authorization', authorization)
+      .send({ rating: 4 })
+      .expect(409);
+
+    await request(app.getHttpServer())
+      .patch(`/reviews/${review.id}`)
+      .set('Authorization', authorization)
+      .send({ rating: 4, comment: 'Updated review' })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get(`/books/${bookId}`)
+      .expect(200)
+      .expect(({ body }: { body: { rating: number; reviewCount: number } }) => {
+        expect(body.rating).toBe(4);
+        expect(body.reviewCount).toBe(1);
+      });
+
+    await request(app.getHttpServer())
+      .get(`/books/${bookId}/reviews`)
+      .expect(200)
+      .expect(({ body }: { body: Array<{ id: number }> }) => {
+        expect(body).toContainEqual(expect.objectContaining({ id: review.id }));
       });
 
     await request(app.getHttpServer())
@@ -245,6 +312,11 @@ describe('AppController (e2e)', () => {
       .expect(200);
     const adminBody = adminLogin.body as AuthTokenPair;
     const adminAuthorization = `Bearer ${adminBody.accessToken}`;
+
+    await request(app.getHttpServer())
+      .delete(`/books/${bookId}`)
+      .set('Authorization', adminAuthorization)
+      .expect(409);
 
     await request(app.getHttpServer())
       .get('/admin/dashboard')
@@ -272,13 +344,30 @@ describe('AppController (e2e)', () => {
       );
 
     await request(app.getHttpServer())
+      .patch(`/loans/${secondLoan.id}/return`)
+      .set('Authorization', adminAuthorization)
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .delete(`/reviews/${review.id}`)
+      .set('Authorization', adminAuthorization)
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .delete(`/books/${bookId}`)
+      .set('Authorization', adminAuthorization)
+      .expect(200);
+
+    await request(app.getHttpServer()).get(`/books/${bookId}`).expect(404);
+
+    await request(app.getHttpServer())
       .get('/admin/categories/statistics')
       .set('Authorization', adminAuthorization)
       .expect(200)
       .expect(
         ({ body }: { body: Array<{ id: string; booksCount: number }> }) => {
           expect(body).toContainEqual(
-            expect.objectContaining({ id: categoryId, booksCount: 1 }),
+            expect.objectContaining({ id: categoryId, booksCount: 0 }),
           );
         },
       );
@@ -289,6 +378,7 @@ describe('AppController (e2e)', () => {
       const authorId = `loan-author-${testResourceSuffix}`;
       const categoryId = `loan-category-${testResourceSuffix}`;
       const bookId = `loan-book-${testResourceSuffix}`;
+      await prisma.review.deleteMany({ where: { bookId } });
       await prisma.loan.deleteMany({ where: { bookId } });
       await prisma.book.deleteMany({ where: { id: bookId } });
       await prisma.category.deleteMany({ where: { id: categoryId } });

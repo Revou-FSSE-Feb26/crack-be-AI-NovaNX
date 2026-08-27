@@ -29,6 +29,7 @@ import { ErrorResponseDto } from '../common/dto/error-response.dto';
 import { BooksService } from './books.service';
 import {
   BookDetailResponseDto,
+  PaginatedBooksResponseDto,
   BookResponseDto,
 } from './dto/book-response.dto';
 import { CreateBookDto } from './dto/create-book.dto';
@@ -73,10 +74,17 @@ export class BooksController {
   @ApiOperation({ summary: 'List all books with author and category' })
   @ApiOkResponse({
     description: 'Books returned successfully',
-    type: [BookDetailResponseDto],
+    type: PaginatedBooksResponseDto,
   })
   findAll(@Query() query: QueryBooksDto) {
     return this.booksService.findAll(query);
+  }
+
+  @Get('recommend')
+  @ApiOperation({ summary: 'Get top-rated book recommendations' })
+  @ApiOkResponse({ type: PaginatedBooksResponseDto })
+  findRecommended(@Query() query: QueryBooksDto) {
+    return this.booksService.findRecommended(query);
   }
 
   @Get(':id')
@@ -115,6 +123,10 @@ export class BooksController {
     description: 'Book was not found',
     type: ErrorResponseDto,
   })
+  @ApiConflictResponse({
+    description: 'Total copies would be lower than active loans',
+    type: ErrorResponseDto,
+  })
   @Roles(Role.ADMIN)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Patch(':id')
@@ -123,7 +135,9 @@ export class BooksController {
   }
 
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Delete a book (admin only)' })
+  @ApiOperation({
+    summary: 'Delete/archive a book when it has no active loans (admin only)',
+  })
   @ApiOkResponse({
     description: 'Deleted book',
     type: BookResponseDto,
@@ -138,6 +152,10 @@ export class BooksController {
   })
   @ApiNotFoundResponse({
     description: 'Book was not found',
+    type: ErrorResponseDto,
+  })
+  @ApiConflictResponse({
+    description: 'Book still has one or more active loans',
     type: ErrorResponseDto,
   })
   @Roles(Role.ADMIN)

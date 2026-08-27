@@ -31,6 +31,7 @@ model User {
   role             Role     @default(USER)
   refreshTokenHash String?
   loans            Loan[]
+  reviews          Review[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -59,21 +60,41 @@ model Category {
 }
 
 model Book {
-  id             String   @id
-  title          String
-  rating         Float    @default(0)
-  coverClassName String?
-  authorId       String
-  categoryId     String
-  isAvailable    Boolean  @default(true)
-  author         Author   @relation(fields: [authorId], references: [id])
-  category       Category @relation(fields: [categoryId], references: [id])
-  loans          Loan[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String    @id
+  title           String
+  rating          Float     @default(0)
+  coverClassName  String?
+  authorId        String
+  categoryId      String
+  isAvailable     Boolean   @default(true)
+  totalCopies     Int       @default(1)
+  availableCopies Int       @default(1)
+  deletedAt       DateTime?
+  author          Author    @relation(fields: [authorId], references: [id])
+  category        Category  @relation(fields: [categoryId], references: [id])
+  loans           Loan[]
+  reviews         Review[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([authorId])
   @@index([categoryId])
+  @@index([deletedAt])
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  bookId    String
+  rating    Int
+  comment   String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, bookId])
+  @@index([bookId])
 }
 
 model Loan {

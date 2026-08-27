@@ -236,8 +236,10 @@
                   "pm.test('Status code is 200', function () {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "pm.test('Response is an array', function () {",
-                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "pm.test('Response contains paginated data', function () {",
+                  "  const response = pm.response.json();",
+                  "  pm.expect(response.data).to.be.an('array');",
+                  "  pm.expect(response.meta).to.include.keys('page', 'limit', 'total', 'totalPages');",
                   "});"
                 ]
               }
@@ -2914,12 +2916,13 @@
                       "pm.test('Status code is 200', function () {",
                       "  pm.response.to.have.status(200);",
                       "});",
-                      "const books = pm.response.json();",
+                      "const response = pm.response.json();",
+                      "const books = response.data;",
                       "pm.test('At least one seeded book exists', function () {",
                       "  pm.expect(books.length).to.be.above(0);",
                       "});",
                       "const availableBook = books.find(function (book) { return book.isAvailable; });",
-                      "if (availableBook) { pm.collectionVariables.set('loanBookId', availableBook.id); }",
+                      "if (availableBook) { pm.collectionVariables.set('loanBookId', availableBook.id); pm.collectionVariables.set('originalBookRating', availableBook.rating); }",
                       "pm.test('Seeded books have resolved author and category names', function () {",
                       "  const sample = books[0];",
                       "  pm.expect(sample.author).to.be.an('object');",
@@ -3037,6 +3040,250 @@
                   "raw": "{{baseUrl}}/loans",
                   "host": ["{{baseUrl}}"],
                   "path": ["loans"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Book Recommendations with Pagination (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "const response = pm.response.json();",
+                      "pm.expect(response.data).to.be.an('array');",
+                      "pm.expect(response.meta.page).to.eql(1);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/books/recommend?page=1&limit=5",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books", "recommend"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "5" }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Review (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.collectionVariables.set('reviewId', pm.response.json().id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"rating\":5,\"comment\":\"Postman review lifecycle\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/books/{{loanBookId}}/reviews",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books", "{{loanBookId}}", "reviews"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Duplicate Review (409)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 409', function () { pm.response.to.have.status(409); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"rating\":4}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/books/{{loanBookId}}/reviews",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books", "{{loanBookId}}", "reviews"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List Book Reviews (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.expect(pm.response.json()).to.be.an('array').and.not.empty;"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/books/{{loanBookId}}/reviews",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books", "{{loanBookId}}", "reviews"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Own Review (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.expect(pm.response.json().rating).to.eql(4);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"rating\":4,\"comment\":\"Updated Postman review\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/reviews/{{reviewId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["reviews", "{{reviewId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Book Detail Includes Reviews and Inventory (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "const book = pm.response.json();",
+                      "pm.expect(book.reviewCount).to.be.above(0);",
+                      "pm.expect(book.reviews).to.be.an('array').and.not.empty;",
+                      "pm.expect(book.totalCopies).to.be.a('number');",
+                      "pm.expect(book.availableCopies).to.be.a('number');"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/books/{{loanBookId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books", "{{loanBookId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Own Review (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/reviews/{{reviewId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["reviews", "{{reviewId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Restore Seeded Book Rating (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"rating\":{{originalBookRating}}}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/books/{{loanBookId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books", "{{loanBookId}}"]
                 }
               },
               "response": []

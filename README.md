@@ -18,7 +18,7 @@ The Swagger UI documents every endpoint (request/response shapes, DTOs, status c
 - Base NestJS application
 - Prisma 7 configuration and generated client (CommonJS output via `moduleFormat = "cjs"`)
 - PostgreSQL datasource using `DATABASE_URL`, connected through `@prisma/adapter-pg`
-- Normalized `User`, `Author`, `Category`, `Book`, and `Loan` models with PK/FK/UNIQUE/CHECK constraints and migrations
+- Normalized `User`, `Author`, `Category`, `Book`, `Loan`, and `Review` models with PK/FK/UNIQUE/CHECK constraints and migrations
 - Seed data for authors, categories, and books
 - Full CRUD REST endpoints for `authors`, `categories`, and `books`
 - Repository pattern: each module's service depends on an abstract `*Repository` class (a DI token), implemented by a Prisma-backed repository (`Prisma*Repository`) that wraps the shared `PrismaService`
@@ -31,7 +31,9 @@ The Swagger UI documents every endpoint (request/response shapes, DTOs, status c
 - GitHub Actions production gate covering dependency audit, migrations, lint, build, unit tests, e2e tests, and the complete Newman regression suite against an isolated PostgreSQL service
 - Role-based access control (RBAC): `User.role` (`USER` / `ADMIN`), included in the JWT payload, enforced via a `RolesGuard` + `@Roles()` decorator
 - Self-service account endpoints use the authenticated JWT identity: `GET/PATCH/DELETE /me` and `PATCH /me/password`. Admin account management remains under `/users`, and every `/users` endpoint is admin-only. Password and role changes use dedicated DTOs/endpoints to prevent privilege escalation through mass assignment.
-- Atomic loan lifecycle: authenticated users borrow/return books under `/loans`; a transaction plus a partial unique database index prevents two active loans for one book.
+- Atomic loan lifecycle: authenticated users borrow/return books under `/loans`; conditional inventory updates prevent over-borrowing while allowing concurrent loans up to `totalCopies`.
+- Paginated catalog and rating-based recommendations; inventory counters allow multiple copies of a title to be loaned concurrently.
+- One review per user/book with owner/admin moderation and transactional book-rating recalculation.
 - Admin dashboard and aggregate author/category statistics, plus documented filtering, sorting, relational, aggregation, grouping, and zero-result relation-count queries.
 - Default `GET /` endpoint returning `Hello World!`
 - Unit and end-to-end tests for the default endpoint
@@ -110,15 +112,16 @@ npm run prisma:seed
 
 ### Models
 
-| Model      | Notes                                                                                                           |
-| ---------- | --------------------------------------------------------------------------------------------------------------- |
-| `User`     | `id` (auto-increment), `fullName`, `email` (unique), bcrypt password hash, role, refresh-token hash, timestamps |
-| `Author`   | `id` (string), `name` (unique), `booksCount`, `borrowedBooksCount`, `rating`, `avatarPath`, timestamps          |
-| `Category` | `id` (string), `name` (unique), `slug` (unique), `subtitle`, `iconPath`, timestamps                             |
-| `Book`     | `id`, title, constrained rating, availability, author/category foreign keys, timestamps                         |
-| `Loan`     | `id`, user/book foreign keys, status, borrowed/due/returned dates; one active loan per book                     |
+| Model      | Notes                                                                                                             |
+| ---------- | ----------------------------------------------------------------------------------------------------------------- |
+| `User`     | `id` (auto-increment), `fullName`, `email` (unique), bcrypt password hash, role, refresh-token hash, timestamps   |
+| `Author`   | `id` (string), `name` (unique), `booksCount`, `borrowedBooksCount`, `rating`, `avatarPath`, timestamps            |
+| `Category` | `id` (string), `name` (unique), `slug` (unique), `subtitle`, `iconPath`, timestamps                               |
+| `Book`     | `id`, title, derived rating, total/available copies, soft-delete marker, author/category foreign keys, timestamps |
+| `Loan`     | `id`, user/book foreign keys, status, borrowed/due/returned dates                                                 |
+| `Review`   | `id`, user/book foreign keys, rating 1–5, optional comment; unique per user/book                                  |
 
-`Author` and `Category` each have a one-to-many relation to `Book`; `User` and `Book` each have a one-to-many relation to `Loan`. See [`nexread-api/docs/database-queries.md`](nexread-api/docs/database-queries.md) for eight concrete relational/query techniques used by the application.
+`Author` and `Category` each have a one-to-many relation to `Book`; `User` and `Book` each have one-to-many relations to `Loan` and `Review`. See [`nexread-api/docs/database-queries.md`](nexread-api/docs/database-queries.md) for concrete relational/query techniques used by the application.
 
 ### Entity Relationship Diagram
 
@@ -128,6 +131,8 @@ npm run prisma:seed
 - `Category` (1) → `Book` (N) via `Book.categoryId`
 - `User` (1) → `Loan` (N) via `Loan.userId`
 - `Book` (1) → `Loan` (N) via `Loan.bookId`
+- `User` (1) → `Review` (N) via `Review.userId`
+- `Book` (1) → `Review` (N) via `Review.bookId`
 
 ## Running the Application
 
@@ -149,45 +154,50 @@ By default, the API runs at `http://localhost:3000`. The interactive Swagger API
 
 ### Available Endpoints
 
-| Method | Path                           | Description                                    | Auth required      |
-| ------ | ------------------------------ | ---------------------------------------------- | ------------------ |
-| GET    | `/`                            | Health check (`Hello World!`)                  | No                 |
-| GET    | `/health/live`                 | Process liveness probe                         | No                 |
-| GET    | `/health/ready`                | API and database readiness probe               | No                 |
-| POST   | `/auth/register`               | Register a new user                            | No                 |
-| POST   | `/auth/login`                  | Authenticate and return an access/refresh pair | No                 |
-| POST   | `/auth/refresh`                | Rotate a refresh token and return a new pair   | No (refresh token) |
-| POST   | `/auth/logout`                 | Revoke the current user's refresh token        | Yes (Bearer)       |
-| GET    | `/authors`                     | List all authors                               | No                 |
-| GET    | `/authors/:id`                 | Get a single author                            | No                 |
-| POST   | `/authors`                     | Create an author                               | Yes (Admin only)   |
-| PATCH  | `/authors/:id`                 | Update an author                               | Yes (Admin only)   |
-| DELETE | `/authors/:id`                 | Delete an author                               | Yes (Admin only)   |
-| GET    | `/categories`                  | List all categories                            | No                 |
-| GET    | `/categories/:id`              | Get a single category                          | No                 |
-| POST   | `/categories`                  | Create a category                              | Yes (Admin only)   |
-| PATCH  | `/categories/:id`              | Update a category                              | Yes (Admin only)   |
-| DELETE | `/categories/:id`              | Delete a category                              | Yes (Admin only)   |
-| GET    | `/books`                       | List all books (includes author and category)  | No                 |
-| GET    | `/books/:id`                   | Get a single book                              | No                 |
-| POST   | `/books`                       | Create a book                                  | Yes (Admin only)   |
-| PATCH  | `/books/:id`                   | Update a book                                  | Yes (Admin only)   |
-| DELETE | `/books/:id`                   | Delete a book                                  | Yes (Admin only)   |
-| GET    | `/me`                          | Get the authenticated user's profile           | Yes                |
-| PATCH  | `/me`                          | Update the authenticated user's name/email     | Yes                |
-| PATCH  | `/me/password`                 | Change the authenticated user's password       | Yes                |
-| DELETE | `/me`                          | Delete the authenticated user's account        | Yes                |
-| GET    | `/users`                       | List all users                                 | Yes (Admin only)   |
-| GET    | `/users/:id`                   | Get a user by id                               | Yes (Admin only)   |
-| PATCH  | `/users/:id/role`              | Promote/demote a user's role                   | Yes (Admin only)   |
-| DELETE | `/users/:id`                   | Delete a user                                  | Yes (Admin only)   |
-| POST   | `/loans`                       | Borrow an available book                       | Yes                |
-| GET    | `/loans`                       | List the authenticated user's loans            | Yes                |
-| PATCH  | `/loans/:id/return`            | Return the authenticated user's loan           | Yes                |
-| GET    | `/admin/loans`                 | List every loan                                | Yes (Admin only)   |
-| GET    | `/admin/dashboard`             | Aggregate operational metrics                  | Yes (Admin only)   |
-| GET    | `/admin/authors/statistics`    | Book count/rating per author                   | Yes (Admin only)   |
-| GET    | `/admin/categories/statistics` | Book count including empty categories          | Yes (Admin only)   |
+| Method | Path                           | Description                                     | Auth required      |
+| ------ | ------------------------------ | ----------------------------------------------- | ------------------ |
+| GET    | `/`                            | Health check (`Hello World!`)                   | No                 |
+| GET    | `/health/live`                 | Process liveness probe                          | No                 |
+| GET    | `/health/ready`                | API and database readiness probe                | No                 |
+| POST   | `/auth/register`               | Register a new user                             | No                 |
+| POST   | `/auth/login`                  | Authenticate and return an access/refresh pair  | No                 |
+| POST   | `/auth/refresh`                | Rotate a refresh token and return a new pair    | No (refresh token) |
+| POST   | `/auth/logout`                 | Revoke the current user's refresh token         | Yes (Bearer)       |
+| GET    | `/authors`                     | List all authors                                | No                 |
+| GET    | `/authors/:id`                 | Get a single author                             | No                 |
+| POST   | `/authors`                     | Create an author                                | Yes (Admin only)   |
+| PATCH  | `/authors/:id`                 | Update an author                                | Yes (Admin only)   |
+| DELETE | `/authors/:id`                 | Delete an author                                | Yes (Admin only)   |
+| GET    | `/categories`                  | List all categories                             | No                 |
+| GET    | `/categories/:id`              | Get a single category                           | No                 |
+| POST   | `/categories`                  | Create a category                               | Yes (Admin only)   |
+| PATCH  | `/categories/:id`              | Update a category                               | Yes (Admin only)   |
+| DELETE | `/categories/:id`              | Delete a category                               | Yes (Admin only)   |
+| GET    | `/books`                       | Paginated/filterable books with author/category | No                 |
+| GET    | `/books/recommend`             | Paginated recommendations ordered by rating     | No                 |
+| GET    | `/books/:id`                   | Book detail with inventory and reviews          | No                 |
+| POST   | `/books`                       | Create a book                                   | Yes (Admin only)   |
+| PATCH  | `/books/:id`                   | Update a book                                   | Yes (Admin only)   |
+| DELETE | `/books/:id`                   | Delete/archive unless it has active loans       | Yes (Admin only)   |
+| GET    | `/books/:bookId/reviews`       | List a book's reviews                           | No                 |
+| POST   | `/books/:bookId/reviews`       | Review a book once                              | Yes                |
+| PATCH  | `/reviews/:id`                 | Update own review (or moderate as admin)        | Yes                |
+| DELETE | `/reviews/:id`                 | Delete own review (or moderate as admin)        | Yes                |
+| GET    | `/me`                          | Get the authenticated user's profile            | Yes                |
+| PATCH  | `/me`                          | Update the authenticated user's name/email      | Yes                |
+| PATCH  | `/me/password`                 | Change the authenticated user's password        | Yes                |
+| DELETE | `/me`                          | Delete the authenticated user's account         | Yes                |
+| GET    | `/users`                       | List all users                                  | Yes (Admin only)   |
+| GET    | `/users/:id`                   | Get a user by id                                | Yes (Admin only)   |
+| PATCH  | `/users/:id/role`              | Promote/demote a user's role                    | Yes (Admin only)   |
+| DELETE | `/users/:id`                   | Delete a user                                   | Yes (Admin only)   |
+| POST   | `/loans`                       | Borrow an available book                        | Yes                |
+| GET    | `/loans`                       | List the authenticated user's loans             | Yes                |
+| PATCH  | `/loans/:id/return`            | Return the authenticated user's loan            | Yes                |
+| GET    | `/admin/loans`                 | List every loan                                 | Yes (Admin only)   |
+| GET    | `/admin/dashboard`             | Aggregate operational metrics                   | Yes (Admin only)   |
+| GET    | `/admin/authors/statistics`    | Book count/rating per author                    | Yes (Admin only)   |
+| GET    | `/admin/categories/statistics` | Book count including empty categories           | Yes (Admin only)   |
 
 Protected routes require an `Authorization: Bearer <accessToken>` header with a token obtained from `POST /auth/login`, `/auth/register`, or `/auth/refresh`; unauthenticated requests receive `401 Unauthorized`. When the access token expires, send `{ "refreshToken": "..." }` to `POST /auth/refresh`, replace both locally stored tokens with the returned pair, and retry the original request once. Refresh tokens are rotated, so a previously used token is rejected. Only one refresh-token session is active per user; a new login invalidates the previous refresh token. `POST /auth/logout` revokes the stored refresh token, while the short-lived access token remains valid until its expiry; the frontend must discard both tokens immediately. Password and role changes also revoke the refresh token. `/me` always derives the target user from the authenticated JWT and does not accept a user id. Every `/users` route requires the `ADMIN` role; authenticated users with the `USER` role receive `403 Forbidden`. Request bodies are validated against each resource's DTO; invalid or unknown fields are rejected/stripped by the global `ValidationPipe`.
 
