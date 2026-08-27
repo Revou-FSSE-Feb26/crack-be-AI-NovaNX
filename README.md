@@ -18,7 +18,7 @@ The Swagger UI documents every endpoint (request/response shapes, DTOs, status c
 - Base NestJS application
 - Prisma 7 configuration and generated client (CommonJS output via `moduleFormat = "cjs"`)
 - PostgreSQL datasource using `DATABASE_URL`, connected through `@prisma/adapter-pg`
-- `User`, `Author`, `Category`, and `Book` models with migrations
+- Normalized `User`, `Author`, `Category`, `Book`, and `Loan` models with PK/FK/UNIQUE/CHECK constraints and migrations
 - Seed data for authors, categories, and books
 - Full CRUD REST endpoints for `authors`, `categories`, and `books`
 - Repository pattern: each module's service depends on an abstract `*Repository` class (a DI token), implemented by a Prisma-backed repository (`Prisma*Repository`) that wraps the shared `PrismaService`
@@ -30,7 +30,9 @@ The Swagger UI documents every endpoint (request/response shapes, DTOs, status c
 - Separate `GET /health/live` and database-aware `GET /health/ready` probes; Railway only promotes a deployment after the readiness probe succeeds
 - GitHub Actions production gate covering dependency audit, migrations, lint, build, unit tests, e2e tests, and the complete Newman regression suite against an isolated PostgreSQL service
 - Role-based access control (RBAC): `User.role` (`USER` / `ADMIN`), included in the JWT payload, enforced via a `RolesGuard` + `@Roles()` decorator
-- `GET/PATCH/DELETE /users/:id` endpoints allow a user to manage their own account, or an admin to manage any account; `GET /users` (list) and `PATCH /users/:id/role` (promote/demote) are admin-only. The `role` field can never be set through the self-service update DTO (or through registration) — only through the dedicated admin-only role endpoint — to prevent privilege-escalation via mass assignment
+- Self-service account endpoints use the authenticated JWT identity: `GET/PATCH/DELETE /me` and `PATCH /me/password`. Admin account management remains under `/users`, and every `/users` endpoint is admin-only. Password and role changes use dedicated DTOs/endpoints to prevent privilege escalation through mass assignment.
+- Atomic loan lifecycle: authenticated users borrow/return books under `/loans`; a transaction plus a partial unique database index prevents two active loans for one book.
+- Admin dashboard and aggregate author/category statistics, plus documented filtering, sorting, relational, aggregation, grouping, and zero-result relation-count queries.
 - Default `GET /` endpoint returning `Hello World!`
 - Unit and end-to-end tests for the default endpoint
 
@@ -72,6 +74,7 @@ JWT_SECRET="replace-with-a-long-random-secret"
 JWT_EXPIRES_IN="15m"
 JWT_REFRESH_SECRET="replace-with-a-different-long-random-secret"
 JWT_REFRESH_EXPIRES_IN="7d"
+FRONTEND_URL="http://localhost:3000"
 RATE_LIMIT_TTL_MS="60000"
 RATE_LIMIT_MAX="120"
 AUTH_REGISTER_RATE_LIMIT_MAX="10"
@@ -81,7 +84,7 @@ ADMIN_SEED_EMAIL="admin@example.com"
 ADMIN_SEED_PASSWORD="replace-with-a-strong-password"
 ```
 
-Replace the placeholders with your PostgreSQL connection details. `JWT_SECRET` signs access tokens; `JWT_REFRESH_SECRET` is a separate required secret for refresh tokens and must not reuse the access-token secret. `JWT_EXPIRES_IN` is optional (defaults to `15m`) and `JWT_REFRESH_EXPIRES_IN` is optional (defaults to `7d`); both accept [`ms`](https://github.com/vercel/ms) durations such as `15m`, `1h`, or `7d`. `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` are optional — if set, `npm run prisma:seed` creates (or promotes/updates) that account as an `ADMIN`; if unset, the admin seed step is skipped with a warning instead of falling back to an insecure default credential. The `.env` file is ignored by Git and must not be committed.
+Replace the placeholders with your PostgreSQL connection details. `JWT_SECRET` signs access tokens; `JWT_REFRESH_SECRET` is a separate required secret for refresh tokens and must not reuse the access-token secret. `JWT_EXPIRES_IN` is optional (defaults to `15m`) and `JWT_REFRESH_EXPIRES_IN` is optional (defaults to `7d`); both accept [`ms`](https://github.com/vercel/ms) durations such as `15m`, `1h`, or `7d`. `FRONTEND_URL` is the CORS allowlist (comma-separated when multiple origins are needed) and is required in production. `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` are optional — if set, `npm run prisma:seed` creates (or promotes/updates) that account as an `ADMIN`; if unset, the admin seed step is skipped with a warning instead of falling back to an insecure default credential. The `.env` file is ignored by Git and must not be committed.
 
 Startup fails fast when required URLs/secrets or optional duration/rate-limit values are invalid. Production JWT secrets must be different and contain at least 32 characters. Rate limits default to 120 requests/minute globally, 10 registrations/minute, 10 login attempts/minute, and 20 refresh attempts/minute per client IP. The built-in throttler store is suitable for the current single API replica; configure shared storage such as Redis before scaling to multiple replicas.
 
@@ -107,14 +110,15 @@ npm run prisma:seed
 
 ### Models
 
-| Model      | Notes                                                                                                  |
-| ---------- | ------------------------------------------------------------------------------------------------------ |
-| `User`     | `id` (auto-increment), `fullName`, `email` (unique), `password`, timestamps                            |
-| `Author`   | `id` (string), `name` (unique), `booksCount`, `borrowedBooksCount`, `rating`, `avatarPath`, timestamps |
-| `Category` | `id` (string), `name` (unique), `slug` (unique), `subtitle`, `iconPath`, timestamps                    |
-| `Book`     | `id` (string), `title`, `rating`, `coverClassName`, `authorId`, `categoryId`, timestamps               |
+| Model      | Notes                                                                                                           |
+| ---------- | --------------------------------------------------------------------------------------------------------------- |
+| `User`     | `id` (auto-increment), `fullName`, `email` (unique), bcrypt password hash, role, refresh-token hash, timestamps |
+| `Author`   | `id` (string), `name` (unique), `booksCount`, `borrowedBooksCount`, `rating`, `avatarPath`, timestamps          |
+| `Category` | `id` (string), `name` (unique), `slug` (unique), `subtitle`, `iconPath`, timestamps                             |
+| `Book`     | `id`, title, constrained rating, availability, author/category foreign keys, timestamps                         |
+| `Loan`     | `id`, user/book foreign keys, status, borrowed/due/returned dates; one active loan per book                     |
 
-`Author` and `Category` each have a one-to-many relation to `Book`.
+`Author` and `Category` each have a one-to-many relation to `Book`; `User` and `Book` each have a one-to-many relation to `Loan`. See [`nexread-api/docs/database-queries.md`](nexread-api/docs/database-queries.md) for eight concrete relational/query techniques used by the application.
 
 ### Entity Relationship Diagram
 
@@ -122,7 +126,8 @@ npm run prisma:seed
 
 - `Author` (1) → `Book` (N) via `Book.authorId`
 - `Category` (1) → `Book` (N) via `Book.categoryId`
-- `User` has no relations to other models; it has its own CRUD endpoints under `/users` (see below), separate from `/auth/register` and `/auth/login`.
+- `User` (1) → `Loan` (N) via `Loan.userId`
+- `Book` (1) → `Loan` (N) via `Loan.bookId`
 
 ## Running the Application
 
@@ -144,37 +149,47 @@ By default, the API runs at `http://localhost:3000`. The interactive Swagger API
 
 ### Available Endpoints
 
-| Method | Path              | Description                                       | Auth required       |
-| ------ | ----------------- | ------------------------------------------------- | ------------------- |
-| GET    | `/`               | Health check (`Hello World!`)                     | No                  |
-| GET    | `/health/live`     | Process liveness probe                            | No                  |
-| GET    | `/health/ready`    | API and database readiness probe                  | No                  |
-| POST   | `/auth/register`  | Register a new user                               | No                  |
-| POST   | `/auth/login`     | Authenticate and return an access/refresh pair    | No                  |
-| POST   | `/auth/refresh`   | Rotate a refresh token and return a new pair      | No (refresh token)  |
-| POST   | `/auth/logout`    | Revoke the current user's refresh token           | Yes (Bearer)        |
-| GET    | `/authors`        | List all authors                                  | No                  |
-| GET    | `/authors/:id`    | Get a single author                               | No                  |
-| POST   | `/authors`        | Create an author                                  | Yes (Admin only)    |
-| PATCH  | `/authors/:id`    | Update an author                                  | Yes (Admin only)    |
-| DELETE | `/authors/:id`    | Delete an author                                  | Yes (Admin only)    |
-| GET    | `/categories`     | List all categories                               | No                  |
-| GET    | `/categories/:id` | Get a single category                             | No                  |
-| POST   | `/categories`     | Create a category                                 | Yes (Admin only)    |
-| PATCH  | `/categories/:id` | Update a category                                 | Yes (Admin only)    |
-| DELETE | `/categories/:id` | Delete a category                                 | Yes (Admin only)    |
-| GET    | `/books`          | List all books (includes author and category)     | No                  |
-| GET    | `/books/:id`      | Get a single book                                 | No                  |
-| POST   | `/books`          | Create a book                                     | Yes (Admin only)    |
-| PATCH  | `/books/:id`      | Update a book                                     | Yes (Admin only)    |
-| DELETE | `/books/:id`      | Delete a book                                     | Yes (Admin only)    |
-| GET    | `/users`          | List all users                                    | Yes (Admin only)    |
-| GET    | `/users/:id`      | Get a single user                                 | Yes (Self or Admin) |
-| PATCH  | `/users/:id`      | Update a user's own profile (name/email/password) | Yes (Self or Admin) |
-| PATCH  | `/users/:id/role` | Promote/demote a user's role                      | Yes (Admin only)    |
-| DELETE | `/users/:id`      | Delete a user                                     | Yes (Self or Admin) |
+| Method | Path                           | Description                                    | Auth required      |
+| ------ | ------------------------------ | ---------------------------------------------- | ------------------ |
+| GET    | `/`                            | Health check (`Hello World!`)                  | No                 |
+| GET    | `/health/live`                 | Process liveness probe                         | No                 |
+| GET    | `/health/ready`                | API and database readiness probe               | No                 |
+| POST   | `/auth/register`               | Register a new user                            | No                 |
+| POST   | `/auth/login`                  | Authenticate and return an access/refresh pair | No                 |
+| POST   | `/auth/refresh`                | Rotate a refresh token and return a new pair   | No (refresh token) |
+| POST   | `/auth/logout`                 | Revoke the current user's refresh token        | Yes (Bearer)       |
+| GET    | `/authors`                     | List all authors                               | No                 |
+| GET    | `/authors/:id`                 | Get a single author                            | No                 |
+| POST   | `/authors`                     | Create an author                               | Yes (Admin only)   |
+| PATCH  | `/authors/:id`                 | Update an author                               | Yes (Admin only)   |
+| DELETE | `/authors/:id`                 | Delete an author                               | Yes (Admin only)   |
+| GET    | `/categories`                  | List all categories                            | No                 |
+| GET    | `/categories/:id`              | Get a single category                          | No                 |
+| POST   | `/categories`                  | Create a category                              | Yes (Admin only)   |
+| PATCH  | `/categories/:id`              | Update a category                              | Yes (Admin only)   |
+| DELETE | `/categories/:id`              | Delete a category                              | Yes (Admin only)   |
+| GET    | `/books`                       | List all books (includes author and category)  | No                 |
+| GET    | `/books/:id`                   | Get a single book                              | No                 |
+| POST   | `/books`                       | Create a book                                  | Yes (Admin only)   |
+| PATCH  | `/books/:id`                   | Update a book                                  | Yes (Admin only)   |
+| DELETE | `/books/:id`                   | Delete a book                                  | Yes (Admin only)   |
+| GET    | `/me`                          | Get the authenticated user's profile           | Yes                |
+| PATCH  | `/me`                          | Update the authenticated user's name/email     | Yes                |
+| PATCH  | `/me/password`                 | Change the authenticated user's password       | Yes                |
+| DELETE | `/me`                          | Delete the authenticated user's account        | Yes                |
+| GET    | `/users`                       | List all users                                 | Yes (Admin only)   |
+| GET    | `/users/:id`                   | Get a user by id                               | Yes (Admin only)   |
+| PATCH  | `/users/:id/role`              | Promote/demote a user's role                   | Yes (Admin only)   |
+| DELETE | `/users/:id`                   | Delete a user                                  | Yes (Admin only)   |
+| POST   | `/loans`                       | Borrow an available book                       | Yes                |
+| GET    | `/loans`                       | List the authenticated user's loans            | Yes                |
+| PATCH  | `/loans/:id/return`            | Return the authenticated user's loan           | Yes                |
+| GET    | `/admin/loans`                 | List every loan                                | Yes (Admin only)   |
+| GET    | `/admin/dashboard`             | Aggregate operational metrics                  | Yes (Admin only)   |
+| GET    | `/admin/authors/statistics`    | Book count/rating per author                   | Yes (Admin only)   |
+| GET    | `/admin/categories/statistics` | Book count including empty categories          | Yes (Admin only)   |
 
-Protected routes require an `Authorization: Bearer <accessToken>` header with a token obtained from `POST /auth/login`, `/auth/register`, or `/auth/refresh`; unauthenticated requests receive `401 Unauthorized`. When the access token expires, send `{ "refreshToken": "..." }` to `POST /auth/refresh`, replace both locally stored tokens with the returned pair, and retry the original request once. Refresh tokens are rotated, so a previously used token is rejected. Only one refresh-token session is active per user; a new login invalidates the previous refresh token. `POST /auth/logout` revokes the stored refresh token, while the short-lived access token remains valid until its expiry; the frontend must discard both tokens immediately. Password and role changes also revoke the refresh token. "Self or Admin" means the token's user must either match the `:id` in the path or have the `ADMIN` role, otherwise the request receives `403 Forbidden`. "Admin only" routes always require the `ADMIN` role regardless of `:id`; authenticated users with the `USER` role receive `403 Forbidden`. The `role` field can never be changed through `PATCH /users/:id` — only through the dedicated `PATCH /users/:id/role` admin endpoint. Request bodies are validated against each resource's DTO; invalid or unknown fields are rejected/stripped by the global `ValidationPipe`.
+Protected routes require an `Authorization: Bearer <accessToken>` header with a token obtained from `POST /auth/login`, `/auth/register`, or `/auth/refresh`; unauthenticated requests receive `401 Unauthorized`. When the access token expires, send `{ "refreshToken": "..." }` to `POST /auth/refresh`, replace both locally stored tokens with the returned pair, and retry the original request once. Refresh tokens are rotated, so a previously used token is rejected. Only one refresh-token session is active per user; a new login invalidates the previous refresh token. `POST /auth/logout` revokes the stored refresh token, while the short-lived access token remains valid until its expiry; the frontend must discard both tokens immediately. Password and role changes also revoke the refresh token. `/me` always derives the target user from the authenticated JWT and does not accept a user id. Every `/users` route requires the `ADMIN` role; authenticated users with the `USER` role receive `403 Forbidden`. Request bodies are validated against each resource's DTO; invalid or unknown fields are rejected/stripped by the global `ValidationPipe`.
 
 ## Testing
 
@@ -232,7 +247,7 @@ The API listens on `process.env.PORT` and is otherwise stateless, so it deploys 
 2. Set environment variables on the service:
    - `NODE_ENV=production` — enables structured JSON logging and production secret-strength validation.
    - `DATABASE_URL` — copy from the Railway Postgres plugin (Railway can also auto-inject this via a variable reference).
-   - `FRONTEND_URL` — the deployed frontend origin, so CORS only allows that origin. Leave unset to allow any origin.
+   - `FRONTEND_URL` — required deployed frontend origin (or comma-separated origins), so production CORS never falls back to accepting arbitrary websites.
    - `JWT_SECRET` — a long random secret used to sign/verify JWT access tokens. Required.
    - `JWT_EXPIRES_IN` — optional access token lifetime (defaults to `15m`).
    - `JWT_REFRESH_SECRET` — a different long random secret used to sign/verify refresh tokens. Required.
@@ -246,7 +261,7 @@ The API listens on `process.env.PORT` and is otherwise stateless, so it deploys 
    ```bash
    DATABASE_URL="<railway-postgres-url>" npm run prisma:seed
    ```
-   Do not add seeding to the start command — `create()` calls are not idempotent and will fail on unique constraints on subsequent deploys.
+   Do not add seeding to the start command. Although the current seed uses idempotent upserts, explicit seeding keeps deployment startup focused on migrations and avoids silently overwriting production catalog/admin seed records.
 
 ### Production operations checklist
 

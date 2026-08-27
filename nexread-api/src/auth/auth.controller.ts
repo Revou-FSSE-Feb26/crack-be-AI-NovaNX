@@ -30,7 +30,7 @@ import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import type { AuthenticatedRequest } from './interfaces/authenticated-request.interface';
 
-@ApiTags('auth')
+@ApiTags('Auth')
 @ApiTooManyRequestsResponse({
   description: 'Too many requests from this client',
   type: ErrorResponseDto,

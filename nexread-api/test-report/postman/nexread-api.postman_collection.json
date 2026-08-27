@@ -158,12 +158,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                ""
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": [""]
             }
           },
           "response": []
@@ -192,13 +188,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/health/live",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "health",
-                "live"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "live"]
             }
           },
           "response": []
@@ -228,13 +219,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/health/ready",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "health",
-                "ready"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "ready"]
             }
           },
           "response": []
@@ -262,12 +248,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/authors",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "authors"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["authors"]
             }
           },
           "response": []
@@ -295,12 +277,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/categories",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "categories"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["categories"]
             }
           },
           "response": []
@@ -328,12 +306,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/books",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "books"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["books"]
             }
           },
           "response": []
@@ -379,13 +353,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "register"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
             }
           },
           "response": []
@@ -429,13 +398,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
             }
           },
           "response": []
@@ -470,13 +434,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "refresh"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
             },
             "body": {
               "mode": "raw",
@@ -513,13 +472,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/logout",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "logout"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
             }
           },
           "response": []
@@ -547,13 +501,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "refresh"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
             },
             "body": {
               "mode": "raw",
@@ -589,14 +538,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/users/{{smokeUserId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users",
-                "{{smokeUserId}}"
-              ]
+              "raw": "{{baseUrl}}/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["me"]
             }
           },
           "response": []
@@ -646,13 +590,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/auth/register",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "auth",
-                    "register"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "register"]
                 }
               },
               "response": []
@@ -694,13 +633,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/auth/register",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "auth",
-                    "register"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "register"]
                 }
               },
               "response": []
@@ -742,13 +676,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/auth/register",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "auth",
-                    "register"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "register"]
                 }
               },
               "response": []
@@ -802,13 +731,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/auth/register",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "auth",
-                    "register"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "register"]
                 }
               },
               "response": []
@@ -859,13 +783,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/auth/login",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "auth",
-                    "login"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
                 }
               },
               "response": []
@@ -907,13 +826,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/auth/login",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "auth",
-                    "login"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
                 }
               },
               "response": []
@@ -955,13 +869,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/auth/login",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "auth",
-                    "login"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
                 }
               },
               "response": []
@@ -1003,13 +912,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/auth/register",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "auth",
-                    "register"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "register"]
                 }
               },
               "response": []
@@ -1043,13 +947,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/auth/refresh",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "auth",
-                    "refresh"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "refresh"]
                 },
                 "body": {
                   "mode": "raw",
@@ -1086,13 +985,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/auth/refresh",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "auth",
-                    "refresh"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "refresh"]
                 },
                 "body": {
                   "mode": "raw",
@@ -1136,13 +1030,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/auth/login",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "auth",
-                    "login"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
                 },
                 "body": {
                   "mode": "raw",
@@ -1182,13 +1071,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/auth/refresh",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "auth",
-                    "refresh"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "refresh"]
                 },
                 "body": {
                   "mode": "raw",
@@ -1225,13 +1109,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/auth/refresh",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "auth",
-                    "refresh"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "refresh"]
                 },
                 "body": {
                   "mode": "raw",
@@ -1293,12 +1172,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/authors",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "authors"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["authors"]
                     }
                   },
                   "response": []
@@ -1326,13 +1201,8 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/authors/{{authorId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "authors",
-                        "{{authorId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["authors", "{{authorId}}"]
                     }
                   },
                   "response": []
@@ -1378,13 +1248,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/authors/{{authorId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "authors",
-                        "{{authorId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["authors", "{{authorId}}"]
                     }
                   },
                   "response": []
@@ -1412,13 +1277,8 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/authors/{{authorId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "authors",
-                        "{{authorId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["authors", "{{authorId}}"]
                     }
                   },
                   "response": []
@@ -1448,13 +1308,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/authors/{{authorId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "authors",
-                        "{{authorId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["authors", "{{authorId}}"]
                     }
                   },
                   "response": []
@@ -1479,13 +1334,8 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/authors/{{authorId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "authors",
-                        "{{authorId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["authors", "{{authorId}}"]
                     }
                   },
                   "response": []
@@ -1534,12 +1384,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/categories",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "categories"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["categories"]
                     }
                   },
                   "response": []
@@ -1564,13 +1410,8 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/categories/{{categoryId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "categories",
-                        "{{categoryId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["categories", "{{categoryId}}"]
                     }
                   },
                   "response": []
@@ -1616,13 +1457,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/categories/{{categoryId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "categories",
-                        "{{categoryId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["categories", "{{categoryId}}"]
                     }
                   },
                   "response": []
@@ -1650,13 +1486,8 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/categories/{{categoryId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "categories",
-                        "{{categoryId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["categories", "{{categoryId}}"]
                     }
                   },
                   "response": []
@@ -1686,13 +1517,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/categories/{{categoryId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "categories",
-                        "{{categoryId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["categories", "{{categoryId}}"]
                     }
                   },
                   "response": []
@@ -1717,13 +1543,8 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/categories/{{categoryId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "categories",
-                        "{{categoryId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["categories", "{{categoryId}}"]
                     }
                   },
                   "response": []
@@ -1772,12 +1593,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/authors",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "authors"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["authors"]
                     }
                   },
                   "response": []
@@ -1821,12 +1638,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/categories",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "categories"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["categories"]
                     }
                   },
                   "response": []
@@ -1875,12 +1688,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/books",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "books"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["books"]
                     }
                   },
                   "response": []
@@ -1912,13 +1721,8 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/books/{{bookId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "books",
-                        "{{bookId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["books", "{{bookId}}"]
                     }
                   },
                   "response": []
@@ -1964,13 +1768,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/books/{{bookId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "books",
-                        "{{bookId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["books", "{{bookId}}"]
                     }
                   },
                   "response": []
@@ -2000,13 +1799,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/books/{{bookId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "books",
-                        "{{bookId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["books", "{{bookId}}"]
                     }
                   },
                   "response": []
@@ -2031,13 +1825,8 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/books/{{bookId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "books",
-                        "{{bookId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["books", "{{bookId}}"]
                     }
                   },
                   "response": []
@@ -2067,13 +1856,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/authors/{{bookTestAuthorId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "authors",
-                        "{{bookTestAuthorId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["authors", "{{bookTestAuthorId}}"]
                     }
                   },
                   "response": []
@@ -2103,13 +1887,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/categories/{{bookTestCategoryId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "categories",
-                        "{{bookTestCategoryId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["categories", "{{bookTestCategoryId}}"]
                     }
                   },
                   "response": []
@@ -2153,12 +1932,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/authors",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "authors"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors"]
                 }
               },
               "response": []
@@ -2195,12 +1970,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/books",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "books"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books"]
                 }
               },
               "response": []
@@ -2237,12 +2008,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/categories",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "categories"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories"]
                 }
               },
               "response": []
@@ -2279,13 +2046,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/authors/some-id",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "authors",
-                    "some-id"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors", "some-id"]
                 }
               },
               "response": []
@@ -2308,13 +2070,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/books/some-id",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "books",
-                    "some-id"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books", "some-id"]
                 }
               },
               "response": []
@@ -2355,12 +2112,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/categories",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "categories"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories"]
                 }
               },
               "response": []
@@ -2383,12 +2136,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/authors",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "authors"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors"]
                 }
               },
               "response": []
@@ -2435,12 +2184,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/authors",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "authors"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors"]
                 }
               },
               "response": []
@@ -2482,12 +2227,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/categories",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "categories"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories"]
                 }
               },
               "response": []
@@ -2533,12 +2274,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/books",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "books"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books"]
                 }
               },
               "response": []
@@ -2581,12 +2318,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/authors",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "authors"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors"]
                 }
               },
               "response": []
@@ -2629,12 +2362,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/authors",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "authors"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors"]
                 }
               },
               "response": []
@@ -2680,13 +2409,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/authors/does-not-exist-{{runId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "authors",
-                    "does-not-exist-{{runId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors", "does-not-exist-{{runId}}"]
                 }
               },
               "response": []
@@ -2716,13 +2440,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/authors/does-not-exist-{{runId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "authors",
-                    "does-not-exist-{{runId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors", "does-not-exist-{{runId}}"]
                 }
               },
               "response": []
@@ -2750,13 +2469,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/authors/{{errAuthorId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "authors",
-                    "{{errAuthorId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors", "{{errAuthorId}}"]
                 }
               },
               "response": []
@@ -2784,13 +2498,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/categories/{{errCategoryId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "categories",
-                    "{{errCategoryId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories", "{{errCategoryId}}"]
                 }
               },
               "response": []
@@ -2853,12 +2562,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/categories",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "categories"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories"]
                 }
               },
               "response": []
@@ -2886,13 +2591,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/categories/slug-seed-{{runId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "categories",
-                    "slug-seed-{{runId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories", "slug-seed-{{runId}}"]
                 }
               },
               "response": []
@@ -2934,12 +2634,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/authors",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "authors"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors"]
                 }
               },
               "response": []
@@ -2981,12 +2677,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/categories",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "categories"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories"]
                 }
               },
               "response": []
@@ -3028,12 +2720,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/books",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "books"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books"]
                 }
               },
               "response": []
@@ -3063,13 +2751,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/books/{{integrityBookId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "books",
-                    "{{integrityBookId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books", "{{integrityBookId}}"]
                 }
               },
               "response": []
@@ -3097,13 +2780,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/books/{{integrityBookId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "books",
-                    "{{integrityBookId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books", "{{integrityBookId}}"]
                 }
               },
               "response": []
@@ -3131,13 +2809,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/authors/{{integrityAuthorId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "authors",
-                    "{{integrityAuthorId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors", "{{integrityAuthorId}}"]
                 }
               },
               "response": []
@@ -3165,13 +2838,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/categories/{{integrityCategoryId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "categories",
-                    "{{integrityCategoryId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories", "{{integrityCategoryId}}"]
                 }
               },
               "response": []
@@ -3202,12 +2870,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/authors",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "authors"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["authors"]
                 }
               },
               "response": []
@@ -3233,12 +2897,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/categories",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "categories"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories"]
                 }
               },
               "response": []
@@ -3258,6 +2918,8 @@
                       "pm.test('At least one seeded book exists', function () {",
                       "  pm.expect(books.length).to.be.above(0);",
                       "});",
+                      "const availableBook = books.find(function (book) { return book.isAvailable; });",
+                      "if (availableBook) { pm.collectionVariables.set('loanBookId', availableBook.id); }",
                       "pm.test('Seeded books have resolved author and category names', function () {",
                       "  const sample = books[0];",
                       "  pm.expect(sample.author).to.be.an('object');",
@@ -3274,12 +2936,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/books",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "books"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["books"]
                 }
               },
               "response": []
@@ -3287,7 +2945,255 @@
           ]
         },
         {
-          "name": "10 - Session Cleanup",
+          "name": "10 - Loans and Admin Analytics",
+          "item": [
+            {
+              "name": "Borrow Available Book (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
+                      "const loan = pm.response.json();",
+                      "pm.expect(loan.status).to.eql('ACTIVE');",
+                      "pm.collectionVariables.set('loanId', loan.id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"bookId\":\"{{loanBookId}}\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/loans",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["loans"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Borrow Unavailable Book (409)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 409', function () { pm.response.to.have.status(409); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"bookId\":\"{{loanBookId}}\"}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/loans",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["loans"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List My Loans (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.expect(pm.response.json()).to.be.an('array');"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/loans",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["loans"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Admin Dashboard (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.expect(pm.response.json().activeLoans).to.be.a('number');"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/dashboard",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "dashboard"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Admin Author Statistics (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.expect(pm.response.json()).to.be.an('array');"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/authors/statistics",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "authors", "statistics"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Admin Category Statistics (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.expect(pm.response.json()).to.be.an('array');"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/categories/statistics",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "categories", "statistics"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Admin List All Loans (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "const loans = pm.response.json();",
+                      "pm.expect(loans).to.be.an('array');",
+                      "if (loans.length) { pm.expect(loans[0].user).not.to.have.property('password'); pm.expect(loans[0].user).not.to.have.property('refreshTokenHash'); }"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/loans",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "loans"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Return My Loan (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.expect(pm.response.json().status).to.eql('RETURNED');"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/loans/{{loanId}}/return",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["loans", "{{loanId}}", "return"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "11 - Session Cleanup",
           "item": [
             {
               "name": "Logout Admin - Revoke Refresh Token (204)",
@@ -3312,13 +3218,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/auth/logout",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "auth",
-                    "logout"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "logout"]
                 }
               },
               "response": []
@@ -3346,13 +3247,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/auth/refresh",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "auth",
-                    "refresh"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "refresh"]
                 },
                 "body": {
                   "mode": "raw",
@@ -3389,13 +3285,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/auth/logout",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "auth",
-                    "logout"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "logout"]
                 }
               },
               "response": []
@@ -3423,13 +3314,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/auth/refresh",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "auth",
-                    "refresh"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "refresh"]
                 },
                 "body": {
                   "mode": "raw",
@@ -3465,14 +3351,9 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{baseUrl}}/users/{{regressionUserId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "users",
-                    "{{regressionUserId}}"
-                  ]
+                  "raw": "{{baseUrl}}/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["me"]
                 }
               },
               "response": []

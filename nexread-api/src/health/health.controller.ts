@@ -15,7 +15,7 @@ import { ErrorResponseDto } from '../common/dto/error-response.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { HealthResponseDto } from './dto/health-response.dto';
 
-@ApiTags('health')
+@ApiTags('Health')
 @SkipThrottle()
 @Controller('health')
 export class HealthController {

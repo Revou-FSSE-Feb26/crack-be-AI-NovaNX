@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBookDto } from './dto/create-book.dto';
+import { QueryBooksDto } from './dto/query-books.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
 import { BooksRepository } from './repositories/books.repository';
 
@@ -11,8 +12,8 @@ export class BooksService {
     return this.booksRepository.create(createBookDto);
   }
 
-  findAll() {
-    return this.booksRepository.findAll();
+  findAll(query: QueryBooksDto = new QueryBooksDto()) {
+    return this.booksRepository.findAll(query);
   }
 
   async findOne(id: string) {

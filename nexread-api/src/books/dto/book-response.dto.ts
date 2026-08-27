@@ -25,6 +25,9 @@ export class BookResponseDto {
   @ApiProperty({ example: 'fiction' })
   categoryId: string;
 
+  @ApiProperty({ example: true })
+  isAvailable: boolean;
+
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 

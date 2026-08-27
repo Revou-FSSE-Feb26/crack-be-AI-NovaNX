@@ -11,6 +11,8 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { positiveIntegerFromEnvironment } from './config/environment';
 import { HealthModule } from './health/health.module';
+import { LoansModule } from './loans/loans.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -31,6 +33,8 @@ import { HealthModule } from './health/health.module';
     UsersModule,
     AuthModule,
     HealthModule,
+    LoansModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [

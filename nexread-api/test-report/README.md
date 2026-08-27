@@ -21,6 +21,7 @@ Besides the Jest unit tests (`src/**/*.spec.ts`) and end-to-end tests (`test/`),
 | `00 - Smoke Test`                     | Root/liveness/readiness, public lists, auth rotation/logout, and user cleanup  |
 | `02 - Request Validation`             | Invalid email, short password, missing required field, unknown-field stripping |
 | `03 - CRUD Core Resources`            | Full create/read/update/delete lifecycle for Authors, Categories, Books        |
+| Jest e2e loan scenario                | Atomic borrow/return, unavailable conflict, filters, dashboard, and statistics |
 | `05 - JWT Authentication`             | Login failures, user/admin token pairs, rotation, and refresh replay rejection |
 | `06 - Route Protection Middleware`    | 401 on protected routes without a token, 200 on public `GET` routes            |
 | `07 - Error Handling`                 | Invalid foreign key, duplicate unique fields, 404 on nonexistent records       |
@@ -61,5 +62,5 @@ The collection can also be imported directly into the Postman desktop app togeth
 ## Other test documentation
 
 - Unit tests: `npm test` (source: `src/**/*.spec.ts`)
-- End-to-end tests: `npm run test:e2e` (source: `test/`; covers the health endpoint plus refresh-token rotation, replay rejection, and logout revocation)
+- End-to-end tests: `npm run test:e2e` (source: `test/`; covers health, refresh-token security, `/me` authorization, loan lifecycle, filtering, RBAC, dashboard, and aggregation)
 - Coverage report: `npm run test:cov` (output: `coverage/`, git-ignored)

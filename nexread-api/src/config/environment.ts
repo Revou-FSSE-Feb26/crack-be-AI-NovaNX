@@ -67,6 +67,26 @@ export function validateEnvironment(env = process.env): void {
     );
   }
 
+  const frontendUrl = env.FRONTEND_URL?.trim();
+  if (nodeEnv === 'production' && !frontendUrl) {
+    throw new Error('FRONTEND_URL is required in production');
+  }
+
+  if (frontendUrl) {
+    for (const origin of frontendUrl.split(',').map((value) => value.trim())) {
+      let parsedOrigin: URL;
+      try {
+        parsedOrigin = new URL(origin);
+      } catch {
+        throw new Error('FRONTEND_URL must contain valid HTTP(S) origins');
+      }
+
+      if (!['http:', 'https:'].includes(parsedOrigin.protocol)) {
+        throw new Error('FRONTEND_URL must contain valid HTTP(S) origins');
+      }
+    }
+  }
+
   for (const name of ['JWT_EXPIRES_IN', 'JWT_REFRESH_EXPIRES_IN']) {
     const value = env[name];
 
@@ -93,4 +113,12 @@ export const positiveIntegerFromEnvironment = (
 ): number => {
   const value = Number(process.env[name] ?? fallback);
   return Number.isInteger(value) && value > 0 ? value : fallback;
+};
+
+export const corsOriginsFromEnvironment = (
+  env = process.env,
+): true | string[] => {
+  const value = env.FRONTEND_URL?.trim();
+  if (!value) return true;
+  return value.split(',').map((origin) => origin.trim());
 };

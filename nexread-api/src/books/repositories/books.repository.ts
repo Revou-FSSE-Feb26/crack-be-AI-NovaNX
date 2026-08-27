@@ -4,6 +4,7 @@ import type {
   CategoryModel,
 } from '../../../generated/prisma/models';
 import type { CreateBookDto } from '../dto/create-book.dto';
+import type { QueryBooksDto } from '../dto/query-books.dto';
 import type { UpdateBookDto } from '../dto/update-book.dto';
 
 /**
@@ -24,7 +25,7 @@ export type BookWithRelations = BookModel & {
  */
 export abstract class BooksRepository {
   abstract create(data: CreateBookDto): Promise<BookModel>;
-  abstract findAll(): Promise<BookWithRelations[]>;
+  abstract findAll(query?: QueryBooksDto): Promise<BookWithRelations[]>;
   abstract findById(id: string): Promise<BookWithRelations | null>;
   abstract update(id: string, data: UpdateBookDto): Promise<BookModel>;
   abstract delete(id: string): Promise<BookModel>;

@@ -1,5 +1,4 @@
 import {
-  IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -15,18 +14,6 @@ export class UpdateAuthorDto {
   @IsString()
   @IsNotEmpty()
   name?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  booksCount?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  borrowedBooksCount?: number;
 
   @ApiPropertyOptional()
   @IsOptional()

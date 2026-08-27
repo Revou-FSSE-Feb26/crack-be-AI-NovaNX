@@ -2,9 +2,11 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import type { Role } from '../../generated/prisma/enums';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersRepository } from './repositories/users.repository';
@@ -68,15 +70,9 @@ export class UsersService {
       }
     }
 
-    const hashedPassword = updateUserDto.password
-      ? await bcrypt.hash(updateUserDto.password, SALT_ROUNDS)
-      : undefined;
-
     const updated = await this.usersRepository.update(id, {
       fullName: updateUserDto.fullName,
       email: updateUserDto.email,
-      password: hashedPassword,
-      refreshTokenHash: hashedPassword ? null : undefined,
     });
 
     return toSafeUser(updated);
@@ -86,6 +82,31 @@ export class UsersService {
     await this.findExistingOrThrow(id);
     const updated = await this.usersRepository.updateRole(id, role);
     return toSafeUser(updated);
+  }
+
+  async changePassword(
+    id: number,
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<void> {
+    const user = await this.findExistingOrThrow(id);
+    const isCurrentPasswordValid = await bcrypt.compare(
+      changePasswordDto.currentPassword,
+      user.password,
+    );
+
+    if (!isCurrentPasswordValid) {
+      throw new UnauthorizedException('Current password is invalid');
+    }
+
+    const password = await bcrypt.hash(
+      changePasswordDto.newPassword,
+      SALT_ROUNDS,
+    );
+
+    await this.usersRepository.update(id, {
+      password,
+      refreshTokenHash: null,
+    });
   }
 
   updateRefreshTokenHash(id: number, refreshTokenHash: string | null) {

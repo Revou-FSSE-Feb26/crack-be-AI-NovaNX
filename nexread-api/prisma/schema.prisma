@@ -18,6 +18,11 @@ enum Role {
   ADMIN
 }
 
+enum LoanStatus {
+  ACTIVE
+  RETURNED
+}
+
 model User {
   id               Int      @id @default(autoincrement())
   fullName         String
@@ -25,6 +30,7 @@ model User {
   password         String
   role             Role     @default(USER)
   refreshTokenHash String?
+  loans            Loan[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -59,11 +65,29 @@ model Book {
   coverClassName String?
   authorId       String
   categoryId     String
+  isAvailable    Boolean  @default(true)
   author         Author   @relation(fields: [authorId], references: [id])
   category       Category @relation(fields: [categoryId], references: [id])
+  loans          Loan[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@index([authorId])
   @@index([categoryId])
+}
+
+model Loan {
+  id         Int        @id @default(autoincrement())
+  userId     Int
+  bookId     String
+  status     LoanStatus @default(ACTIVE)
+  borrowedAt DateTime   @default(now())
+  dueAt      DateTime
+  returnedAt DateTime?
+  user       User       @relation(fields: [userId], references: [id], onDelete: Restrict)
+  book       Book       @relation(fields: [bookId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([bookId])
+  @@index([status])
 }

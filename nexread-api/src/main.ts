@@ -8,7 +8,10 @@ import helmet from 'helmet';
 import { randomUUID } from 'node:crypto';
 import { AppModule } from './app.module';
 import { PrismaClientExceptionFilter } from './common/filters/prisma-exception.filter';
-import { validateEnvironment } from './config/environment';
+import {
+  corsOriginsFromEnvironment,
+  validateEnvironment,
+} from './config/environment';
 
 async function bootstrap() {
   validateEnvironment();
@@ -57,7 +60,9 @@ async function bootstrap() {
     next();
   });
   app.enableCors({
-    origin: process.env.FRONTEND_URL ?? true,
+    origin: corsOriginsFromEnvironment(),
+    methods: ['GET', 'HEAD', 'POST', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Authorization', 'Content-Type', 'X-Request-Id'],
   });
   app.useGlobalPipes(
     new ValidationPipe({
@@ -73,8 +78,20 @@ async function bootstrap() {
     .setDescription('API documentation for the NexRead library catalog service')
     .setVersion('1.0')
     .addBearerAuth()
+    .addTag('Health')
+    .addTag('Auth')
+    .addTag('Me', 'User profile and personal data')
+    .addTag('Books')
+    .addTag('Authors')
+    .addTag('Categories')
+    .addTag('Loans')
+    .addTag('Reviews')
+    .addTag('Cart')
+    .addTag('Admin', 'Admin-only endpoints and dashboard')
     .build();
-  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig, {
+    autoTagControllers: false,
+  });
   SwaggerModule.setup('api', app, swaggerDocument);
 
   await app.listen(process.env.PORT ?? 3000);

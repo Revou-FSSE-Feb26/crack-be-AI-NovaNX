@@ -61,6 +61,21 @@ export class PrismaUsersRepository implements UsersRepository {
   }
 
   delete(id: number): Promise<UserModel> {
-    return this.prisma.user.delete({ where: { id } });
+    return this.prisma.$transaction(async (transaction) => {
+      const activeLoans = await transaction.loan.findMany({
+        where: { userId: id, status: 'ACTIVE' },
+        select: { bookId: true },
+      });
+
+      if (activeLoans.length > 0) {
+        await transaction.book.updateMany({
+          where: { id: { in: activeLoans.map((loan) => loan.bookId) } },
+          data: { isAvailable: true },
+        });
+      }
+
+      await transaction.loan.deleteMany({ where: { userId: id } });
+      return transaction.user.delete({ where: { id } });
+    });
   }
 }

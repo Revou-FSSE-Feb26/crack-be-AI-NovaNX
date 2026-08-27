@@ -30,7 +30,7 @@ import { AuthorResponseDto } from './dto/author-response.dto';
 import { CreateAuthorDto } from './dto/create-author.dto';
 import { UpdateAuthorDto } from './dto/update-author.dto';
 
-@ApiTags('authors')
+@ApiTags('Authors')
 @Controller('authors')
 export class AuthorsController {
   constructor(private readonly authorsService: AuthorsService) {}

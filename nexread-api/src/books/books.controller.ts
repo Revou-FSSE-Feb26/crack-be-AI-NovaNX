@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -31,9 +32,10 @@ import {
   BookResponseDto,
 } from './dto/book-response.dto';
 import { CreateBookDto } from './dto/create-book.dto';
+import { QueryBooksDto } from './dto/query-books.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
 
-@ApiTags('books')
+@ApiTags('Books')
 @Controller('books')
 export class BooksController {
   constructor(private readonly booksService: BooksService) {}
@@ -73,8 +75,8 @@ export class BooksController {
     description: 'Books returned successfully',
     type: [BookDetailResponseDto],
   })
-  findAll() {
-    return this.booksService.findAll();
+  findAll(@Query() query: QueryBooksDto) {
+    return this.booksService.findAll(query);
   }
 
   @Get(':id')
