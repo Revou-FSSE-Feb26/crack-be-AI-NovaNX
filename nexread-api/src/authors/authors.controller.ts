@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -25,9 +26,19 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
+import { PaginatedBooksResponseDto } from '../books/dto/book-response.dto';
+import { QueryBooksDto } from '../books/dto/query-books.dto';
 import { AuthorsService } from './authors.service';
-import { AuthorResponseDto } from './dto/author-response.dto';
+import {
+  AuthorResponseDto,
+  PaginatedAuthorsResponseDto,
+  PaginatedPopularAuthorsResponseDto,
+} from './dto/author-response.dto';
 import { CreateAuthorDto } from './dto/create-author.dto';
+import {
+  QueryAuthorsDto,
+  QueryPopularAuthorsDto,
+} from './dto/query-authors.dto';
 import { UpdateAuthorDto } from './dto/update-author.dto';
 
 @ApiTags('Authors')
@@ -65,13 +76,31 @@ export class AuthorsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all authors' })
+  @ApiOperation({ summary: 'Search and paginate authors' })
   @ApiOkResponse({
     description: 'Authors returned successfully',
-    type: [AuthorResponseDto],
+    type: PaginatedAuthorsResponseDto,
   })
-  findAll() {
-    return this.authorsService.findAll();
+  findAll(@Query() query: QueryAuthorsDto) {
+    return this.authorsService.findAll(query);
+  }
+
+  @Get('popular')
+  @ApiOperation({ summary: 'List popular authors using catalog engagement' })
+  @ApiOkResponse({ type: PaginatedPopularAuthorsResponseDto })
+  findPopular(@Query() query: QueryPopularAuthorsDto) {
+    return this.authorsService.findPopular(query);
+  }
+
+  @Get(':id/books')
+  @ApiOperation({ summary: 'List paginated books by author' })
+  @ApiOkResponse({ type: PaginatedBooksResponseDto })
+  @ApiNotFoundResponse({
+    description: 'Author was not found',
+    type: ErrorResponseDto,
+  })
+  findBooks(@Param('id') id: string, @Query() query: QueryBooksDto) {
+    return this.authorsService.findBooks(id, query);
   }
 
   @Get(':id')
@@ -122,12 +151,15 @@ export class AuthorsController {
   }
 
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Delete an author (admin only)' })
+  @ApiOperation({
+    summary:
+      'Delete/archive an author without active catalog books (admin only)',
+  })
   @ApiOkResponse({
     description: 'Deleted author',
     type: AuthorResponseDto,
   })
-  @ApiBadRequestResponse({
+  @ApiConflictResponse({
     description: 'Author is still referenced by one or more books',
     type: ErrorResponseDto,
   })

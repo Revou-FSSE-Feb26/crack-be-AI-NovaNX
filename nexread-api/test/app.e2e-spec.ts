@@ -212,6 +212,38 @@ describe('AppController (e2e)', () => {
     const registrationBody = registration.body as AuthTokenPair;
     const authorization = `Bearer ${registrationBody.accessToken}`;
 
+    await request(app.getHttpServer())
+      .get(`/authors?q=loan author&page=1&limit=1`)
+      .expect(200)
+      .expect(
+        ({
+          body,
+        }: {
+          body: { data: Array<{ id: string }>; meta: { total: number } };
+        }) => {
+          expect(body.data).toContainEqual(
+            expect.objectContaining({ id: authorId }),
+          );
+          expect(body.meta.total).toBeGreaterThan(0);
+        },
+      );
+
+    await request(app.getHttpServer())
+      .get(`/authors/${authorId}/books?page=1&limit=5`)
+      .expect(200)
+      .expect(({ body }: { body: { data: Array<{ authorId: string }> } }) => {
+        expect(body.data).toContainEqual(expect.objectContaining({ authorId }));
+      });
+
+    await request(app.getHttpServer())
+      .get('/authors/popular?page=1&limit=5')
+      .expect(200)
+      .expect(
+        ({ body }: { body: { data: Array<{ popularityScore: number }> } }) => {
+          expect(body.data[0]?.popularityScore).toEqual(expect.any(Number));
+        },
+      );
+
     const borrowing = await request(app.getHttpServer())
       .post('/loans')
       .set('Authorization', authorization)
@@ -314,6 +346,11 @@ describe('AppController (e2e)', () => {
     const adminAuthorization = `Bearer ${adminBody.accessToken}`;
 
     await request(app.getHttpServer())
+      .delete(`/authors/${authorId}`)
+      .set('Authorization', adminAuthorization)
+      .expect(409);
+
+    await request(app.getHttpServer())
       .delete(`/books/${bookId}`)
       .set('Authorization', adminAuthorization)
       .expect(409);
@@ -359,6 +396,13 @@ describe('AppController (e2e)', () => {
       .expect(200);
 
     await request(app.getHttpServer()).get(`/books/${bookId}`).expect(404);
+
+    await request(app.getHttpServer())
+      .delete(`/authors/${authorId}`)
+      .set('Authorization', adminAuthorization)
+      .expect(200);
+
+    await request(app.getHttpServer()).get(`/authors/${authorId}`).expect(404);
 
     await request(app.getHttpServer())
       .get('/admin/categories/statistics')

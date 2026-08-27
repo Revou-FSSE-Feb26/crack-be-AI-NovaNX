@@ -37,15 +37,18 @@ model User {
 }
 
 model Author {
-  id                 String   @id
-  name               String   @unique
-  booksCount         Int      @default(0)
-  borrowedBooksCount Int      @default(0)
-  rating             Float    @default(0)
+  id                 String    @id
+  name               String    @unique
+  booksCount         Int       @default(0)
+  borrowedBooksCount Int       @default(0)
+  rating             Float     @default(0)
   avatarPath         String?
+  deletedAt          DateTime?
   books              Book[]
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([deletedAt])
 }
 
 model Category {

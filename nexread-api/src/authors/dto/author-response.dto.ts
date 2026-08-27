@@ -29,3 +29,47 @@ export class AuthorResponseDto {
   @ApiProperty({ type: String, format: 'date-time' })
   updatedAt: Date;
 }
+
+export class PopularAuthorResponseDto extends AuthorResponseDto {
+  @ApiProperty({ minimum: 0, example: 24 })
+  reviewCount: number;
+
+  @ApiProperty({ minimum: 0, example: 125 })
+  borrowCount: number;
+
+  @ApiProperty({ minimum: 0, maximum: 5, example: 4.7 })
+  averageBookRating: number;
+
+  @ApiProperty({ minimum: 0, example: 38.14 })
+  popularityScore: number;
+}
+
+export class AuthorPaginationMetaDto {
+  @ApiProperty({ example: 1 })
+  page: number;
+
+  @ApiProperty({ example: 10 })
+  limit: number;
+
+  @ApiProperty({ example: 24 })
+  total: number;
+
+  @ApiProperty({ example: 3 })
+  totalPages: number;
+}
+
+export class PaginatedAuthorsResponseDto {
+  @ApiProperty({ type: [AuthorResponseDto] })
+  data: AuthorResponseDto[];
+
+  @ApiProperty({ type: AuthorPaginationMetaDto })
+  meta: AuthorPaginationMetaDto;
+}
+
+export class PaginatedPopularAuthorsResponseDto {
+  @ApiProperty({ type: [PopularAuthorResponseDto] })
+  data: PopularAuthorResponseDto[];
+
+  @ApiProperty({ type: AuthorPaginationMetaDto })
+  meta: AuthorPaginationMetaDto;
+}

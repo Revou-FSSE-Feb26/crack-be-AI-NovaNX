@@ -115,7 +115,7 @@ npm run prisma:seed
 | Model      | Notes                                                                                                             |
 | ---------- | ----------------------------------------------------------------------------------------------------------------- |
 | `User`     | `id` (auto-increment), `fullName`, `email` (unique), bcrypt password hash, role, refresh-token hash, timestamps   |
-| `Author`   | `id` (string), `name` (unique), `booksCount`, `borrowedBooksCount`, `rating`, `avatarPath`, timestamps            |
+| `Author`   | `id` (string), `name` (unique), catalog counters/rating, avatar, soft-delete marker, timestamps                   |
 | `Category` | `id` (string), `name` (unique), `slug` (unique), `subtitle`, `iconPath`, timestamps                               |
 | `Book`     | `id`, title, derived rating, total/available copies, soft-delete marker, author/category foreign keys, timestamps |
 | `Loan`     | `id`, user/book foreign keys, status, borrowed/due/returned dates                                                 |
@@ -163,11 +163,13 @@ By default, the API runs at `http://localhost:3000`. The interactive Swagger API
 | POST   | `/auth/login`                  | Authenticate and return an access/refresh pair  | No                 |
 | POST   | `/auth/refresh`                | Rotate a refresh token and return a new pair    | No (refresh token) |
 | POST   | `/auth/logout`                 | Revoke the current user's refresh token         | Yes (Bearer)       |
-| GET    | `/authors`                     | List all authors                                | No                 |
+| GET    | `/authors`                     | Search and paginate authors                     | No                 |
+| GET    | `/authors/popular`             | Rank authors by book/review/loan engagement     | No                 |
+| GET    | `/authors/:id/books`           | Paginated books written by an author            | No                 |
 | GET    | `/authors/:id`                 | Get a single author                             | No                 |
 | POST   | `/authors`                     | Create an author                                | Yes (Admin only)   |
 | PATCH  | `/authors/:id`                 | Update an author                                | Yes (Admin only)   |
-| DELETE | `/authors/:id`                 | Delete an author                                | Yes (Admin only)   |
+| DELETE | `/authors/:id`                 | Delete/archive an author with no visible books  | Yes (Admin only)   |
 | GET    | `/categories`                  | List all categories                             | No                 |
 | GET    | `/categories/:id`              | Get a single category                           | No                 |
 | POST   | `/categories`                  | Create a category                               | Yes (Admin only)   |

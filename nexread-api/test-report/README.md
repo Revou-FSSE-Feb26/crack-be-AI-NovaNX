@@ -16,19 +16,19 @@ test-report/
 
 Besides the Jest unit tests (`src/**/*.spec.ts`) and end-to-end tests (`test/`), the Postman collection in `postman/nexread-api.postman_collection.json` covers the following, organized as folders inside the collection:
 
-| Folder in collection                  | Covers                                                                         |
-| ------------------------------------- | ------------------------------------------------------------------------------ |
-| `00 - Smoke Test`                     | Root/liveness/readiness, public lists, auth rotation/logout, and user cleanup  |
-| `02 - Request Validation`             | Invalid email, short password, missing required field, unknown-field stripping |
-| `03 - CRUD Core Resources`            | Full create/read/update/delete lifecycle for Authors, Categories, Books        |
-| Jest e2e loan scenario                | Atomic borrow/return, unavailable conflict, filters, dashboard, and statistics |
+| Folder in collection                  | Covers                                                                          |
+| ------------------------------------- | ------------------------------------------------------------------------------- |
+| `00 - Smoke Test`                     | Root/liveness/readiness, public lists, auth rotation/logout, and user cleanup   |
+| `02 - Request Validation`             | Invalid email, short password, missing required field, unknown-field stripping  |
+| `03 - CRUD Core Resources`            | Full create/read/update/delete lifecycle for Authors, Categories, Books         |
+| Jest e2e loan scenario                | Atomic borrow/return, unavailable conflict, filters, dashboard, and statistics  |
 | `10 - Loans and Admin Analytics`      | Pagination, recommendations, Reviews lifecycle, inventory, loans, and analytics |
-| `05 - JWT Authentication`             | Login failures, user/admin token pairs, rotation, and refresh replay rejection |
-| `06 - Route Protection Middleware`    | 401 on protected routes without a token, 200 on public `GET` routes            |
-| `07 - Error Handling`                 | Invalid foreign key, duplicate unique fields, 404 on nonexistent records       |
-| `08 - Data Integrity and Constraints` | Unique constraint violations, relational integrity of created records          |
-| `09 - Integration Test (Seeded Data)` | Sanity checks against the seeded Authors/Categories/Books                      |
-| `10 - Session Cleanup`                | Logout revocation and cleanup of temporary users                               |
+| `05 - JWT Authentication`             | Login failures, user/admin token pairs, rotation, and refresh replay rejection  |
+| `06 - Route Protection Middleware`    | 401 on protected routes without a token, 200 on public `GET` routes             |
+| `07 - Error Handling`                 | Invalid foreign key, duplicate unique fields, 404 on nonexistent records        |
+| `08 - Data Integrity and Constraints` | Unique constraint violations, relational integrity of created records           |
+| `09 - Integration Test (Seeded Data)` | Seeded catalog checks plus popular authors and books-by-author pagination       |
+| `10 - Session Cleanup`                | Logout revocation and cleanup of temporary users                                |
 
 Mentor requirements #1 ("test all API endpoints") and #4 ("use Postman/Newman for automated testing") aren't a dedicated folder — they're satisfied by the collection as a whole, since every folder above exercises real endpoints through Postman/Newman.
 
@@ -63,5 +63,5 @@ The collection can also be imported directly into the Postman desktop app togeth
 ## Other test documentation
 
 - Unit tests: `npm test` (source: `src/**/*.spec.ts`)
-- End-to-end tests: `npm run test:e2e` (source: `test/`; covers health, refresh-token security, `/me` authorization, loan lifecycle, filtering, RBAC, dashboard, and aggregation)
+- End-to-end tests: `npm run test:e2e` (source: `test/`; covers health, refresh-token security, `/me` authorization, author discovery/deletion rules, loan lifecycle, filtering, RBAC, dashboard, and aggregation)
 - Coverage report: `npm run test:cov` (output: `coverage/`, git-ignored)
