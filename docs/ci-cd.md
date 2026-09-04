@@ -1,22 +1,23 @@
 # NexRead API CI/CD Runbook
 
-The repository contains three GitHub Actions workflows:
+The repository contains four GitHub Actions workflows:
 
 - `NexRead API CI` runs on every pull request and every push to `main`. Its stable required check is `CI Gate`.
 - `NexRead API CD` deploys the exact commit verified by a successful CI push to `main`, first to staging and then to production.
 - `NexRead API Rollback` is a manually dispatched recovery workflow for a Railway deployment with `canRollback=true`.
+- `NexRead Production Uptime` probes the production readiness endpoint every five minutes and creates a GitHub incident issue when either the API or database is unavailable.
 
 ## One-time GitHub configuration
 
 Create two GitHub environments named `staging` and `production`. Configure these values separately in each environment:
 
-| Type | Name | Value |
-| --- | --- | --- |
-| Secret | `RAILWAY_TOKEN` | A Railway project token scoped to the matching Railway environment |
-| Variable | `RAILWAY_PROJECT` | The Railway project ID |
-| Variable | `RAILWAY_ENVIRONMENT` | The matching Railway environment name or ID |
-| Variable | `RAILWAY_SERVICE` | The Railway API service name or ID |
-| Variable | `API_BASE_URL` | The public HTTPS base URL, without a trailing path |
+| Type     | Name                  | Value                                                              |
+| -------- | --------------------- | ------------------------------------------------------------------ |
+| Secret   | `RAILWAY_TOKEN`       | A Railway project token scoped to the matching Railway environment |
+| Variable | `RAILWAY_PROJECT`     | The Railway project ID                                             |
+| Variable | `RAILWAY_ENVIRONMENT` | The matching Railway environment name or ID                        |
+| Variable | `RAILWAY_SERVICE`     | The Railway API service name or ID                                 |
+| Variable | `API_BASE_URL`        | The public HTTPS base URL, without a trailing path                 |
 
 On the `production` GitHub environment, add at least one required reviewer and prevent self-review. The deployment job then pauses for approval only after staging deploys and passes both health probes. Limit who can deploy to production to the `main` branch.
 
@@ -57,6 +58,14 @@ In Railway, identify a previous deployment whose `canRollback` field is true and
 The workflow calls Railway's `deploymentRollback` GraphQL mutation and then waits for both health probes. Database migrations must remain backward-compatible with the previous application version. For a destructive schema change, use an expand-and-contract migration sequence; application rollback is not a database rollback.
 
 If the workflow cannot be used, Railway's deployment menu provides the same rollback operation. Record the incident, affected deployment IDs, and follow-up fix after service is restored.
+
+## Production monitoring and alerting
+
+`NexRead Production Uptime` calls `https://crack-be-ai-novanx-production.up.railway.app/health/ready` every five minutes. A healthy result requires HTTP 200 and a JSON body whose `status` is `ok`. Because the readiness handler performs a database query, this single probe detects both API outages and database connectivity failures.
+
+After retries are exhausted, the workflow creates one open issue labeled `production-uptime`, assigns it to the repository owner, and marks the Actions run as failed. Repeated failures reuse the existing issue instead of generating noise. The next successful probe closes the issue automatically. Repository notification settings must allow Actions and assigned-issue notifications so the incident reaches email or mobile.
+
+Railway project webhooks should be configured under **Project Settings > Webhooks** for deployment status changes and volume alerts. A Slack or Discord incoming-webhook URL can be registered directly. Railway's CPU and RAM threshold monitors are configured from the Observability dashboard, but Railway requires the Pro plan for that feature; they cannot be enabled on Hobby. Until an upgrade, use the external readiness monitor and inspect Railway service metrics during an incident.
 
 ## Secret handling
 

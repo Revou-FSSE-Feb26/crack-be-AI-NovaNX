@@ -1,0 +1,121 @@
+name: NexRead Production Uptime
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: nexread-production-uptime
+  cancel-in-progress: true
+
+env:
+  HEALTHCHECK_URL: https://crack-be-ai-novanx-production.up.railway.app/health/ready
+  INCIDENT_ASSIGNEE: AI-NovaNX
+  INCIDENT_LABEL: production-uptime
+  INCIDENT_TITLE: "Production readiness check is failing"
+
+jobs:
+  readiness:
+    name: Check API and database readiness
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Probe production readiness
+        id: probe
+        continue-on-error: true
+        shell: bash
+        run: |
+          response_file=$(mktemp)
+          trap 'rm -f "$response_file"' EXIT
+
+          http_status=$(curl \
+            --silent \
+            --show-error \
+            --location \
+            --output "$response_file" \
+            --write-out '%{http_code}' \
+            --connect-timeout 10 \
+            --max-time 20 \
+            --retry 2 \
+            --retry-delay 5 \
+            --retry-connrefused \
+            "$HEALTHCHECK_URL") || {
+              echo "The production readiness endpoint could not be reached."
+              exit 1
+            }
+
+          if [[ "$http_status" != "200" ]]; then
+            echo "Expected HTTP 200, received HTTP $http_status."
+            sed -n '1,20p' "$response_file"
+            exit 1
+          fi
+
+          if ! jq -e '.status == "ok"' "$response_file" > /dev/null; then
+            echo 'The endpoint did not return {"status":"ok"}.'
+            sed -n '1,20p' "$response_file"
+            exit 1
+          fi
+
+          echo "Production API and database readiness are healthy."
+
+      - name: Open an incident issue
+        if: steps.probe.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh label create "$INCIDENT_LABEL" \
+            --repo "$GITHUB_REPOSITORY" \
+            --color D73A4A \
+            --description "Automated production uptime incident" \
+            --force
+
+          issue_number=$(gh issue list \
+            --repo "$GITHUB_REPOSITORY" \
+            --state open \
+            --label "$INCIDENT_LABEL" \
+            --search "$INCIDENT_TITLE in:title" \
+            --json number \
+            --jq '.[0].number // empty')
+
+          if [[ -z "$issue_number" ]]; then
+            run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            gh issue create \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$INCIDENT_TITLE" \
+              --label "$INCIDENT_LABEL" \
+              --assignee "$INCIDENT_ASSIGNEE" \
+              --body "The external readiness probe failed at $(date -u +'%Y-%m-%dT%H:%M:%SZ'). This endpoint checks both the API and its database dependency. Investigate the [failed monitoring run]($run_url). The issue will close automatically after recovery."
+          else
+            echo "Incident issue #$issue_number is already open."
+          fi
+
+      - name: Close the incident after recovery
+        if: steps.probe.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          issue_number=$(gh issue list \
+            --repo "$GITHUB_REPOSITORY" \
+            --state open \
+            --label "$INCIDENT_LABEL" \
+            --search "$INCIDENT_TITLE in:title" \
+            --json number \
+            --jq '.[0].number // empty')
+
+          if [[ -n "$issue_number" ]]; then
+            gh issue close "$issue_number" \
+              --repo "$GITHUB_REPOSITORY" \
+              --comment "The readiness endpoint recovered at $(date -u +'%Y-%m-%dT%H:%M:%SZ')."
+          fi
+
+      - name: Fail the monitoring run when unhealthy
+        if: steps.probe.outcome == 'failure'
+        run: exit 1
