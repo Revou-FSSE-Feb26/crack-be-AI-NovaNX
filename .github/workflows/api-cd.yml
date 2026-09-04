@@ -59,7 +59,7 @@ jobs:
 
       - name: Deploy the CI-verified revision to staging
         run: >-
-          railway up nexread-api --path-as-root
+          railway up nexread-api
           --project "$RAILWAY_PROJECT"
           --environment "$RAILWAY_ENVIRONMENT"
           --service "$RAILWAY_SERVICE"
@@ -106,7 +106,7 @@ jobs:
 
       - name: Deploy the approved revision to production
         run: >-
-          railway up nexread-api --path-as-root
+          railway up nexread-api
           --project "$RAILWAY_PROJECT"
           --environment "$RAILWAY_ENVIRONMENT"
           --service "$RAILWAY_SERVICE"
