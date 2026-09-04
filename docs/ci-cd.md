@@ -13,6 +13,8 @@ Create two GitHub environments named `staging` and `production`. Configure these
 | Type | Name | Value |
 | --- | --- | --- |
 | Secret | `RAILWAY_TOKEN` | A Railway project token scoped to the matching Railway environment |
+| Variable | `RAILWAY_PROJECT` | The Railway project ID |
+| Variable | `RAILWAY_ENVIRONMENT` | The matching Railway environment name or ID |
 | Variable | `RAILWAY_SERVICE` | The Railway API service name or ID |
 | Variable | `API_BASE_URL` | The public HTTPS base URL, without a trailing path |
 
@@ -20,7 +22,7 @@ On the `production` GitHub environment, add at least one required reviewer and p
 
 Protect `main` with a branch ruleset that:
 
-1. Requires a pull request and at least one approving review.
+1. Requires a pull request. Require an approving review when the repository has another eligible reviewer; a single-collaborator repository cannot satisfy self-approval.
 2. Requires the `CI Gate` status check to pass before merge.
 3. Requires branches to be up to date before merge.
 4. Blocks force pushes and branch deletion.
@@ -59,4 +61,3 @@ If the workflow cannot be used, Railway's deployment menu provides the same roll
 ## Secret handling
 
 Production and staging secrets live only in their corresponding GitHub/Railway environments. CI creates random JWT and admin seed credentials at runtime and uses a disposable PostgreSQL service with trust authentication, so it does not require or receive deployment secrets. Never print tokens, copy production variables into CI, or store `.env` files in the repository.
-

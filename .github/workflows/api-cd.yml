@@ -31,6 +31,8 @@ jobs:
       url: ${{ vars.API_BASE_URL }}
     env:
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_PROJECT: ${{ vars.RAILWAY_PROJECT }}
+      RAILWAY_ENVIRONMENT: ${{ vars.RAILWAY_ENVIRONMENT }}
       RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
       API_BASE_URL: ${{ vars.API_BASE_URL }}
 
@@ -47,6 +49,8 @@ jobs:
         shell: bash
         run: |
           test -n "$RAILWAY_TOKEN" || { echo "Missing staging secret RAILWAY_TOKEN"; exit 1; }
+          test -n "$RAILWAY_PROJECT" || { echo "Missing staging variable RAILWAY_PROJECT"; exit 1; }
+          test -n "$RAILWAY_ENVIRONMENT" || { echo "Missing staging variable RAILWAY_ENVIRONMENT"; exit 1; }
           test -n "$RAILWAY_SERVICE" || { echo "Missing staging variable RAILWAY_SERVICE"; exit 1; }
           [[ "$API_BASE_URL" =~ ^https:// ]] || { echo "API_BASE_URL must use HTTPS"; exit 1; }
 
@@ -54,7 +58,12 @@ jobs:
         run: npm install --global "@railway/cli@${RAILWAY_CLI_VERSION}"
 
       - name: Deploy the CI-verified revision to staging
-        run: railway up nexread-api --path-as-root --service "$RAILWAY_SERVICE" --ci
+        run: >-
+          railway up nexread-api --path-as-root
+          --project "$RAILWAY_PROJECT"
+          --environment "$RAILWAY_ENVIRONMENT"
+          --service "$RAILWAY_SERVICE"
+          --ci
 
       - name: Smoke test staging
         run: nexread-api/scripts/smoke-deployment.sh "$API_BASE_URL"
@@ -69,6 +78,8 @@ jobs:
       url: ${{ vars.API_BASE_URL }}
     env:
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_PROJECT: ${{ vars.RAILWAY_PROJECT }}
+      RAILWAY_ENVIRONMENT: ${{ vars.RAILWAY_ENVIRONMENT }}
       RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
       API_BASE_URL: ${{ vars.API_BASE_URL }}
 
@@ -85,6 +96,8 @@ jobs:
         shell: bash
         run: |
           test -n "$RAILWAY_TOKEN" || { echo "Missing production secret RAILWAY_TOKEN"; exit 1; }
+          test -n "$RAILWAY_PROJECT" || { echo "Missing production variable RAILWAY_PROJECT"; exit 1; }
+          test -n "$RAILWAY_ENVIRONMENT" || { echo "Missing production variable RAILWAY_ENVIRONMENT"; exit 1; }
           test -n "$RAILWAY_SERVICE" || { echo "Missing production variable RAILWAY_SERVICE"; exit 1; }
           [[ "$API_BASE_URL" =~ ^https:// ]] || { echo "API_BASE_URL must use HTTPS"; exit 1; }
 
@@ -92,8 +105,12 @@ jobs:
         run: npm install --global "@railway/cli@${RAILWAY_CLI_VERSION}"
 
       - name: Deploy the approved revision to production
-        run: railway up nexread-api --path-as-root --service "$RAILWAY_SERVICE" --ci
+        run: >-
+          railway up nexread-api --path-as-root
+          --project "$RAILWAY_PROJECT"
+          --environment "$RAILWAY_ENVIRONMENT"
+          --service "$RAILWAY_SERVICE"
+          --ci
 
       - name: Smoke test production
         run: nexread-api/scripts/smoke-deployment.sh "$API_BASE_URL"
-
