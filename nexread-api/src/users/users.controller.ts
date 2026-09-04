@@ -9,11 +9,13 @@ import {
   ParseIntPipe,
   Patch,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiConflictResponse,
   ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -26,6 +28,7 @@ import { Role } from '../../generated/prisma/enums';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import type { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { QueryUsersDto } from './dto/query-users.dto';
@@ -93,17 +96,26 @@ export class UsersController {
     description: 'User was not found',
     type: ErrorResponseDto,
   })
+  @ApiConflictResponse({
+    description: 'The operation would demote the acting or last administrator',
+    type: ErrorResponseDto,
+  })
   updateRole(
+    @Req() request: AuthenticatedRequest,
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserRoleDto: UpdateUserRoleDto,
   ) {
-    return this.usersService.updateRole(id, updateUserRoleDto.role);
+    return this.usersService.updateRole(
+      request.user.userId,
+      id,
+      updateUserRoleDto.role,
+    );
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete a user (admin only)' })
-  @ApiNoContentResponse({ description: 'User deleted successfully' })
+  @ApiOperation({ summary: 'Soft-delete a user (admin only)' })
+  @ApiNoContentResponse({ description: 'User soft-deleted successfully' })
   @ApiBadRequestResponse({
     description: 'User id is not an integer',
     type: ErrorResponseDto,
@@ -112,7 +124,14 @@ export class UsersController {
     description: 'User was not found',
     type: ErrorResponseDto,
   })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.remove(id);
+  @ApiConflictResponse({
+    description: 'The operation would delete the acting or last administrator',
+    type: ErrorResponseDto,
+  })
+  remove(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.usersService.adminRemove(request.user.userId, id);
   }
 }

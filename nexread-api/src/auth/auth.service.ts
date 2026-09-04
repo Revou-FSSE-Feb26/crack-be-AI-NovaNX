@@ -87,6 +87,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
+      tokenVersion: user.tokenVersion,
     };
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync({

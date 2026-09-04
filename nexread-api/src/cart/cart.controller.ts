@@ -36,26 +36,31 @@ import {
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({ type: ErrorResponseDto })
 @UseGuards(JwtAuthGuard)
-@Controller('cart')
+@Controller('api/cart')
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List books in the authenticated user cart' })
+  @ApiOperation({
+    summary: 'My cart — daftar buku di cart (untuk halaman My Cart)',
+  })
   @ApiOkResponse({ type: [CartItemResponseDto] })
   findMine(@Req() request: AuthenticatedRequest) {
     return this.cartService.findMine(request.user.userId);
   }
 
   @Get('checkout')
-  @ApiOperation({ summary: 'Get checkout user and book information' })
+  @ApiOperation({
+    summary:
+      'Checkout payload — User Information + Book List (untuk halaman Checkout)',
+  })
   @ApiOkResponse({ type: CheckoutResponseDto })
   checkout(@Req() request: AuthenticatedRequest) {
     return this.cartService.getCheckout(request.user.userId);
   }
 
   @Post('items')
-  @ApiOperation({ summary: 'Add an available book to the cart' })
+  @ApiOperation({ summary: 'Add book to cart (untuk pinjam nanti)' })
   @ApiCreatedResponse({ type: CartItemResponseDto })
   @ApiNotFoundResponse({ type: ErrorResponseDto })
   @ApiConflictResponse({ type: ErrorResponseDto })
@@ -63,21 +68,21 @@ export class CartController {
     return this.cartService.add(request.user.userId, data);
   }
 
-  @Delete('items/:id')
+  @Delete('items/:itemId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Remove one item from the cart' })
+  @ApiOperation({ summary: 'Remove item from cart' })
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ type: ErrorResponseDto })
   remove(
     @Req() request: AuthenticatedRequest,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('itemId', ParseIntPipe) itemId: number,
   ) {
-    return this.cartService.remove(request.user.userId, id);
+    return this.cartService.remove(request.user.userId, itemId);
   }
 
   @Delete()
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Clear the authenticated user cart' })
+  @ApiOperation({ summary: 'Clear my cart' })
   @ApiNoContentResponse()
   clear(@Req() request: AuthenticatedRequest) {
     return this.cartService.clear(request.user.userId);

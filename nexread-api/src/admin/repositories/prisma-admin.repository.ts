@@ -23,8 +23,8 @@ export class PrismaAdminRepository implements AdminRepository {
       activeLoans,
       overdueLoans,
     ] = await this.prisma.$transaction([
-      this.prisma.user.count(),
-      this.prisma.author.count(),
+      this.prisma.user.count({ where: { deletedAt: null } }),
+      this.prisma.author.count({ where: { deletedAt: null } }),
       this.prisma.category.count(),
       this.prisma.book.count({ where: { deletedAt: null } }),
       this.prisma.book.count({
@@ -38,13 +38,17 @@ export class PrismaAdminRepository implements AdminRepository {
 
     const topLoanGroups = await this.prisma.loan.groupBy({
       by: ['bookId'],
+      where: { book: { deletedAt: null } },
       _count: { bookId: true },
       orderBy: { _count: { bookId: 'desc' } },
       take: 5,
     });
 
     const topBooks = await this.prisma.book.findMany({
-      where: { id: { in: topLoanGroups.map((item) => item.bookId) } },
+      where: {
+        id: { in: topLoanGroups.map((item) => item.bookId) },
+        deletedAt: null,
+      },
       select: { id: true, title: true },
     });
     const bookById = new Map(topBooks.map((book) => [book.id, book]));
@@ -67,6 +71,7 @@ export class PrismaAdminRepository implements AdminRepository {
   async getAuthorStatistics(): Promise<AuthorStatistic[]> {
     const [authors, aggregates] = await Promise.all([
       this.prisma.author.findMany({
+        where: { deletedAt: null },
         select: { id: true, name: true },
         orderBy: { name: 'asc' },
       }),

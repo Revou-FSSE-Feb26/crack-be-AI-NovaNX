@@ -1,0 +1,99 @@
+name: NexRead API CD
+
+on:
+  workflow_run:
+    workflows: ["NexRead API CI"]
+    types: [completed]
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: nexread-api-deployment
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "22"
+  RAILWAY_CLI_VERSION: "5.49.1"
+
+jobs:
+  deploy-staging:
+    name: Deploy staging
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: staging
+      url: ${{ vars.API_BASE_URL }}
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
+      API_BASE_URL: ${{ vars.API_BASE_URL }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Validate staging configuration
+        shell: bash
+        run: |
+          test -n "$RAILWAY_TOKEN" || { echo "Missing staging secret RAILWAY_TOKEN"; exit 1; }
+          test -n "$RAILWAY_SERVICE" || { echo "Missing staging variable RAILWAY_SERVICE"; exit 1; }
+          [[ "$API_BASE_URL" =~ ^https:// ]] || { echo "API_BASE_URL must use HTTPS"; exit 1; }
+
+      - name: Install pinned Railway CLI
+        run: npm install --global "@railway/cli@${RAILWAY_CLI_VERSION}"
+
+      - name: Deploy the CI-verified revision to staging
+        run: railway up nexread-api --path-as-root --service "$RAILWAY_SERVICE" --ci
+
+      - name: Smoke test staging
+        run: nexread-api/scripts/smoke-deployment.sh "$API_BASE_URL"
+
+  deploy-production:
+    name: Deploy production
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: ${{ vars.API_BASE_URL }}
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
+      API_BASE_URL: ${{ vars.API_BASE_URL }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Validate production configuration
+        shell: bash
+        run: |
+          test -n "$RAILWAY_TOKEN" || { echo "Missing production secret RAILWAY_TOKEN"; exit 1; }
+          test -n "$RAILWAY_SERVICE" || { echo "Missing production variable RAILWAY_SERVICE"; exit 1; }
+          [[ "$API_BASE_URL" =~ ^https:// ]] || { echo "API_BASE_URL must use HTTPS"; exit 1; }
+
+      - name: Install pinned Railway CLI
+        run: npm install --global "@railway/cli@${RAILWAY_CLI_VERSION}"
+
+      - name: Deploy the approved revision to production
+        run: railway up nexread-api --path-as-root --service "$RAILWAY_SERVICE" --ci
+
+      - name: Smoke test production
+        run: nexread-api/scripts/smoke-deployment.sh "$API_BASE_URL"
+

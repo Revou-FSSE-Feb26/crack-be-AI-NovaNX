@@ -1,0 +1,71 @@
+name: NexRead API Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Railway environment to roll back
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      deployment_id:
+        description: Railway deployment ID with canRollback=true
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: nexread-api-deployment
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    name: Roll back ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ vars.API_BASE_URL }}
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      API_BASE_URL: ${{ vars.API_BASE_URL }}
+      DEPLOYMENT_ID: ${{ inputs.deployment_id }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Validate rollback configuration
+        shell: bash
+        run: |
+          test -n "$RAILWAY_TOKEN" || { echo "Missing environment secret RAILWAY_TOKEN"; exit 1; }
+          test -n "$DEPLOYMENT_ID" || { echo "Missing Railway deployment ID"; exit 1; }
+          [[ "$API_BASE_URL" =~ ^https:// ]] || { echo "API_BASE_URL must use HTTPS"; exit 1; }
+
+      - name: Roll back Railway deployment
+        shell: bash
+        run: |
+          payload=$(jq -n \
+            --arg id "$DEPLOYMENT_ID" \
+            '{query: "mutation deploymentRollback($id: String!) { deploymentRollback(id: $id) { id status } }", variables: {id: $id}}')
+          response=$(curl --fail-with-body --silent --show-error \
+            --request POST \
+            --url https://backboard.railway.com/graphql/v2 \
+            --header "Project-Access-Token: $RAILWAY_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data "$payload")
+
+          if ! jq -e '.errors == null and .data.deploymentRollback.id != null' >/dev/null <<< "$response"; then
+            jq '{errors, data}' <<< "$response"
+            exit 1
+          fi
+
+          jq '.data.deploymentRollback' <<< "$response"
+
+      - name: Smoke test restored deployment
+        run: nexread-api/scripts/smoke-deployment.sh "$API_BASE_URL"
+

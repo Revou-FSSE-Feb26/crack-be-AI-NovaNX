@@ -45,7 +45,7 @@ describe('AuthorsService', () => {
       page: 1,
       limit: 10,
     });
-    const publicAuthor = { ...author };
+    const publicAuthor: Partial<AuthorModel> = { ...author };
     delete publicAuthor.deletedAt;
 
     await expect(service.findAll({ q: 'one' })).resolves.toEqual({

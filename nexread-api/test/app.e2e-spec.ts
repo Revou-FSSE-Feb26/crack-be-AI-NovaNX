@@ -20,6 +20,8 @@ describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
   let testEmail: string | undefined;
+  let secondaryTestEmail: string | undefined;
+  let adminAuditUserIds: number[] = [];
   let testResourceSuffix: string | undefined;
 
   beforeEach(async () => {
@@ -171,6 +173,112 @@ describe('AppController (e2e)', () => {
       .expect(204);
   });
 
+  it('secures admin user management, soft deletes users, and records audit events', async () => {
+    const suffix = Date.now();
+    testEmail = `admin-controls-${suffix}@example.com`;
+    secondaryTestEmail = `admin-target-${suffix}@example.com`;
+    const password = 'strong-password';
+
+    const actorRegistration = await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({ fullName: 'Admin Controls', email: testEmail, password })
+      .expect(201);
+    const actor = actorRegistration.body as AuthTokenPair;
+    await prisma.user.update({
+      where: { id: actor.user.id },
+      data: { role: 'ADMIN' },
+    });
+    const actorLogin = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: testEmail, password })
+      .expect(200);
+    const actorToken = (actorLogin.body as AuthTokenPair).accessToken;
+    const authorization = `Bearer ${actorToken}`;
+
+    const targetRegistration = await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({ fullName: 'Admin Target', email: secondaryTestEmail, password })
+      .expect(201);
+    const target = targetRegistration.body as AuthTokenPair;
+    adminAuditUserIds = [actor.user.id, target.user.id];
+
+    await request(app.getHttpServer())
+      .get(`/users?q=${encodeURIComponent(secondaryTestEmail)}&page=1&limit=5`)
+      .set('Authorization', authorization)
+      .expect(200)
+      .expect(
+        ({ body }: { body: { data: Array<Record<string, unknown>> } }) => {
+          expect(body.data).toContainEqual(
+            expect.objectContaining({ id: target.user.id }),
+          );
+          expect(body.data[0]).not.toHaveProperty('password');
+          expect(body.data[0]).not.toHaveProperty('refreshTokenHash');
+          expect(body.data[0]).not.toHaveProperty('deletedAt');
+        },
+      );
+
+    await request(app.getHttpServer())
+      .get(`/users/${target.user.id}`)
+      .set('Authorization', authorization)
+      .expect(200)
+      .expect(({ body }: { body: { id: number } }) => {
+        expect(body.id).toBe(target.user.id);
+      });
+
+    await request(app.getHttpServer())
+      .patch(`/users/${target.user.id}/role`)
+      .set('Authorization', authorization)
+      .send({ role: 'ADMIN' })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get('/me')
+      .set('Authorization', `Bearer ${target.accessToken}`)
+      .expect(401);
+
+    await request(app.getHttpServer())
+      .patch(`/users/${actor.user.id}/role`)
+      .set('Authorization', authorization)
+      .send({ role: 'USER' })
+      .expect(409);
+
+    await request(app.getHttpServer())
+      .delete(`/users/${actor.user.id}`)
+      .set('Authorization', authorization)
+      .expect(409);
+
+    await request(app.getHttpServer())
+      .patch(`/users/${target.user.id}/role`)
+      .set('Authorization', authorization)
+      .send({ role: 'USER' })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get('/me')
+      .set('Authorization', `Bearer ${target.accessToken}`)
+      .expect(401);
+
+    await request(app.getHttpServer())
+      .delete(`/users/${target.user.id}`)
+      .set('Authorization', authorization)
+      .expect(204);
+
+    await request(app.getHttpServer())
+      .get(`/users/${target.user.id}`)
+      .set('Authorization', authorization)
+      .expect(404);
+
+    const deletedUser = await prisma.user.findUniqueOrThrow({
+      where: { id: target.user.id },
+    });
+    expect(deletedUser.deletedAt).toBeInstanceOf(Date);
+    await expect(
+      prisma.adminAuditLog.count({
+        where: { actorAdminId: actor.user.id, targetUserId: target.user.id },
+      }),
+    ).resolves.toBe(3);
+  });
+
   it('borrows and returns a book atomically and exposes admin analytics', async () => {
     testResourceSuffix = `${Date.now()}`;
     const authorId = `loan-author-${testResourceSuffix}`;
@@ -225,20 +333,20 @@ describe('AppController (e2e)', () => {
     const authorization = `Bearer ${registrationBody.accessToken}`;
 
     const cartItemResponse = await request(app.getHttpServer())
-      .post('/cart/items')
+      .post('/api/cart/items')
       .set('Authorization', authorization)
       .send({ bookId: cartBookId })
       .expect(201);
     const cartItem = cartItemResponse.body as { id: number };
 
     await request(app.getHttpServer())
-      .post('/cart/items')
+      .post('/api/cart/items')
       .set('Authorization', authorization)
       .send({ bookId: cartBookId })
       .expect(409);
 
     await request(app.getHttpServer())
-      .get('/cart/checkout')
+      .get('/api/cart/checkout')
       .set('Authorization', authorization)
       .expect(200)
       .expect(({ body }: { body: { totalItems: number } }) => {
@@ -246,7 +354,7 @@ describe('AppController (e2e)', () => {
       });
 
     const rollbackItemResponse = await request(app.getHttpServer())
-      .post('/cart/items')
+      .post('/api/cart/items')
       .set('Authorization', authorization)
       .send({ bookId })
       .expect(201);
@@ -270,7 +378,7 @@ describe('AppController (e2e)', () => {
       data: { availableCopies: 2, isAvailable: true },
     });
     await request(app.getHttpServer())
-      .delete(`/cart/items/${rollbackItem.id}`)
+      .delete(`/api/cart/items/${rollbackItem.id}`)
       .set('Authorization', authorization)
       .expect(204);
 
@@ -283,12 +391,12 @@ describe('AppController (e2e)', () => {
     expect(cartLoan).toBeDefined();
 
     await request(app.getHttpServer())
-      .delete(`/cart/items/${cartItem.id}`)
+      .delete(`/api/cart/items/${cartItem.id}`)
       .set('Authorization', authorization)
       .expect(404);
 
     await request(app.getHttpServer())
-      .get('/cart')
+      .get('/api/cart')
       .set('Authorization', authorization)
       .expect(200)
       .expect(({ body }: { body: unknown[] }) => expect(body).toHaveLength(0));
@@ -570,6 +678,16 @@ describe('AppController (e2e)', () => {
     await request(app.getHttpServer()).get(`/authors/${authorId}`).expect(404);
 
     await request(app.getHttpServer())
+      .get('/admin/authors/statistics')
+      .set('Authorization', adminAuthorization)
+      .expect(200)
+      .expect(({ body }: { body: Array<{ id: string }> }) => {
+        expect(body).not.toContainEqual(
+          expect.objectContaining({ id: authorId }),
+        );
+      });
+
+    await request(app.getHttpServer())
       .get('/admin/categories/statistics')
       .set('Authorization', adminAuthorization)
       .expect(200)
@@ -605,9 +723,28 @@ describe('AppController (e2e)', () => {
       testResourceSuffix = undefined;
     }
 
-    if (testEmail) {
-      await prisma.user.deleteMany({ where: { email: testEmail } });
+    if (adminAuditUserIds.length > 0) {
+      await prisma.adminAuditLog.deleteMany({
+        where: {
+          OR: [
+            { actorAdminId: { in: adminAuditUserIds } },
+            { targetUserId: { in: adminAuditUserIds } },
+          ],
+        },
+      });
+      adminAuditUserIds = [];
+    }
+
+    if (testEmail || secondaryTestEmail) {
+      await prisma.user.deleteMany({
+        where: {
+          email: {
+            in: [testEmail, secondaryTestEmail].filter(Boolean) as string[],
+          },
+        },
+      });
       testEmail = undefined;
+      secondaryTestEmail = undefined;
     }
 
     await app.close();

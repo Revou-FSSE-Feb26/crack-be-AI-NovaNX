@@ -104,8 +104,14 @@ export class MeController {
 
   @Delete()
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete the authenticated user account' })
-  @ApiNoContentResponse({ description: 'User account deleted successfully' })
+  @ApiOperation({ summary: 'Soft-delete the authenticated user account' })
+  @ApiNoContentResponse({
+    description: 'User account soft-deleted successfully',
+  })
+  @ApiConflictResponse({
+    description: 'Administrators cannot delete their own account',
+    type: ErrorResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'Authenticated user was not found',
     type: ErrorResponseDto,

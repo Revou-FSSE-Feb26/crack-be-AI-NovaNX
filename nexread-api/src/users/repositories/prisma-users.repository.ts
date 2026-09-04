@@ -1,8 +1,15 @@
-import { Injectable } from '@nestjs/common';
-import type { Role } from '../../../generated/prisma/enums';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  AdminAuditAction,
+  LoanStatus,
+  Role,
+} from '../../../generated/prisma/enums';
 import type { UserModel } from '../../../generated/prisma/models';
 import { PrismaService } from '../../prisma/prisma.service';
-import { LoanStatus } from '../../../generated/prisma/enums';
 import type { QueryUsersDto } from '../dto/query-users.dto';
 import {
   UsersRepository,
@@ -26,24 +33,27 @@ export class PrismaUsersRepository implements UsersRepository {
   }
 
   findByEmail(email: string): Promise<UserModel | null> {
-    return this.prisma.user.findUnique({ where: { email } });
+    return this.prisma.user.findFirst({ where: { email, deletedAt: null } });
   }
 
   findById(id: number): Promise<UserModel | null> {
-    return this.prisma.user.findUnique({ where: { id } });
+    return this.prisma.user.findFirst({ where: { id, deletedAt: null } });
   }
 
   async findAll(query: QueryUsersDto = {}): Promise<PaginatedUsers> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
-    const where = query.q
-      ? {
-          OR: [
-            { fullName: { contains: query.q, mode: 'insensitive' as const } },
-            { email: { contains: query.q, mode: 'insensitive' as const } },
-          ],
-        }
-      : {};
+    const where = {
+      deletedAt: null,
+      ...(query.q
+        ? {
+            OR: [
+              { fullName: { contains: query.q, mode: 'insensitive' as const } },
+              { email: { contains: query.q, mode: 'insensitive' as const } },
+            ],
+          }
+        : {}),
+    };
     const [data, total] = await this.prisma.$transaction([
       this.prisma.user.findMany({
         where,
@@ -84,6 +94,7 @@ export class PrismaUsersRepository implements UsersRepository {
       email: string;
       password: string;
       refreshTokenHash: string | null;
+      tokenVersion: { increment: number };
     }>,
   ): Promise<UserModel> {
     return this.prisma.user.update({ where: { id }, data });
@@ -99,52 +110,131 @@ export class PrismaUsersRepository implements UsersRepository {
     });
   }
 
-  updateRole(id: number, role: Role): Promise<UserModel> {
-    return this.prisma.user.update({
-      where: { id },
-      data: { role, refreshTokenHash: null },
+  countActiveAdmins(): Promise<number> {
+    return this.prisma.user.count({
+      where: { role: Role.ADMIN, deletedAt: null },
+    });
+  }
+
+  updateRole(actorAdminId: number, id: number, role: Role): Promise<UserModel> {
+    return this.prisma.$transaction(async (transaction) => {
+      await transaction.$executeRaw`SELECT pg_advisory_xact_lock(71928401::bigint)`;
+      const user = await transaction.user.findFirst({
+        where: { id, deletedAt: null },
+      });
+
+      if (!user) {
+        throw new NotFoundException(`User with id "${id}" not found`);
+      }
+
+      if (
+        actorAdminId === id &&
+        user.role === Role.ADMIN &&
+        role !== Role.ADMIN
+      ) {
+        throw new ConflictException('Administrators cannot demote themselves');
+      }
+
+      if (user.role === Role.ADMIN && role !== Role.ADMIN) {
+        const activeAdmins = await transaction.user.count({
+          where: { role: Role.ADMIN, deletedAt: null },
+        });
+        if (activeAdmins <= 1) {
+          throw new ConflictException(
+            'The last administrator cannot be demoted',
+          );
+        }
+      }
+
+      const updated = await transaction.user.update({
+        where: { id },
+        data: {
+          role,
+          refreshTokenHash: null,
+          tokenVersion: { increment: 1 },
+        },
+      });
+      await transaction.adminAuditLog.create({
+        data: {
+          actorAdminId,
+          targetUserId: id,
+          action: AdminAuditAction.USER_ROLE_CHANGED,
+          previousRole: user.role,
+          newRole: role,
+        },
+      });
+      return updated;
+    });
+  }
+
+  adminDelete(actorAdminId: number, id: number): Promise<UserModel> {
+    return this.prisma.$transaction(async (transaction) => {
+      await transaction.$executeRaw`SELECT pg_advisory_xact_lock(71928401::bigint)`;
+      const user = await transaction.user.findFirst({
+        where: { id, deletedAt: null },
+      });
+
+      if (!user) {
+        throw new NotFoundException(`User with id "${id}" not found`);
+      }
+      if (actorAdminId === id) {
+        throw new ConflictException('Administrators cannot delete themselves');
+      }
+      if (user.role === Role.ADMIN) {
+        const activeAdmins = await transaction.user.count({
+          where: { role: Role.ADMIN, deletedAt: null },
+        });
+        if (activeAdmins <= 1) {
+          throw new ConflictException(
+            'The last administrator cannot be deleted',
+          );
+        }
+      }
+
+      const deleted = await transaction.user.update({
+        where: { id },
+        data: {
+          deletedAt: new Date(),
+          refreshTokenHash: null,
+          tokenVersion: { increment: 1 },
+        },
+      });
+      await transaction.cartItem.deleteMany({ where: { userId: id } });
+      await transaction.adminAuditLog.create({
+        data: {
+          actorAdminId,
+          targetUserId: id,
+          action: AdminAuditAction.USER_DELETED,
+          previousRole: user.role,
+        },
+      });
+      return deleted;
     });
   }
 
   delete(id: number): Promise<UserModel> {
     return this.prisma.$transaction(async (transaction) => {
-      const activeLoans = await transaction.loan.groupBy({
-        by: ['bookId'],
-        where: { userId: id, status: 'ACTIVE' },
-        _count: { _all: true },
+      const user = await transaction.user.findFirst({
+        where: { id, deletedAt: null },
       });
-
-      for (const loanGroup of activeLoans) {
-        await transaction.book.update({
-          where: { id: loanGroup.bookId },
-          data: {
-            availableCopies: { increment: loanGroup._count._all },
-            isAvailable: true,
-          },
-        });
+      if (!user) {
+        throw new NotFoundException(`User with id "${id}" not found`);
       }
-
-      const reviewedBooks = await transaction.review.findMany({
-        where: { userId: id },
-        distinct: ['bookId'],
-        select: { bookId: true },
+      if (user.role === Role.ADMIN) {
+        throw new ConflictException(
+          'Administrators cannot delete their own account',
+        );
+      }
+      const deleted = await transaction.user.update({
+        where: { id },
+        data: {
+          deletedAt: new Date(),
+          refreshTokenHash: null,
+          tokenVersion: { increment: 1 },
+        },
       });
-      await transaction.loan.deleteMany({ where: { userId: id } });
-      await transaction.review.deleteMany({ where: { userId: id } });
       await transaction.cartItem.deleteMany({ where: { userId: id } });
-
-      for (const { bookId } of reviewedBooks) {
-        const aggregate = await transaction.review.aggregate({
-          where: { bookId },
-          _avg: { rating: true },
-        });
-        await transaction.book.update({
-          where: { id: bookId },
-          data: { rating: aggregate._avg.rating ?? 0 },
-        });
-      }
-
-      return transaction.user.delete({ where: { id } });
+      return deleted;
     });
   }
 }

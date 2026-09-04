@@ -11,7 +11,10 @@ export type LoanWithBook = LoanModel & {
   book: BookModel & { author: AuthorModel; category: CategoryModel };
 };
 
-export type SafeLoanUser = Omit<UserModel, 'password' | 'refreshTokenHash'>;
+export type SafeLoanUser = Pick<
+  UserModel,
+  'id' | 'fullName' | 'email' | 'role' | 'createdAt' | 'updatedAt'
+>;
 export type LoanWithRelations = LoanWithBook & { user: SafeLoanUser };
 export type PaginatedLoans<T> = {
   data: T[];

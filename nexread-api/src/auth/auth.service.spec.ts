@@ -29,6 +29,8 @@ describe('AuthService refresh tokens', () => {
       password: await bcrypt.hash('strong-password', 4),
       role: Role.USER,
       refreshTokenHash: null,
+      tokenVersion: 0,
+      deletedAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

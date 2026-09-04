@@ -23,18 +23,45 @@ enum LoanStatus {
   RETURNED
 }
 
+enum AdminAuditAction {
+  USER_ROLE_CHANGED
+  USER_DELETED
+}
+
 model User {
-  id               Int        @id @default(autoincrement())
-  fullName         String
-  email            String     @unique
-  password         String
-  role             Role       @default(USER)
-  refreshTokenHash String?
-  loans            Loan[]
-  reviews          Review[]
-  cartItems        CartItem[]
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  id                 Int             @id @default(autoincrement())
+  fullName           String
+  email              String          @unique
+  password           String
+  role               Role            @default(USER)
+  refreshTokenHash   String?
+  tokenVersion       Int             @default(0)
+  loans              Loan[]
+  reviews            Review[]
+  cartItems          CartItem[]
+  adminActions       AdminAuditLog[] @relation("AdminAuditActor")
+  adminActionTargets AdminAuditLog[] @relation("AdminAuditTarget")
+  deletedAt          DateTime?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@index([deletedAt])
+}
+
+model AdminAuditLog {
+  id           Int              @id @default(autoincrement())
+  actorAdminId Int
+  targetUserId Int
+  action       AdminAuditAction
+  previousRole Role?
+  newRole      Role?
+  actorAdmin   User             @relation("AdminAuditActor", fields: [actorAdminId], references: [id], onDelete: Restrict)
+  targetUser   User             @relation("AdminAuditTarget", fields: [targetUserId], references: [id], onDelete: Restrict)
+  createdAt    DateTime         @default(now())
+
+  @@index([actorAdminId])
+  @@index([targetUserId])
+  @@index([createdAt])
 }
 
 model Author {

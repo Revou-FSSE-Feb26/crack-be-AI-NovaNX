@@ -28,9 +28,10 @@ The Swagger UI documents every endpoint (request/response shapes, DTOs, status c
 - Global `PrismaClientExceptionFilter` translates database constraint errors (unique, foreign key, record-not-found) into clean `409`/`400`/`404` responses instead of raw `500` errors
 - Production hardening with Helmet security headers, per-IP global/auth rate limits, trusted-proxy handling, request IDs, structured JSON logs, centralized startup environment validation, and graceful shutdown hooks
 - Separate `GET /health/live` and database-aware `GET /health/ready` probes; Railway only promotes a deployment after the readiness probe succeeds
-- GitHub Actions production gate covering dependency audit, migrations, lint, build, unit tests, e2e tests, and the complete Newman regression suite against an isolated PostgreSQL service
+- GitHub Actions CI/CD with formatting, lint, type, coverage, build, migration, E2E, Newman, and production dependency gates; successful `main` revisions progress through staging, approval-protected production, and automated smoke tests
 - Role-based access control (RBAC): `User.role` (`USER` / `ADMIN`), included in the JWT payload, enforced via a `RolesGuard` + `@Roles()` decorator
 - Self-service account endpoints use the authenticated JWT identity: `GET/PATCH/DELETE /me` and `PATCH /me/password`. Admin account management remains under `/users`, and every `/users` endpoint is admin-only. Password and role changes use dedicated DTOs/endpoints to prevent privilege escalation through mass assignment.
+- User deletion is a soft delete that preserves loan/review history, revokes refresh access, and removes pending cart items. Admin role/deletion actions are stored in an immutable audit trail; self-demotion, self-deletion, and removal of the last active admin are rejected.
 - Atomic loan lifecycle: authenticated users borrow/return books under `/loans`; conditional inventory updates prevent over-borrowing while allowing concurrent loans up to `totalCopies`.
 - Paginated catalog and rating-based recommendations; inventory counters allow multiple copies of a title to be loaned concurrently.
 - One review per user/book with owner/admin moderation and transactional book-rating recalculation.
@@ -114,13 +115,14 @@ npm run prisma:seed
 
 | Model      | Notes                                                                                                             |
 | ---------- | ----------------------------------------------------------------------------------------------------------------- |
-| `User`     | `id` (auto-increment), `fullName`, `email` (unique), bcrypt password hash, role, refresh-token hash, timestamps   |
+| `User`     | Account identity, credentials, role, refresh-token hash, soft-delete marker, and timestamps                     |
 | `Author`   | `id` (string), `name` (unique), catalog counters/rating, avatar, soft-delete marker, timestamps                   |
 | `Category` | `id` (string), `name` (unique), `slug` (unique), `subtitle`, `iconPath`, timestamps                               |
 | `Book`     | `id`, title, derived rating, total/available copies, soft-delete marker, author/category foreign keys, timestamps |
 | `Loan`     | `id`, user/book foreign keys, status, borrowed/due/returned dates                                                 |
 | `Review`   | `id`, user/book foreign keys, rating 1–5, optional comment; unique per user/book                                  |
 | `CartItem` | Persistent user/book cart entry; unique per user/book and removed automatically with its user or book             |
+| `AdminAuditLog` | Persistent actor/target/action record for administrative role changes and user deletion                   |
 
 `Author` and `Category` each have a one-to-many relation to `Book`; `User` and `Book` each have one-to-many relations to `Loan` and `Review`. See [`nexread-api/docs/database-queries.md`](nexread-api/docs/database-queries.md) for concrete relational/query techniques used by the application.
 
@@ -134,6 +136,7 @@ npm run prisma:seed
 - `Book` (1) → `Loan` (N) via `Loan.bookId`
 - `User` (1) → `Review` (N) via `Review.userId`
 - `Book` (1) → `Review` (N) via `Review.bookId`
+- `User` (1) → `AdminAuditLog` (N) as the acting admin and target user
 
 ## Running the Application
 
@@ -190,20 +193,20 @@ By default, the API runs at `http://localhost:3000`. The interactive Swagger API
 | GET    | `/me/reviews`                  | Paginated reviews written by the user           | Yes                |
 | PATCH  | `/me`                          | Update the authenticated user's name/email      | Yes                |
 | PATCH  | `/me/password`                 | Change the authenticated user's password        | Yes                |
-| DELETE | `/me`                          | Delete the authenticated user's account         | Yes                |
+| DELETE | `/me`                          | Soft-delete the authenticated user's account    | Yes                |
 | GET    | `/users`                       | Search and paginate all users                   | Yes (Admin only)   |
 | GET    | `/users/:id`                   | Get a user by id                                | Yes (Admin only)   |
 | PATCH  | `/users/:id/role`              | Promote/demote a user's role                    | Yes (Admin only)   |
-| DELETE | `/users/:id`                   | Delete a user                                   | Yes (Admin only)   |
+| DELETE | `/users/:id`                   | Soft-delete a user with admin-lockout protection | Yes (Admin only)   |
 | POST   | `/loans`                       | Borrow an available book                        | Yes                |
 | GET    | `/loans`                       | Filter and paginate authenticated user loans    | Yes                |
 | POST   | `/loans/from-cart`             | Atomically borrow all books in the cart         | Yes                |
 | PATCH  | `/loans/:id/return`            | Return a loan as its borrower or an admin       | Yes                |
-| GET    | `/cart`                        | List books in the authenticated user's cart     | Yes                |
-| GET    | `/cart/checkout`               | Get checkout user and book information          | Yes                |
-| POST   | `/cart/items`                  | Add an available book to the cart               | Yes                |
-| DELETE | `/cart/items/:id`              | Remove one cart item                            | Yes                |
-| DELETE | `/cart`                        | Clear the authenticated user's cart             | Yes                |
+| GET    | `/api/cart`                    | List books in the authenticated user's cart     | Yes                |
+| GET    | `/api/cart/checkout`           | Get checkout user and book information          | Yes                |
+| POST   | `/api/cart/items`              | Add an available book to the cart               | Yes                |
+| DELETE | `/api/cart/items/:itemId`      | Remove one cart item                            | Yes                |
+| DELETE | `/api/cart`                    | Clear the authenticated user's cart             | Yes                |
 | POST   | `/admin/loans`                 | Create a loan for a user                        | Yes (Admin only)   |
 | GET    | `/admin/loans`                 | Search, filter, and paginate every loan         | Yes (Admin only)   |
 | GET    | `/admin/loans/overdue`         | List overdue active loans                       | Yes (Admin only)   |
@@ -212,7 +215,7 @@ By default, the API runs at `http://localhost:3000`. The interactive Swagger API
 | GET    | `/admin/authors/statistics`    | Book count/rating per author                    | Yes (Admin only)   |
 | GET    | `/admin/categories/statistics` | Book count including empty categories           | Yes (Admin only)   |
 
-Protected routes require an `Authorization: Bearer <accessToken>` header with a token obtained from `POST /auth/login`, `/auth/register`, or `/auth/refresh`; unauthenticated requests receive `401 Unauthorized`. When the access token expires, send `{ "refreshToken": "..." }` to `POST /auth/refresh`, replace both locally stored tokens with the returned pair, and retry the original request once. Refresh tokens are rotated, so a previously used token is rejected. Only one refresh-token session is active per user; a new login invalidates the previous refresh token. `POST /auth/logout` revokes the stored refresh token, while the short-lived access token remains valid until its expiry; the frontend must discard both tokens immediately. Password and role changes also revoke the refresh token. `/me` always derives the target user from the authenticated JWT and does not accept a user id. Every `/users` route requires the `ADMIN` role; authenticated users with the `USER` role receive `403 Forbidden`. Request bodies are validated against each resource's DTO; invalid or unknown fields are rejected/stripped by the global `ValidationPipe`.
+Protected routes require an `Authorization: Bearer <accessToken>` header with a token obtained from `POST /auth/login`, `/auth/register`, or `/auth/refresh`; unauthenticated requests receive `401 Unauthorized`. When the access token expires, send `{ "refreshToken": "..." }` to `POST /auth/refresh`, replace both locally stored tokens with the returned pair, and retry the original request once. Refresh tokens are rotated, so a previously used token is rejected. Only one refresh-token session is active per user; a new login invalidates the previous refresh token. `POST /auth/logout` revokes the stored refresh token, while the short-lived access token remains valid until its expiry; the frontend must discard both tokens immediately. Password and role changes revoke the refresh token. Protected requests also verify that the user is still active and that the token role/email matches the current database record, so role changes and account deletion invalidate existing access tokens immediately. `/me` always derives the target user from the authenticated JWT and does not accept a user id. Every `/users` route requires the `ADMIN` role; authenticated users with the `USER` role receive `403 Forbidden`. Request bodies are validated against each resource's DTO; invalid or unknown fields are rejected/stripped by the global `ValidationPipe`.
 
 ## Testing
 
@@ -288,10 +291,11 @@ The API listens on `process.env.PORT` and is otherwise stateless, so it deploys 
 
 ### Production operations checklist
 
+- Complete the GitHub environments, branch protection, Railway isolation, and rollback setup in [`docs/ci-cd.md`](docs/ci-cd.md) before enabling the deployment workflow.
 - Configure external uptime monitoring against `/health/ready`; `/health/live` is intended only to distinguish a running process from a dependency failure.
 - Enable Railway PostgreSQL daily and weekly backups (or PITR where required), document the responsible operator, and perform a restore drill before accepting irreplaceable user data. Backup schedules and alert recipients are account-level operational choices and are intentionally not created by application code.
 - Enable Railway CPU, memory, disk, and deployment notifications or connect an error/observability service. Application logs are emitted as structured JSON in production and include a non-sensitive request ID, method, path, status, and duration.
-- Protect `main` with the `NexRead API CI` required status check. It rejects production dependency vulnerabilities at high/critical severity and runs the full test suite before merge.
+- Protect `main` with the `CI Gate` required status check. It rejects production dependency vulnerabilities at high/critical severity and requires every quality/integration job before merge.
 - Rotate JWT/admin credentials periodically and immediately after suspected exposure. Never copy Railway secrets into source control or CI logs.
 
 ## Project Structure

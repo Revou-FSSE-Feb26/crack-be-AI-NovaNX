@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import type { Role } from '../../generated/prisma/enums';
+import { Role } from '../../generated/prisma/enums';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -90,14 +90,32 @@ export class UsersService {
     const updated = await this.usersRepository.update(id, {
       fullName: updateUserDto.fullName,
       email: updateUserDto.email,
+      tokenVersion: updateUserDto.email ? { increment: 1 } : undefined,
     });
 
     return toSafeUser(updated);
   }
 
-  async updateRole(id: number, role: Role) {
-    await this.findExistingOrThrow(id);
-    const updated = await this.usersRepository.updateRole(id, role);
+  async updateRole(actorAdminId: number, id: number, role: Role) {
+    const user = await this.findExistingOrThrow(id);
+    if (user.role === role) {
+      return toSafeUser(user);
+    }
+    if (actorAdminId === id && user.role !== role) {
+      throw new ConflictException('Administrators cannot demote themselves');
+    }
+    if (
+      user.role === Role.ADMIN &&
+      role !== Role.ADMIN &&
+      (await this.usersRepository.countActiveAdmins()) <= 1
+    ) {
+      throw new ConflictException('The last administrator cannot be demoted');
+    }
+    const updated = await this.usersRepository.updateRole(
+      actorAdminId,
+      id,
+      role,
+    );
     return toSafeUser(updated);
   }
 
@@ -123,6 +141,7 @@ export class UsersService {
     await this.usersRepository.update(id, {
       password,
       refreshTokenHash: null,
+      tokenVersion: { increment: 1 },
     });
   }
 
@@ -133,6 +152,20 @@ export class UsersService {
   async remove(id: number) {
     await this.findExistingOrThrow(id);
     await this.usersRepository.delete(id);
+  }
+
+  async adminRemove(actorAdminId: number, id: number) {
+    const user = await this.findExistingOrThrow(id);
+    if (actorAdminId === id) {
+      throw new ConflictException('Administrators cannot delete themselves');
+    }
+    if (
+      user.role === Role.ADMIN &&
+      (await this.usersRepository.countActiveAdmins()) <= 1
+    ) {
+      throw new ConflictException('The last administrator cannot be deleted');
+    }
+    await this.usersRepository.adminDelete(actorAdminId, id);
   }
 
   private async findExistingOrThrow(id: number) {

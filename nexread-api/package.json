@@ -11,6 +11,7 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -18,6 +19,7 @@
     "deploy:start": "prisma migrate deploy && node dist/src/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "lint:check": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
@@ -36,7 +38,11 @@
   "overrides": {
     "@nestjs/swagger": {
       "js-yaml": "5.2.3"
-    }
+    },
+    "deepmerge-ts": "8.0.2",
+    "fast-uri": "3.1.7",
+    "mysql2": "3.24.3",
+    "qs": "6.16.0"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -108,6 +114,14 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
+    "coverageThreshold": {
+      "global": {
+        "branches": 25,
+        "functions": 15,
+        "lines": 35,
+        "statements": 35
+      }
+    },
     "testEnvironment": "node"
   }
 }

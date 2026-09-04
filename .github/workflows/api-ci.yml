@@ -2,45 +2,95 @@ name: NexRead API CI
 
 on:
   pull_request:
-    paths:
-      - "nexread-api/**"
-      - ".github/workflows/api-ci.yml"
   push:
     branches: [main]
-    paths:
-      - "nexread-api/**"
-      - ".github/workflows/api-ci.yml"
 
 permissions:
   contents: read
 
 concurrency:
-  group: api-ci-${{ github.ref }}
+  group: api-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NODE_VERSION: "22"
+
 jobs:
-  verify:
+  quality:
+    name: Code quality and unit tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: nexread-api
     env:
       NODE_ENV: test
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/nexread_test
-      JWT_SECRET: ci-access-secret-that-is-at-least-32-characters
-      JWT_REFRESH_SECRET: ci-refresh-secret-that-is-different-and-long
+      DATABASE_URL: postgresql://postgres@localhost:5432/nexread_test
       JWT_EXPIRES_IN: 15m
       JWT_REFRESH_EXPIRES_IN: 7d
-      ADMIN_SEED_EMAIL: ci-admin@example.com
-      ADMIN_SEED_PASSWORD: ci-only-strong-admin-password
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: nexread-api/package-lock.json
+
+      - name: Prepare isolated test secrets
+        shell: bash
+        run: |
+          echo "JWT_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "JWT_REFRESH_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: npm ci --no-audit
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint:check
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Unit tests with coverage floor
+        run: npm test -- --runInBand --coverage
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: api-coverage-${{ github.run_id }}
+          path: nexread-api/coverage/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  integration:
+    name: Database, E2E, and API regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: nexread-api
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres@localhost:5432/nexread_test
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      ADMIN_SEED_EMAIL: ci-admin@example.invalid
     services:
       postgres:
         image: postgres:17-alpine
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
           POSTGRES_DB: nexread_test
+          POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
         options: >-
@@ -50,19 +100,23 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: nexread-api/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Prepare isolated test secrets
+        shell: bash
+        run: |
+          echo "JWT_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "JWT_REFRESH_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "ADMIN_SEED_PASSWORD=$(openssl rand -base64 36 | tr -d '\n')" >> "$GITHUB_ENV"
 
-      - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=high
+      - name: Install dependencies
+        run: npm ci --no-audit
 
       - name: Apply database migrations
         run: npm run prisma:migrate:deploy
@@ -70,19 +124,14 @@ jobs:
       - name: Seed isolated CI database
         run: npm run prisma:seed
 
-      - name: Lint
-        run: npm run lint:check
-
-      - name: Build
-        run: npm run build
-
-      - name: Unit tests
-        run: npm test -- --runInBand
-
       - name: End-to-end tests
         run: npm run test:e2e
 
+      - name: Build production artifact
+        run: npm run build
+
       - name: Start API for Newman
+        shell: bash
         run: |
           npm run start:prod > /tmp/nexread-api.log 2>&1 &
           for attempt in {1..30}; do
@@ -97,11 +146,52 @@ jobs:
       - name: Newman API regression
         run: npm run test:newman
 
-      - name: Upload Newman reports
+      - name: Upload Newman reports and API log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: newman-reports
-          path: nexread-api/test-report/newman-reports/
+          name: api-regression-${{ github.run_id }}
+          path: |
+            nexread-api/test-report/newman-reports/
+            /tmp/nexread-api.log
           if-no-files-found: ignore
           retention-days: 14
+
+  security:
+    name: Production dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: nexread-api
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: nexread-api/package-lock.json
+
+      - name: Install lockfile without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit
+
+      - name: Reject high or critical production vulnerabilities
+        run: npm audit --omit=dev --audit-level=high
+
+  ci-gate:
+    name: CI Gate
+    if: always()
+    needs: [quality, integration, security]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every quality gate
+        shell: bash
+        run: |
+          if [[ "${{ needs.quality.result }}" != "success" || \
+                "${{ needs.integration.result }}" != "success" || \
+                "${{ needs.security.result }}" != "success" ]]; then
+            echo "One or more required CI jobs did not pass."
+            exit 1
+          fi

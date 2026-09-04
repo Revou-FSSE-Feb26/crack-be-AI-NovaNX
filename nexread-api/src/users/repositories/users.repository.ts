@@ -40,12 +40,19 @@ export abstract class UsersRepository {
       email: string;
       password: string;
       refreshTokenHash: string | null;
+      tokenVersion: { increment: number };
     }>,
   ): Promise<UserModel>;
   abstract updateRefreshTokenHash(
     id: number,
     refreshTokenHash: string | null,
   ): Promise<UserModel>;
-  abstract updateRole(id: number, role: Role): Promise<UserModel>;
+  abstract countActiveAdmins(): Promise<number>;
+  abstract updateRole(
+    actorAdminId: number,
+    id: number,
+    role: Role,
+  ): Promise<UserModel>;
+  abstract adminDelete(actorAdminId: number, id: number): Promise<UserModel>;
   abstract delete(id: number): Promise<UserModel>;
 }

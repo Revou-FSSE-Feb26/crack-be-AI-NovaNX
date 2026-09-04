@@ -296,8 +296,10 @@
                   "pm.test('Status code is 200', function () {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "pm.test('Response is an array', function () {",
-                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "pm.test('Response contains paginated data', function () {",
+                  "  const response = pm.response.json();",
+                  "  pm.expect(response.data).to.be.an('array');",
+                  "  pm.expect(response.meta).to.include.keys('page', 'limit', 'total', 'totalPages');",
                   "});"
                 ]
               }
@@ -1805,9 +1807,9 @@
                       "options": { "raw": { "language": "json" } }
                     },
                     "url": {
-                      "raw": "{{baseUrl}}/cart/items",
+                      "raw": "{{baseUrl}}/api/cart/items",
                       "host": ["{{baseUrl}}"],
-                      "path": ["cart", "items"]
+                      "path": ["api", "cart", "items"]
                     }
                   },
                   "response": []
@@ -1835,9 +1837,9 @@
                       }
                     ],
                     "url": {
-                      "raw": "{{baseUrl}}/cart",
+                      "raw": "{{baseUrl}}/api/cart",
                       "host": ["{{baseUrl}}"],
-                      "path": ["cart"]
+                      "path": ["api", "cart"]
                     }
                   },
                   "response": []
@@ -1865,9 +1867,9 @@
                       }
                     ],
                     "url": {
-                      "raw": "{{baseUrl}}/cart/checkout",
+                      "raw": "{{baseUrl}}/api/cart/checkout",
                       "host": ["{{baseUrl}}"],
-                      "path": ["cart", "checkout"]
+                      "path": ["api", "cart", "checkout"]
                     }
                   },
                   "response": []
@@ -1894,9 +1896,9 @@
                       }
                     ],
                     "url": {
-                      "raw": "{{baseUrl}}/cart/items/{{cartItemId}}",
+                      "raw": "{{baseUrl}}/api/cart/items/{{cartItemId}}",
                       "host": ["{{baseUrl}}"],
-                      "path": ["cart", "items", "{{cartItemId}}"]
+                      "path": ["api", "cart", "items", "{{cartItemId}}"]
                     }
                   },
                   "response": []
@@ -1929,9 +1931,9 @@
                       "options": { "raw": { "language": "json" } }
                     },
                     "url": {
-                      "raw": "{{baseUrl}}/cart/items",
+                      "raw": "{{baseUrl}}/api/cart/items",
                       "host": ["{{baseUrl}}"],
-                      "path": ["cart", "items"]
+                      "path": ["api", "cart", "items"]
                     }
                   },
                   "response": []
@@ -1958,9 +1960,9 @@
                       }
                     ],
                     "url": {
-                      "raw": "{{baseUrl}}/cart",
+                      "raw": "{{baseUrl}}/api/cart",
                       "host": ["{{baseUrl}}"],
-                      "path": ["cart"]
+                      "path": ["api", "cart"]
                     }
                   },
                   "response": []
@@ -2023,9 +2025,9 @@
                       }
                     ],
                     "url": {
-                      "raw": "{{baseUrl}}/cart",
+                      "raw": "{{baseUrl}}/api/cart",
                       "host": ["{{baseUrl}}"],
-                      "path": ["cart"]
+                      "path": ["api", "cart"]
                     }
                   },
                   "response": []
