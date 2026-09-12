@@ -8,6 +8,7 @@ const book: BookModel = {
   title: 'Book One',
   rating: 4,
   coverClassName: null,
+  coverUrl: null,
   authorId: 'author-1',
   categoryId: 'category-1',
   isAvailable: true,

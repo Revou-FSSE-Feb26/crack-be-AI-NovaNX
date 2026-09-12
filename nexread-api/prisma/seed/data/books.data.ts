@@ -5,6 +5,7 @@ export type BookSeedData = {
   categoryId: string;
   rating: number;
   coverClassName: string;
+  coverUrl: string;
 };
 
 export const books: BookSeedData[] = [
@@ -16,6 +17,7 @@ export const books: BookSeedData[] = [
     rating: 4.9,
     coverClassName:
       'bg-[linear-gradient(135deg,_#ff637e,_#fb2c36_50%,_#020618)]',
+    coverUrl: '/covers/books/21-rasa-bakso.png',
   },
   {
     id: 'white-fang',
@@ -25,6 +27,7 @@ export const books: BookSeedData[] = [
     rating: 4.9,
     coverClassName:
       'bg-[linear-gradient(135deg,_#5ee9b5,_#009689_50%,_#020618)]',
+    coverUrl: '/covers/books/white-fang.png',
   },
   {
     id: 'oliver-twist',
@@ -34,6 +37,7 @@ export const books: BookSeedData[] = [
     rating: 4.9,
     coverClassName:
       'bg-[linear-gradient(135deg,_#fee685,_#ff6900_50%,_#020618)]',
+    coverUrl: '/covers/books/oliver-twist.png',
   },
   {
     id: 'the-scarecrow',
@@ -43,6 +47,7 @@ export const books: BookSeedData[] = [
     rating: 4.9,
     coverClassName:
       'bg-[linear-gradient(135deg,_#a4f4cf,_#006045_50%,_#020618)]',
+    coverUrl: '/covers/books/the-scarecrow.png',
   },
   {
     id: 'rumah-yang-menelan-penghuninya',
@@ -51,6 +56,7 @@ export const books: BookSeedData[] = [
     categoryId: 'cat-self-improvement',
     rating: 4.9,
     coverClassName: 'bg-[linear-gradient(135deg,_#cad5e2,_#1d293d_50%,_#000)]',
+    coverUrl: '/covers/books/rumah-yang-menelan-penghuninya.png',
   },
   {
     id: 'yeti-bertukar-gigi',
@@ -60,6 +66,7 @@ export const books: BookSeedData[] = [
     rating: 4.9,
     coverClassName:
       'bg-[linear-gradient(135deg,_#ffb86a,_#f54900_50%,_#020618)]',
+    coverUrl: '/covers/books/yeti-bertukar-gigi.png',
   },
   {
     id: 'hidden-neon',
@@ -69,6 +76,7 @@ export const books: BookSeedData[] = [
     rating: 4.9,
     coverClassName:
       'bg-[linear-gradient(135deg,_#c4b4ff,_#7008e7_50%,_#020618)]',
+    coverUrl: '/covers/books/hidden-neon.png',
   },
   {
     id: 'digital-fortress',
@@ -78,6 +86,7 @@ export const books: BookSeedData[] = [
     rating: 4.9,
     coverClassName:
       'bg-[linear-gradient(135deg,_#53eafd,_#155dfc_50%,_#020618)]',
+    coverUrl: '/covers/books/digital-fortress.png',
   },
   {
     id: 'atomic-habits',
@@ -87,6 +96,7 @@ export const books: BookSeedData[] = [
     rating: 4.4,
     coverClassName:
       'bg-[linear-gradient(135deg,_#86efac,_#16a34a_50%,_#020618)]',
+    coverUrl: '/covers/books/atomic-habits.png',
   },
   {
     id: 'rich-dad-poor-dad',
@@ -96,6 +106,7 @@ export const books: BookSeedData[] = [
     rating: 3.8,
     coverClassName:
       'bg-[linear-gradient(135deg,_#fde68a,_#ca8a04_50%,_#020618)]',
+    coverUrl: '/covers/books/rich-dad-poor-dad.png',
   },
   {
     id: 'brief-history-of-time',
@@ -105,6 +116,7 @@ export const books: BookSeedData[] = [
     rating: 2.7,
     coverClassName:
       'bg-[linear-gradient(135deg,_#93c5fd,_#2563eb_50%,_#020618)]',
+    coverUrl: '/covers/books/a-brief-history-of-time.png',
   },
   {
     id: 'learning-react',
@@ -114,6 +126,7 @@ export const books: BookSeedData[] = [
     rating: 1.9,
     coverClassName:
       'bg-[linear-gradient(135deg,_#f0abfc,_#a21caf_50%,_#020618)]',
+    coverUrl: '/covers/books/learning-react.png',
   },
   {
     id: 'neon-library',
@@ -123,5 +136,6 @@ export const books: BookSeedData[] = [
     rating: 5.0,
     coverClassName:
       'bg-[linear-gradient(135deg,_#4ddeff,_#7c5cff_50%,_#020618)]',
+    coverUrl: '/covers/books/neon-library.png',
   },
 ];

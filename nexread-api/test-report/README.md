@@ -2,6 +2,10 @@
 
 This folder is the single place for all test-result documentation for `nexread-api`: the Postman/Newman collection used for manual and automated API testing, its environment file, and the generated run reports.
 
+For a dependency-ordered, endpoint-by-endpoint staging checklist, test data,
+expected status codes, RBAC cases, and cleanup procedure, see
+[`STAGING-API-TEST-GUIDE.md`](STAGING-API-TEST-GUIDE.md).
+
 ## Contents
 
 ```text
