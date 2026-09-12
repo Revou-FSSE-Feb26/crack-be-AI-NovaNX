@@ -20,6 +20,13 @@ export class BookResponseDto {
   })
   coverClassName: string | null;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '/covers/books/laskar-pelangi.png',
+  })
+  coverUrl: string | null;
+
   @ApiProperty({ example: 'andrea-hirata' })
   authorId: string;
 

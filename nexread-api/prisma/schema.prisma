@@ -95,6 +95,7 @@ model Book {
   title           String
   rating          Float      @default(0)
   coverClassName  String?
+  coverUrl        String?
   authorId        String
   categoryId      String
   isAvailable     Boolean    @default(true)

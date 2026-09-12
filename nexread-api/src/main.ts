@@ -6,6 +6,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import { randomUUID } from 'node:crypto';
+import { join } from 'node:path';
 import { AppModule } from './app.module';
 import { PrismaClientExceptionFilter } from './common/filters/prisma-exception.filter';
 import {
@@ -24,6 +25,11 @@ async function bootstrap() {
     }),
   });
   const httpLogger = new Logger('HTTP');
+
+  app.useStaticAssets(join(process.cwd(), 'public'), {
+    prefix: '/covers/',
+    maxAge: '7d',
+  });
 
   app.set('trust proxy', 1);
   app.use(
