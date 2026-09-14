@@ -2,7 +2,14 @@ import type { UserModel } from '../../../generated/prisma/models';
 
 export type SafeUser = Pick<
   UserModel,
-  'id' | 'fullName' | 'email' | 'role' | 'createdAt' | 'updatedAt'
+  | 'id'
+  | 'fullName'
+  | 'email'
+  | 'phoneNumber'
+  | 'avatar'
+  | 'role'
+  | 'createdAt'
+  | 'updatedAt'
 >;
 
 /**
@@ -16,6 +23,8 @@ export function toSafeUser(user: UserModel): SafeUser {
     id: user.id,
     fullName: user.fullName,
     email: user.email,
+    phoneNumber: user.phoneNumber,
+    avatar: user.avatar,
     role: user.role,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,

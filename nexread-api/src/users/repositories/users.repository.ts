@@ -38,6 +38,8 @@ export abstract class UsersRepository {
     data: Partial<{
       fullName: string;
       email: string;
+      phoneNumber: string | null;
+      avatar: string | null;
       password: string;
       refreshTokenHash: string | null;
       tokenVersion: { increment: number };

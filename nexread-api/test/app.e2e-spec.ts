@@ -144,11 +144,23 @@ describe('AppController (e2e)', () => {
     await request(app.getHttpServer())
       .patch('/me')
       .set('Authorization', authorization)
-      .send({ fullName: 'Updated Me E2E User' })
+      .send({
+        fullName: 'Updated Me E2E User',
+        phoneNumber: '+6281234567890',
+      })
       .expect(200)
-      .expect(({ body }: { body: { fullName: string } }) => {
-        expect(body.fullName).toBe('Updated Me E2E User');
-      });
+      .expect(
+        ({ body }: { body: { fullName: string; phoneNumber: string } }) => {
+          expect(body.fullName).toBe('Updated Me E2E User');
+          expect(body.phoneNumber).toBe('+6281234567890');
+        },
+      );
+
+    await request(app.getHttpServer())
+      .patch('/me')
+      .set('Authorization', authorization)
+      .send({ phoneNumber: 'not-a-phone-number' })
+      .expect(400);
 
     await request(app.getHttpServer())
       .get(`/users/${registrationBody.user.id}`)

@@ -74,7 +74,7 @@ export class UsersService {
     };
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: number, updateUserDto: UpdateUserDto, avatar?: string) {
     await this.findExistingOrThrow(id);
 
     if (updateUserDto.email) {
@@ -90,6 +90,8 @@ export class UsersService {
     const updated = await this.usersRepository.update(id, {
       fullName: updateUserDto.fullName,
       email: updateUserDto.email,
+      phoneNumber: updateUserDto.phoneNumber,
+      avatar,
       tokenVersion: updateUserDto.email ? { increment: 1 } : undefined,
     });
 

@@ -26,6 +26,10 @@ async function bootstrap() {
   });
   const httpLogger = new Logger('HTTP');
 
+  app.useStaticAssets(join(process.cwd(), 'public', 'avatars'), {
+    prefix: '/avatars/',
+    maxAge: '7d',
+  });
   app.useStaticAssets(join(process.cwd(), 'public'), {
     prefix: '/covers/',
     maxAge: '7d',
