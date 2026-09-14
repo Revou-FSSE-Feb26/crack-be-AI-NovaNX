@@ -101,7 +101,9 @@ export class LoansController {
   }
 
   @Patch(':id/return')
-  @ApiOperation({ summary: 'Return a loan as its borrower or an admin' })
+  @ApiOperation({
+    summary: 'Request a return as borrower, or confirm it as an admin',
+  })
   @ApiOkResponse({ type: LoanResponseDto })
   @ApiNotFoundResponse({
     description: 'Loan was not found',
@@ -174,9 +176,10 @@ export class AdminLoansController {
   @ApiNotFoundResponse({ type: ErrorResponseDto })
   @ApiConflictResponse({ type: ErrorResponseDto })
   update(
+    @Req() request: AuthenticatedRequest,
     @Param('id', ParseIntPipe) id: number,
     @Body() data: AdminUpdateLoanDto,
   ) {
-    return this.loansService.adminUpdate(id, data);
+    return this.loansService.adminUpdate(request.user.userId, id, data);
   }
 }

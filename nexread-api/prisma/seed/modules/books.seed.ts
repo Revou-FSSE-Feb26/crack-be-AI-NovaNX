@@ -2,12 +2,24 @@ import type { PrismaClient } from '../../../generated/prisma/client';
 import { BookCopyStatus } from '../../../generated/prisma/enums';
 import { books } from '../data/books.data';
 
-function seedBarcode(bookId: string, copyNumber: number): string {
-  const normalized = bookId.replace(/[^a-zA-Z0-9]+/g, '-').toUpperCase();
-  return `NXR-${normalized}-${String(copyNumber).padStart(3, '0')}`;
+function seedBarcode(copyNumber: number): string {
+  return `BK-${String(copyNumber).padStart(3, '0')}`;
 }
 
 export async function seedBooks(prisma: PrismaClient): Promise<void> {
+  const prototypeCopies = await prisma.bookCopy.findMany({
+    where: { barcode: { startsWith: 'BK-' } },
+    select: { barcode: true },
+  });
+  let nextBarcodeNumber =
+    Math.max(
+      0,
+      ...prototypeCopies.map((copy) => {
+        const match = /^BK-(\d+)$/.exec(copy.barcode);
+        return match ? Number(match[1]) : 0;
+      }),
+    ) + 1;
+
   for (const book of books) {
     const seededBook = await prisma.book.upsert({
       where: { id: book.id },
@@ -19,9 +31,9 @@ export async function seedBooks(prisma: PrismaClient): Promise<void> {
     });
     if (copyCount === 0) {
       await prisma.bookCopy.createMany({
-        data: Array.from({ length: seededBook.totalCopies }, (_, index) => ({
+        data: Array.from({ length: seededBook.totalCopies }, () => ({
           bookId: book.id,
-          barcode: seedBarcode(book.id, index + 1),
+          barcode: seedBarcode(nextBarcodeNumber++),
           status: BookCopyStatus.AVAILABLE,
         })),
       });

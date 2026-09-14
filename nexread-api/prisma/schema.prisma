@@ -20,6 +20,7 @@ enum Role {
 
 enum LoanStatus {
   ACTIVE
+  RETURN_REQUESTED
   RETURNED
 }
 
@@ -37,22 +38,23 @@ enum AdminAuditAction {
 }
 
 model User {
-  id                 Int             @id @default(autoincrement())
+  id                 Int                @id @default(autoincrement())
   fullName           String
-  email              String          @unique
+  email              String             @unique
   password           String
-  role               Role            @default(USER)
+  role               Role               @default(USER)
   refreshTokenHash   String?
-  tokenVersion       Int             @default(0)
+  tokenVersion       Int                @default(0)
   loans              Loan[]
   reviews            Review[]
   cartItems          CartItem[]
-  adminActions       AdminAuditLog[] @relation("AdminAuditActor")
-  adminActionTargets AdminAuditLog[] @relation("AdminAuditTarget")
+  adminActions       AdminAuditLog[]    @relation("AdminAuditActor")
+  adminActionTargets AdminAuditLog[]    @relation("AdminAuditTarget")
   bookCopyActions    BookCopyAuditLog[]
+  verifiedReturns    Loan[]             @relation("LoanReturnVerifier")
   deletedAt          DateTime?
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
   @@index([deletedAt])
 }
@@ -126,16 +128,16 @@ model Book {
 }
 
 model BookCopy {
-  id        Int            @id @default(autoincrement())
+  id        Int                @id @default(autoincrement())
   bookId    String
-  barcode   String         @unique
-  status    BookCopyStatus @default(AVAILABLE)
+  barcode   String             @unique
+  status    BookCopyStatus     @default(AVAILABLE)
   shelfCode String?
-  book      Book           @relation(fields: [bookId], references: [id], onDelete: Restrict)
+  book      Book               @relation(fields: [bookId], references: [id], onDelete: Restrict)
   loans     Loan[]
   auditLogs BookCopyAuditLog[]
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
 
   @@index([bookId])
   @@index([bookId, status])
@@ -173,21 +175,25 @@ model Review {
 }
 
 model Loan {
-  id         Int        @id @default(autoincrement())
-  userId     Int
-  bookId     String
-  bookCopyId Int?
-  status     LoanStatus @default(ACTIVE)
-  borrowedAt DateTime   @default(now())
-  dueAt      DateTime
-  returnedAt DateTime?
-  user       User       @relation(fields: [userId], references: [id], onDelete: Restrict)
-  book       Book       @relation(fields: [bookId], references: [id], onDelete: Restrict)
-  bookCopy   BookCopy?  @relation(fields: [bookCopyId], references: [id], onDelete: Restrict)
+  id                Int        @id @default(autoincrement())
+  userId            Int
+  bookId            String
+  bookCopyId        Int?
+  status            LoanStatus @default(ACTIVE)
+  borrowedAt        DateTime   @default(now())
+  dueAt             DateTime
+  returnedAt        DateTime?
+  returnRequestedAt DateTime?
+  returnedByAdminId Int?
+  user              User       @relation(fields: [userId], references: [id], onDelete: Restrict)
+  book              Book       @relation(fields: [bookId], references: [id], onDelete: Restrict)
+  bookCopy          BookCopy?  @relation(fields: [bookCopyId], references: [id], onDelete: Restrict)
+  returnedByAdmin   User?      @relation("LoanReturnVerifier", fields: [returnedByAdminId], references: [id], onDelete: Restrict)
 
   @@index([userId])
   @@index([bookId])
   @@index([bookCopyId])
+  @@index([returnedByAdminId])
   @@index([status])
 }
 

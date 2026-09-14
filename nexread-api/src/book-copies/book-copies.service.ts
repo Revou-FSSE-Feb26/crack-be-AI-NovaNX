@@ -12,10 +12,17 @@ import { CreateBookCopyDto } from './dto/create-book-copy.dto';
 import { QueryBookCopiesDto } from './dto/query-book-copies.dto';
 import { UpdateBookCopyStatusDto } from './dto/update-book-copy-status.dto';
 
+const unreturnedLoanStatuses: LoanStatus[] = [
+  LoanStatus.ACTIVE,
+  LoanStatus.RETURN_REQUESTED,
+];
+
 const copyInclude = {
   book: { select: { id: true, title: true } },
   loans: {
-    where: { status: LoanStatus.ACTIVE },
+    where: {
+      status: { in: unreturnedLoanStatuses },
+    },
     include: { user: { select: { id: true, fullName: true, email: true } } },
     take: 1,
   },
@@ -169,7 +176,9 @@ export class BookCopiesService {
       where: { barcode },
       include: {
         loans: {
-          where: { status: LoanStatus.ACTIVE },
+          where: {
+            status: { in: [LoanStatus.ACTIVE, LoanStatus.RETURN_REQUESTED] },
+          },
           select: { id: true },
           take: 1,
         },

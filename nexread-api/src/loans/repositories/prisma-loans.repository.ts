@@ -153,12 +153,33 @@ export class PrismaLoansRepository implements LoansRepository {
     });
   }
 
-  returnLoan(loan: LoanWithRelations): Promise<LoanWithBook> {
+  requestReturn(loan: LoanWithRelations): Promise<LoanWithBook> {
+    return this.prisma.loan.update({
+      where: { id: loan.id },
+      data: {
+        status: LoanStatus.RETURN_REQUESTED,
+        returnRequestedAt: new Date(),
+      },
+      include: loanBookRelations,
+    });
+  }
+
+  returnLoan(
+    loan: LoanWithRelations,
+    returnedByAdminId: number,
+  ): Promise<LoanWithBook> {
     return this.prisma.$transaction(async (transaction) => {
       const returnedAt = new Date();
       const loanUpdate = await transaction.loan.updateMany({
-        where: { id: loan.id, status: LoanStatus.ACTIVE },
-        data: { status: LoanStatus.RETURNED, returnedAt },
+        where: {
+          id: loan.id,
+          status: { in: [LoanStatus.ACTIVE, LoanStatus.RETURN_REQUESTED] },
+        },
+        data: {
+          status: LoanStatus.RETURNED,
+          returnedAt,
+          returnedByAdminId,
+        },
       });
 
       if (loanUpdate.count !== 1) {
@@ -220,7 +241,9 @@ export class PrismaLoansRepository implements LoansRepository {
       const activeLoans = await transaction.loan.count({
         where: {
           userId,
-          status: LoanStatus.ACTIVE,
+          status: {
+            in: [LoanStatus.ACTIVE, LoanStatus.RETURN_REQUESTED],
+          },
           bookId: { in: items.map((item) => item.bookId) },
         },
       });
@@ -317,9 +340,15 @@ export class PrismaLoansRepository implements LoansRepository {
 
   private statusWhere(status?: LoanFilter) {
     if (status === LoanFilter.ACTIVE) return { status: LoanStatus.ACTIVE };
+    if (status === LoanFilter.RETURN_REQUESTED) {
+      return { status: LoanStatus.RETURN_REQUESTED };
+    }
     if (status === LoanFilter.RETURNED) return { status: LoanStatus.RETURNED };
     if (status === LoanFilter.OVERDUE) {
-      return { status: LoanStatus.ACTIVE, dueAt: { lt: new Date() } };
+      return {
+        status: { in: [LoanStatus.ACTIVE, LoanStatus.RETURN_REQUESTED] },
+        dueAt: { lt: new Date() },
+      };
     }
     return {};
   }

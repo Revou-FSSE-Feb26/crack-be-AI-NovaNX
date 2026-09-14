@@ -28,6 +28,7 @@ describe('LoansService', () => {
       findByUser: jest.fn(),
       findAll: jest.fn(),
       borrow: jest.fn(),
+      requestReturn: jest.fn(),
       returnLoan: jest.fn(),
       updateDueAt: jest.fn(),
       borrowFromCart: jest.fn(),
@@ -42,6 +43,20 @@ describe('LoansService', () => {
     await service.returnLoan(99, Role.ADMIN, loan.id);
 
     expect(repository.returnLoan.mock.calls).toHaveLength(1);
+    expect(repository.returnLoan.mock.calls[0]).toEqual([loan, 99]);
+  });
+
+  it('only requests approval when a borrower returns their own loan', async () => {
+    repository.findById.mockResolvedValue(loan);
+    repository.requestReturn.mockResolvedValue({
+      ...loan,
+      status: LoanStatus.RETURN_REQUESTED,
+    });
+
+    await service.returnLoan(loan.userId, Role.USER, loan.id);
+
+    expect(repository.requestReturn.mock.calls).toEqual([[loan]]);
+    expect(repository.returnLoan.mock.calls).toHaveLength(0);
   });
 
   it('rejects a non-owner user returning another user loan', async () => {

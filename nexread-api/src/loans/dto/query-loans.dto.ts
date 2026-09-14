@@ -5,6 +5,7 @@ import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 export enum LoanFilter {
   ALL = 'ALL',
   ACTIVE = 'ACTIVE',
+  RETURN_REQUESTED = 'RETURN_REQUESTED',
   RETURNED = 'RETURNED',
   OVERDUE = 'OVERDUE',
 }

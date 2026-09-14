@@ -13,7 +13,7 @@ export class CreateBookCopyDto {
   @IsNotEmpty()
   bookId!: string;
 
-  @ApiProperty({ example: 'NXR-WHITE-FANG-001' })
+  @ApiProperty({ example: 'BK-001' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)

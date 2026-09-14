@@ -30,7 +30,7 @@ export class PrismaBooksRepository implements BooksRepository {
           availableCopies: totalCopies,
           copies: {
             create: Array.from({ length: totalCopies }, (_, index) => ({
-              barcode: this.generatedBarcode(data.id, index + 1),
+              barcode: this.generatedBarcode(index + 1),
             })),
           },
         },
@@ -99,7 +99,10 @@ export class PrismaBooksRepository implements BooksRepository {
 
   countActiveLoans(id: string): Promise<number> {
     return this.prisma.loan.count({
-      where: { bookId: id, status: LoanStatus.ACTIVE },
+      where: {
+        bookId: id,
+        status: { in: [LoanStatus.ACTIVE, LoanStatus.RETURN_REQUESTED] },
+      },
     });
   }
 
@@ -121,7 +124,7 @@ export class PrismaBooksRepository implements BooksRepository {
           await transaction.bookCopy.createMany({
             data: Array.from({ length: difference }, (_, index) => ({
               bookId: id,
-              barcode: this.generatedBarcode(id, index + 1, true),
+              barcode: this.generatedBarcode(index + 1),
             })),
           });
         } else if (difference < 0) {
@@ -228,16 +231,8 @@ export class PrismaBooksRepository implements BooksRepository {
     });
   }
 
-  private generatedBarcode(
-    bookId: string,
-    copyNumber: number,
-    uniqueSuffix = false,
-  ): string {
-    const normalized = bookId.replace(/[^a-zA-Z0-9]+/g, '-').toUpperCase();
-    const suffix = uniqueSuffix
-      ? `${Date.now()}-${copyNumber}-${randomUUID().slice(0, 8)}`
-      : String(copyNumber).padStart(3, '0');
-    return `NXR-${normalized}-${suffix}`;
+  private generatedBarcode(copyNumber: number): string {
+    return `BK-${randomUUID().slice(0, 8).toUpperCase()}-${String(copyNumber).padStart(3, '0')}`;
   }
 
   private bookWhere(query: QueryBooksDto) {

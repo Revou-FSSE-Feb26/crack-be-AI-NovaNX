@@ -71,7 +71,10 @@ export class PrismaUsersRepository implements UsersRepository {
     const [total, active, returned, overdue] = await this.prisma.$transaction([
       this.prisma.loan.count({ where: { userId: id } }),
       this.prisma.loan.count({
-        where: { userId: id, status: LoanStatus.ACTIVE },
+        where: {
+          userId: id,
+          status: { in: [LoanStatus.ACTIVE, LoanStatus.RETURN_REQUESTED] },
+        },
       }),
       this.prisma.loan.count({
         where: { userId: id, status: LoanStatus.RETURNED },
@@ -79,7 +82,9 @@ export class PrismaUsersRepository implements UsersRepository {
       this.prisma.loan.count({
         where: {
           userId: id,
-          status: LoanStatus.ACTIVE,
+          status: {
+            in: [LoanStatus.ACTIVE, LoanStatus.RETURN_REQUESTED],
+          },
           dueAt: { lt: now },
         },
       }),

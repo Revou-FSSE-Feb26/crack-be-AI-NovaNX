@@ -42,7 +42,11 @@ export abstract class LoansRepository {
     dueAt: Date,
     bookCopyId?: number,
   ): Promise<LoanWithBook>;
-  abstract returnLoan(loan: LoanWithRelations): Promise<LoanWithBook>;
+  abstract requestReturn(loan: LoanWithRelations): Promise<LoanWithBook>;
+  abstract returnLoan(
+    loan: LoanWithRelations,
+    returnedByAdminId: number,
+  ): Promise<LoanWithBook>;
   abstract updateDueAt(id: number, dueAt: Date): Promise<LoanWithRelations>;
   abstract borrowFromCart(userId: number, dueAt: Date): Promise<LoanWithBook[]>;
 }

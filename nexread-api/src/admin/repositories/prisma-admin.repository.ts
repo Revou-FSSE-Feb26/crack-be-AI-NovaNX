@@ -36,9 +36,16 @@ export class PrismaAdminRepository implements AdminRepository {
       this.prisma.book.count({
         where: { deletedAt: null, isAvailable: true },
       }),
-      this.prisma.loan.count({ where: { status: LoanStatus.ACTIVE } }),
       this.prisma.loan.count({
-        where: { status: LoanStatus.ACTIVE, dueAt: { lt: now } },
+        where: {
+          status: { in: [LoanStatus.ACTIVE, LoanStatus.RETURN_REQUESTED] },
+        },
+      }),
+      this.prisma.loan.count({
+        where: {
+          status: { in: [LoanStatus.ACTIVE, LoanStatus.RETURN_REQUESTED] },
+          dueAt: { lt: now },
+        },
       }),
       this.prisma.bookCopy.count(),
       this.prisma.bookCopy.count({

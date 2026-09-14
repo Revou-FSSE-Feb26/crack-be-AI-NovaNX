@@ -44,7 +44,7 @@ export class BookCopyResponseDto {
   @ApiProperty({ example: 'white-fang' })
   bookId!: string;
 
-  @ApiProperty({ example: 'NXR-WHITE-FANG-001' })
+  @ApiProperty({ example: 'BK-001' })
   barcode!: string;
 
   @ApiProperty({ enum: BookCopyStatus })

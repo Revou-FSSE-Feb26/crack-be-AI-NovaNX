@@ -10,7 +10,7 @@ class LoanBookCopyResponseDto {
   @ApiProperty({ example: 'white-fang' })
   bookId!: string;
 
-  @ApiProperty({ example: 'NXR-WHITE-FANG-001' })
+  @ApiProperty({ example: 'BK-001' })
   barcode!: string;
 
   @ApiProperty({ enum: BookCopyStatus })
@@ -44,6 +44,12 @@ export class LoanResponseDto {
 
   @ApiPropertyOptional({ type: String, format: 'date-time', nullable: true })
   returnedAt!: Date | null;
+
+  @ApiPropertyOptional({ type: String, format: 'date-time', nullable: true })
+  returnRequestedAt!: Date | null;
+
+  @ApiPropertyOptional({ example: 2, nullable: true })
+  returnedByAdminId!: number | null;
 
   @ApiProperty({ type: BookListItemResponseDto })
   book!: BookListItemResponseDto;

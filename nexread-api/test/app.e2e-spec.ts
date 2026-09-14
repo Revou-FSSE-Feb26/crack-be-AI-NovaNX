@@ -591,11 +591,11 @@ describe('AppController (e2e)', () => {
       .set('Authorization', authorization)
       .expect(200)
       .expect(({ body }: { body: { status: string } }) => {
-        expect(body.status).toBe('RETURNED');
+        expect(body.status).toBe('RETURN_REQUESTED');
       });
     await expect(
       prisma.bookCopy.findUniqueOrThrow({ where: { id: loan.bookCopyId } }),
-    ).resolves.toMatchObject({ status: 'AVAILABLE' });
+    ).resolves.toMatchObject({ status: 'LOANED' });
 
     await request(app.getHttpServer())
       .get(`/book-copies?bookId=${bookId}`)
@@ -612,6 +612,30 @@ describe('AppController (e2e)', () => {
       .expect(200);
     const adminBody = adminLogin.body as AuthTokenPair;
     const adminAuthorization = `Bearer ${adminBody.accessToken}`;
+
+    await request(app.getHttpServer())
+      .patch(`/admin/loans/${loan.id}`)
+      .set('Authorization', adminAuthorization)
+      .send({ status: 'RETURNED' })
+      .expect(200)
+      .expect(
+        ({
+          body,
+        }: {
+          body: {
+            status: string;
+            returnedAt: string;
+            returnedByAdminId: number;
+          };
+        }) => {
+          expect(body.status).toBe('RETURNED');
+          expect(body.returnedAt).toEqual(expect.any(String));
+          expect(body.returnedByAdminId).toBe(registrationBody.user.id);
+        },
+      );
+    await expect(
+      prisma.bookCopy.findUniqueOrThrow({ where: { id: loan.bookCopyId } }),
+    ).resolves.toMatchObject({ status: 'AVAILABLE' });
 
     await request(app.getHttpServer())
       .get(`/book-copies?bookId=${bookId}&page=1&limit=10`)

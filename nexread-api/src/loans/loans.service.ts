@@ -89,14 +89,29 @@ export class LoansService {
       throw new ForbiddenException('You can only return your own loan');
     }
 
-    if (loan.status !== LoanStatus.ACTIVE) {
-      throw new ConflictException('Loan has already been returned');
+    if (role !== Role.ADMIN) {
+      if (loan.status === LoanStatus.RETURN_REQUESTED) {
+        throw new ConflictException(
+          'Return is already awaiting admin approval',
+        );
+      }
+      if (loan.status !== LoanStatus.ACTIVE) {
+        throw new ConflictException('Loan has already been returned');
+      }
+      return this.loansRepository.requestReturn(loan);
     }
 
-    return this.loansRepository.returnLoan(loan);
+    if (loan.status === LoanStatus.RETURNED) {
+      throw new ConflictException('Loan has already been returned');
+    }
+    return this.loansRepository.returnLoan(loan, userId);
   }
 
-  async adminUpdate(id: number, data: AdminUpdateLoanDto) {
+  async adminUpdate(
+    actorAdminId: number,
+    id: number,
+    data: AdminUpdateLoanDto,
+  ) {
     if (!data.dueAt && !data.status) {
       throw new BadRequestException('dueAt or status must be provided');
     }
@@ -109,10 +124,10 @@ export class LoansService {
       loan = await this.loansRepository.updateDueAt(id, dueAt);
     }
     if (data.status === LoanStatus.RETURNED) {
-      if (loan.status !== LoanStatus.ACTIVE) {
+      if (loan.status === LoanStatus.RETURNED) {
         throw new ConflictException('Loan has already been returned');
       }
-      return this.loansRepository.returnLoan(loan);
+      return this.loansRepository.returnLoan(loan, actorAdminId);
     }
     return loan;
   }
