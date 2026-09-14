@@ -319,6 +319,8 @@ describe('AppController (e2e)', () => {
         id: bookId,
         title: `Atomic Loan ${testResourceSuffix}`,
         rating: 4.7,
+        description: 'An end-to-end book detail description.',
+        pageCount: 240,
         authorId,
         categoryId,
         totalCopies: 2,
@@ -343,6 +345,18 @@ describe('AppController (e2e)', () => {
         copies: { create: { barcode: `E2E-${cartBookId}-001` } },
       },
     });
+
+    await request(app.getHttpServer())
+      .get(`/books/${bookId}`)
+      .expect(200)
+      .expect(
+        ({ body }: { body: { description: string; pageCount: number } }) => {
+          expect(body.description).toBe(
+            'An end-to-end book detail description.',
+          );
+          expect(body.pageCount).toBe(240);
+        },
+      );
 
     const registration = await request(app.getHttpServer())
       .post('/auth/register')
