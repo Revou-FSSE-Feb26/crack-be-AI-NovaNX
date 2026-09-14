@@ -27,6 +27,16 @@ export class BookResponseDto {
   })
   coverUrl: string | null;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'A short synopsis of the book.',
+  })
+  description: string | null;
+
+  @ApiProperty({ type: Number, nullable: true, minimum: 1, example: 320 })
+  pageCount: number | null;
+
   @ApiProperty({ example: 'andrea-hirata' })
   authorId: string;
 

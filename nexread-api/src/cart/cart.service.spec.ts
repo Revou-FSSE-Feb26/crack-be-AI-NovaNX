@@ -9,6 +9,8 @@ const book: BookModel = {
   rating: 4,
   coverClassName: null,
   coverUrl: null,
+  description: null,
+  pageCount: null,
   authorId: 'author-1',
   categoryId: 'category-1',
   isAvailable: true,

@@ -44,6 +44,28 @@ export class UpdateBookDto {
   })
   coverUrl?: string | null;
 
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    maxLength: 5000,
+    example: 'A short synopsis of the book.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(5000)
+  description?: string | null;
+
+  @ApiPropertyOptional({
+    type: Number,
+    nullable: true,
+    minimum: 1,
+    example: 320,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  pageCount?: number | null;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
