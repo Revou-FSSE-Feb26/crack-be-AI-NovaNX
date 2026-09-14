@@ -24,7 +24,7 @@ describe('MeController', () => {
     await controller.removeMe(request);
 
     expect(usersService.findMe).toHaveBeenCalledWith(42);
-    expect(usersService.update).toHaveBeenCalledWith(42, update);
+    expect(usersService.update).toHaveBeenCalledWith(42, update, undefined);
     expect(usersService.remove).toHaveBeenCalledWith(42);
   });
 

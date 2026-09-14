@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Role } from '../../../generated/prisma/enums';
 
 export class AuthUserResponseDto {
@@ -10,6 +10,20 @@ export class AuthUserResponseDto {
 
   @ApiProperty({ format: 'email', example: 'user@example.com' })
   email: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: '+6281234567890',
+  })
+  phoneNumber: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: '/avatars/user-1-1720000000000.png',
+  })
+  avatar: string | null;
 
   @ApiProperty({ enum: Role, enumName: 'Role', example: Role.USER })
   role: Role;

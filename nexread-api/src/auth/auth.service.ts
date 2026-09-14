@@ -114,6 +114,8 @@ export class AuthService {
         id: user.id,
         fullName: user.fullName,
         email: user.email,
+        phoneNumber: user.phoneNumber,
+        avatar: user.avatar,
         role: user.role,
       },
     };

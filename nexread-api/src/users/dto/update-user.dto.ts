@@ -1,5 +1,14 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  Allow,
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 
 /**
  * Fields an authenticated user may update through `PATCH /me`. Password and
@@ -17,4 +26,31 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEmail()
   email?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: '+6281234567890',
+    description:
+      'Phone number in international format (for example +628...) or local format beginning with 0',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) => (value === '' ? null : value))
+  @IsString()
+  @MaxLength(16)
+  @Matches(/^(?:\+[1-9]\d{7,14}|0\d{8,14})$/, {
+    message:
+      'phoneNumber must use international format (for example +628...) or local format beginning with 0',
+  })
+  phoneNumber?: string | null;
+
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary',
+    description:
+      'Avatar image file. Supported formats: JPG, PNG, WEBP, and GIF. Maximum size: 5 MB.',
+  })
+  @IsOptional()
+  @Allow()
+  avatar?: unknown;
 }

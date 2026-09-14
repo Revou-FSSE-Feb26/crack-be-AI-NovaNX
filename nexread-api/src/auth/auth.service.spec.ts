@@ -26,6 +26,8 @@ describe('AuthService refresh tokens', () => {
       id: 1,
       fullName: 'NexRead User',
       email: 'user@example.com',
+      phoneNumber: null,
+      avatar: null,
       password: await bcrypt.hash('strong-password', 4),
       role: Role.USER,
       refreshTokenHash: null,
