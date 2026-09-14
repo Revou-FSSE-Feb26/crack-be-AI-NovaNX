@@ -1,5 +1,6 @@
 import type {
   AuthorModel,
+  BookCopyModel,
   BookModel,
   CategoryModel,
   LoanModel,
@@ -9,6 +10,7 @@ import type { QueryLoansDto } from '../dto/query-loans.dto';
 
 export type LoanWithBook = LoanModel & {
   book: BookModel & { author: AuthorModel; category: CategoryModel };
+  bookCopy: BookCopyModel | null;
 };
 
 export type SafeLoanUser = Pick<
@@ -38,6 +40,7 @@ export abstract class LoansRepository {
     userId: number,
     book: BookModel,
     dueAt: Date,
+    bookCopyId?: number,
   ): Promise<LoanWithBook>;
   abstract returnLoan(loan: LoanWithRelations): Promise<LoanWithBook>;
   abstract updateDueAt(id: number, dueAt: Date): Promise<LoanWithRelations>;

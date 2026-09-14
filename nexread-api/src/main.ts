@@ -88,6 +88,7 @@ async function bootstrap() {
     .addTag('Auth')
     .addTag('Me', 'User profile and personal data')
     .addTag('Books')
+    .addTag('Book Copies', 'Admin inventory for physical book copies')
     .addTag('Authors')
     .addTag('Categories')
     .addTag('Loans')

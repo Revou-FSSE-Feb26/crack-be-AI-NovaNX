@@ -22,6 +22,24 @@ export class DashboardResponseDto {
   @ApiProperty({ example: 2 })
   overdueLoans: number;
 
+  @ApiProperty({ example: 60 })
+  totalPhysicalCopies: number;
+
+  @ApiProperty({ example: 45 })
+  availableCopies: number;
+
+  @ApiProperty({ example: 10 })
+  loanedCopies: number;
+
+  @ApiProperty({ example: 2 })
+  damagedCopies: number;
+
+  @ApiProperty({ example: 1 })
+  lostCopies: number;
+
+  @ApiProperty({ example: 2 })
+  archivedCopies: number;
+
   @ApiProperty({ type: () => [TopBorrowedBookResponseDto] })
   topBorrowedBooks: TopBorrowedBookResponseDto[];
 }

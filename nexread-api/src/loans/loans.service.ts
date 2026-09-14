@@ -45,7 +45,12 @@ export class LoansService {
       );
     }
 
-    return this.loansRepository.borrow(userId, book, dueAt);
+    return this.loansRepository.borrow(
+      userId,
+      book,
+      dueAt,
+      createLoanDto.bookCopyId,
+    );
   }
 
   async findMine(userId: number, query: QueryLoansDto) {
@@ -66,7 +71,11 @@ export class LoansService {
     if (!(await this.loansRepository.userExists(data.userId))) {
       throw new NotFoundException(`User with id "${data.userId}" not found`);
     }
-    return this.borrow(data.userId, { bookId: data.bookId, dueAt: data.dueAt });
+    return this.borrow(data.userId, {
+      bookId: data.bookId,
+      bookCopyId: data.bookCopyId,
+      dueAt: data.dueAt,
+    });
   }
 
   async returnLoan(userId: number, role: Role, id: number) {

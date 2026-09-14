@@ -1,7 +1,24 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { LoanStatus } from '../../../generated/prisma/enums';
+import { BookCopyStatus, LoanStatus } from '../../../generated/prisma/enums';
 import { BookListItemResponseDto } from '../../books/dto/book-response.dto';
 import { UserResponseDto } from '../../users/dto/user-response.dto';
+
+class LoanBookCopyResponseDto {
+  @ApiProperty({ example: 1 })
+  id!: number;
+
+  @ApiProperty({ example: 'white-fang' })
+  bookId!: string;
+
+  @ApiProperty({ example: 'NXR-WHITE-FANG-001' })
+  barcode!: string;
+
+  @ApiProperty({ enum: BookCopyStatus })
+  status!: BookCopyStatus;
+
+  @ApiPropertyOptional({ example: 'F-03', nullable: true })
+  shelfCode!: string | null;
+}
 
 export class LoanResponseDto {
   @ApiProperty({ example: 1 })
@@ -12,6 +29,9 @@ export class LoanResponseDto {
 
   @ApiProperty({ example: 'atomic-habits' })
   bookId!: string;
+
+  @ApiPropertyOptional({ example: 1, nullable: true })
+  bookCopyId!: number | null;
 
   @ApiProperty({ enum: LoanStatus, example: LoanStatus.ACTIVE })
   status!: LoanStatus;
@@ -27,6 +47,9 @@ export class LoanResponseDto {
 
   @ApiProperty({ type: BookListItemResponseDto })
   book!: BookListItemResponseDto;
+
+  @ApiPropertyOptional({ type: LoanBookCopyResponseDto, nullable: true })
+  bookCopy!: LoanBookCopyResponseDto | null;
 }
 
 export class AdminLoanResponseDto extends LoanResponseDto {

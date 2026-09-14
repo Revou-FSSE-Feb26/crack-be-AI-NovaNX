@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { LoanStatus } from '../../../generated/prisma/enums';
+import { BookCopyStatus, LoanStatus } from '../../../generated/prisma/enums';
 import { PrismaService } from '../../prisma/prisma.service';
 import type {
   AuthorStatistic,
@@ -22,6 +22,12 @@ export class PrismaAdminRepository implements AdminRepository {
       availableBooks,
       activeLoans,
       overdueLoans,
+      totalPhysicalCopies,
+      availableCopies,
+      loanedCopies,
+      damagedCopies,
+      lostCopies,
+      archivedCopies,
     ] = await this.prisma.$transaction([
       this.prisma.user.count({ where: { deletedAt: null } }),
       this.prisma.author.count({ where: { deletedAt: null } }),
@@ -33,6 +39,22 @@ export class PrismaAdminRepository implements AdminRepository {
       this.prisma.loan.count({ where: { status: LoanStatus.ACTIVE } }),
       this.prisma.loan.count({
         where: { status: LoanStatus.ACTIVE, dueAt: { lt: now } },
+      }),
+      this.prisma.bookCopy.count(),
+      this.prisma.bookCopy.count({
+        where: { status: BookCopyStatus.AVAILABLE },
+      }),
+      this.prisma.bookCopy.count({
+        where: { status: BookCopyStatus.LOANED },
+      }),
+      this.prisma.bookCopy.count({
+        where: { status: BookCopyStatus.DAMAGED },
+      }),
+      this.prisma.bookCopy.count({
+        where: { status: BookCopyStatus.LOST },
+      }),
+      this.prisma.bookCopy.count({
+        where: { status: BookCopyStatus.ARCHIVED },
       }),
     ]);
 
@@ -61,6 +83,12 @@ export class PrismaAdminRepository implements AdminRepository {
       availableBooks,
       activeLoans,
       overdueLoans,
+      totalPhysicalCopies,
+      availableCopies,
+      loanedCopies,
+      damagedCopies,
+      lostCopies,
+      archivedCopies,
       topBorrowedBooks: topLoanGroups.flatMap((item) => {
         const book = bookById.get(item.bookId);
         return book ? [{ ...book, borrowCount: item._count.bookId }] : [];

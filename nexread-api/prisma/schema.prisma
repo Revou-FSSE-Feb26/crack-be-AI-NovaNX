@@ -23,6 +23,14 @@ enum LoanStatus {
   RETURNED
 }
 
+enum BookCopyStatus {
+  AVAILABLE
+  LOANED
+  DAMAGED
+  LOST
+  ARCHIVED
+}
+
 enum AdminAuditAction {
   USER_ROLE_CHANGED
   USER_DELETED
@@ -41,6 +49,7 @@ model User {
   cartItems          CartItem[]
   adminActions       AdminAuditLog[] @relation("AdminAuditActor")
   adminActionTargets AdminAuditLog[] @relation("AdminAuditTarget")
+  bookCopyActions    BookCopyAuditLog[]
   deletedAt          DateTime?
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
@@ -107,12 +116,45 @@ model Book {
   loans           Loan[]
   reviews         Review[]
   cartItems       CartItem[]
+  copies          BookCopy[]
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
   @@index([authorId])
   @@index([categoryId])
   @@index([deletedAt])
+}
+
+model BookCopy {
+  id        Int            @id @default(autoincrement())
+  bookId    String
+  barcode   String         @unique
+  status    BookCopyStatus @default(AVAILABLE)
+  shelfCode String?
+  book      Book           @relation(fields: [bookId], references: [id], onDelete: Restrict)
+  loans     Loan[]
+  auditLogs BookCopyAuditLog[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([bookId])
+  @@index([bookId, status])
+  @@index([status])
+}
+
+model BookCopyAuditLog {
+  id             Int            @id @default(autoincrement())
+  bookCopyId     Int
+  actorAdminId   Int
+  previousStatus BookCopyStatus
+  newStatus      BookCopyStatus
+  note           String?
+  bookCopy       BookCopy       @relation(fields: [bookCopyId], references: [id], onDelete: Restrict)
+  actorAdmin     User           @relation(fields: [actorAdminId], references: [id], onDelete: Restrict)
+  createdAt      DateTime       @default(now())
+
+  @@index([bookCopyId, createdAt])
+  @@index([actorAdminId])
 }
 
 model Review {
@@ -134,15 +176,18 @@ model Loan {
   id         Int        @id @default(autoincrement())
   userId     Int
   bookId     String
+  bookCopyId Int?
   status     LoanStatus @default(ACTIVE)
   borrowedAt DateTime   @default(now())
   dueAt      DateTime
   returnedAt DateTime?
   user       User       @relation(fields: [userId], references: [id], onDelete: Restrict)
   book       Book       @relation(fields: [bookId], references: [id], onDelete: Restrict)
+  bookCopy   BookCopy?  @relation(fields: [bookCopyId], references: [id], onDelete: Restrict)
 
   @@index([userId])
   @@index([bookId])
+  @@index([bookCopyId])
   @@index([status])
 }
 

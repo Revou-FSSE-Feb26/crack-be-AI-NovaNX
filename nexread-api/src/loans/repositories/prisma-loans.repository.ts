@@ -3,7 +3,8 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
-import { LoanStatus } from '../../../generated/prisma/enums';
+import { BookCopyStatus, LoanStatus } from '../../../generated/prisma/enums';
+import type { Prisma } from '../../../generated/prisma/client';
 import type { BookModel } from '../../../generated/prisma/models';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LoanFilter, type QueryLoansDto } from '../dto/query-loans.dto';
@@ -17,6 +18,11 @@ import {
 const bookRelations = {
   author: true,
   category: true,
+} as const;
+
+const loanBookRelations = {
+  book: { include: bookRelations },
+  bookCopy: true,
 } as const;
 
 const safeUserFields = {
@@ -44,7 +50,7 @@ export class PrismaLoansRepository implements LoansRepository {
     return this.prisma.loan.findUnique({
       where: { id },
       include: {
-        book: { include: bookRelations },
+        ...loanBookRelations,
         user: { select: safeUserFields },
       },
     });
@@ -66,7 +72,7 @@ export class PrismaLoansRepository implements LoansRepository {
     const [data, total] = await this.prisma.$transaction([
       this.prisma.loan.findMany({
         where,
-        include: { book: { include: bookRelations } },
+        include: loanBookRelations,
         orderBy: { borrowedAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
@@ -107,7 +113,7 @@ export class PrismaLoansRepository implements LoansRepository {
       this.prisma.loan.findMany({
         where,
         include: {
-          book: { include: bookRelations },
+          ...loanBookRelations,
           user: { select: safeUserFields },
         },
         orderBy: { borrowedAt: 'desc' },
@@ -119,25 +125,23 @@ export class PrismaLoansRepository implements LoansRepository {
     return { data, total, page, limit };
   }
 
-  borrow(userId: number, book: BookModel, dueAt: Date): Promise<LoanWithBook> {
+  borrow(
+    userId: number,
+    book: BookModel,
+    dueAt: Date,
+    bookCopyId?: number,
+  ): Promise<LoanWithBook> {
     return this.prisma.$transaction(async (transaction) => {
-      const updatedCopies = await transaction.$executeRaw`
-        UPDATE "Book"
-        SET "availableCopies" = "availableCopies" - 1,
-            "isAvailable" = ("availableCopies" - 1) > 0,
-            "updatedAt" = NOW()
-        WHERE "id" = ${book.id}
-          AND "deletedAt" IS NULL
-          AND "availableCopies" > 0
-      `;
-
-      if (updatedCopies !== 1) {
-        throw new ConflictException('Book is currently unavailable');
-      }
+      const claimedCopyId = await this.claimAvailableCopy(
+        transaction,
+        book.id,
+        bookCopyId,
+      );
+      await this.syncBookInventory(transaction, book.id);
 
       const loan = await transaction.loan.create({
-        data: { userId, bookId: book.id, dueAt },
-        include: { book: { include: bookRelations } },
+        data: { userId, bookId: book.id, bookCopyId: claimedCopyId, dueAt },
+        include: loanBookRelations,
       });
 
       await transaction.author.update({
@@ -161,18 +165,30 @@ export class PrismaLoansRepository implements LoansRepository {
         throw new ConflictException('Loan has already been returned');
       }
 
-      const returnedBook = await transaction.book.update({
-        where: { id: loan.bookId },
-        data: { availableCopies: { increment: 1 }, isAvailable: true },
-      });
-
-      if (returnedBook.availableCopies > returnedBook.totalCopies) {
-        throw new ConflictException('Book inventory is already fully returned');
+      if (loan.bookCopyId !== null) {
+        const copyUpdate = await transaction.bookCopy.updateMany({
+          where: { id: loan.bookCopyId, status: BookCopyStatus.LOANED },
+          data: { status: BookCopyStatus.AVAILABLE },
+        });
+        if (copyUpdate.count !== 1) {
+          throw new ConflictException('Physical copy is not currently loaned');
+        }
+        await this.syncBookInventory(transaction, loan.bookId);
+      } else {
+        const returnedBook = await transaction.book.update({
+          where: { id: loan.bookId },
+          data: { availableCopies: { increment: 1 }, isAvailable: true },
+        });
+        if (returnedBook.availableCopies > returnedBook.totalCopies) {
+          throw new ConflictException(
+            'Book inventory is already fully returned',
+          );
+        }
       }
 
       const updated = await transaction.loan.findUniqueOrThrow({
         where: { id: loan.id },
-        include: { book: { include: bookRelations } },
+        include: loanBookRelations,
       });
 
       return updated;
@@ -184,7 +200,7 @@ export class PrismaLoansRepository implements LoansRepository {
       where: { id },
       data: { dueAt },
       include: {
-        book: { include: bookRelations },
+        ...loanBookRelations,
         user: { select: safeUserFields },
       },
     });
@@ -216,24 +232,15 @@ export class PrismaLoansRepository implements LoansRepository {
 
       const loans: LoanWithBook[] = [];
       for (const item of items) {
-        const updatedCopies = await transaction.$executeRaw`
-          UPDATE "Book"
-          SET "availableCopies" = "availableCopies" - 1,
-              "isAvailable" = ("availableCopies" - 1) > 0,
-              "updatedAt" = NOW()
-          WHERE "id" = ${item.bookId}
-            AND "deletedAt" IS NULL
-            AND "availableCopies" > 0
-        `;
-        if (updatedCopies !== 1) {
-          throw new ConflictException(
-            `Book with id "${item.bookId}" is currently unavailable`,
-          );
-        }
+        const bookCopyId = await this.claimAvailableCopy(
+          transaction,
+          item.bookId,
+        );
+        await this.syncBookInventory(transaction, item.bookId);
         loans.push(
           await transaction.loan.create({
-            data: { userId, bookId: item.bookId, dueAt },
-            include: { book: { include: bookRelations } },
+            data: { userId, bookId: item.bookId, bookCopyId, dueAt },
+            include: loanBookRelations,
           }),
         );
         await transaction.author.update({
@@ -243,6 +250,68 @@ export class PrismaLoansRepository implements LoansRepository {
       }
       await transaction.cartItem.deleteMany({ where: { userId } });
       return loans;
+    });
+  }
+
+  private async claimAvailableCopy(
+    transaction: Prisma.TransactionClient,
+    bookId: string,
+    requestedCopyId?: number,
+  ): Promise<number> {
+    const claimed = requestedCopyId
+      ? await transaction.$queryRaw<Array<{ id: number }>>`
+          UPDATE "BookCopy"
+          SET "status" = 'LOANED', "updatedAt" = NOW()
+          WHERE "id" = ${requestedCopyId}
+            AND "bookId" = ${bookId}
+            AND "status" = 'AVAILABLE'
+          RETURNING "id"
+        `
+      : await transaction.$queryRaw<Array<{ id: number }>>`
+          WITH candidate AS (
+            SELECT "id"
+            FROM "BookCopy"
+            WHERE "bookId" = ${bookId} AND "status" = 'AVAILABLE'
+            ORDER BY "id"
+            FOR UPDATE SKIP LOCKED
+            LIMIT 1
+          )
+          UPDATE "BookCopy" AS copy
+          SET "status" = 'LOANED', "updatedAt" = NOW()
+          FROM candidate
+          WHERE copy."id" = candidate."id"
+          RETURNING copy."id"
+        `;
+
+    if (!claimed[0]) {
+      throw new ConflictException(
+        requestedCopyId
+          ? 'Requested physical copy is unavailable or belongs to another book'
+          : 'Book has no available physical copy',
+      );
+    }
+    return claimed[0].id;
+  }
+
+  private async syncBookInventory(
+    transaction: Prisma.TransactionClient,
+    bookId: string,
+  ): Promise<void> {
+    const [totalCopies, availableCopies] = await Promise.all([
+      transaction.bookCopy.count({
+        where: { bookId, status: { not: BookCopyStatus.ARCHIVED } },
+      }),
+      transaction.bookCopy.count({
+        where: { bookId, status: BookCopyStatus.AVAILABLE },
+      }),
+    ]);
+    await transaction.book.update({
+      where: { id: bookId },
+      data: {
+        totalCopies,
+        availableCopies,
+        isAvailable: availableCopies > 0,
+      },
     });
   }
 
