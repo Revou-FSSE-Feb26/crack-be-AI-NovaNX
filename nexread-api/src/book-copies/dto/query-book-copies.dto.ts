@@ -1,23 +1,21 @@
-import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { BookCopyStatus } from '../../../generated/prisma/enums';
 
-export enum LoanFilter {
-  ALL = 'ALL',
-  ACTIVE = 'ACTIVE',
-  RETURN_REQUESTED = 'RETURN_REQUESTED',
-  RETURNED = 'RETURNED',
-  OVERDUE = 'OVERDUE',
-}
-
-export class QueryLoansDto {
-  @ApiPropertyOptional({ enum: LoanFilter, default: LoanFilter.ALL })
+export class QueryBookCopiesDto {
+  @ApiPropertyOptional({ example: 'white-fang' })
   @IsOptional()
-  @IsEnum(LoanFilter)
-  status?: LoanFilter;
+  @IsString()
+  bookId?: string;
+
+  @ApiPropertyOptional({ enum: BookCopyStatus })
+  @IsOptional()
+  @IsEnum(BookCopyStatus)
+  status?: BookCopyStatus;
 
   @ApiPropertyOptional({
-    description: 'Search book title, or user name/email on admin routes',
+    description: 'Search barcode, shelf code, or book title',
   })
   @IsOptional()
   @IsString()

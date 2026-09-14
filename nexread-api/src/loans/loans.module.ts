@@ -10,5 +10,6 @@ import { PrismaLoansRepository } from './repositories/prisma-loans.repository';
     LoansService,
     { provide: LoansRepository, useClass: PrismaLoansRepository },
   ],
+  exports: [LoansService],
 })
 export class LoansModule {}

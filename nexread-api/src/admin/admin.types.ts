@@ -6,6 +6,12 @@ export interface DashboardSummary {
   availableBooks: number;
   activeLoans: number;
   overdueLoans: number;
+  totalPhysicalCopies: number;
+  availableCopies: number;
+  loanedCopies: number;
+  damagedCopies: number;
+  lostCopies: number;
+  archivedCopies: number;
   topBorrowedBooks: TopBorrowedBook[];
 }
 

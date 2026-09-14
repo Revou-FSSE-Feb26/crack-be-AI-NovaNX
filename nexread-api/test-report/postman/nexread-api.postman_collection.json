@@ -3838,7 +3838,7 @@
               "response": []
             },
             {
-              "name": "Return My Loan (200)",
+              "name": "Request Return My Loan (200)",
               "event": [
                 {
                   "listen": "test",
@@ -3846,7 +3846,8 @@
                     "type": "text/javascript",
                     "exec": [
                       "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                      "pm.expect(pm.response.json().status).to.eql('RETURNED');"
+                      "pm.expect(pm.response.json().status).to.eql('RETURN_REQUESTED');",
+                      "pm.expect(pm.response.json().returnRequestedAt).to.be.a('string');"
                     ]
                   }
                 }
@@ -3860,6 +3861,44 @@
                   "raw": "{{baseUrl}}/loans/{{loanId}}/return",
                   "host": ["{{baseUrl}}"],
                   "path": ["loans", "{{loanId}}", "return"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Admin Approves Loan Return (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                      "const response = pm.response.json();",
+                      "pm.expect(response.status).to.eql('RETURNED');",
+                      "pm.expect(response.returnedAt).to.be.a('string');",
+                      "pm.expect(response.returnedByAdminId).to.be.a('number');"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminAccessToken}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"RETURNED\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/loans/{{loanId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "loans", "{{loanId}}"]
                 }
               },
               "response": []

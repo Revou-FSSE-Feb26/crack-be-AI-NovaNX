@@ -311,6 +311,12 @@ describe('AppController (e2e)', () => {
         categoryId,
         totalCopies: 2,
         availableCopies: 2,
+        copies: {
+          create: [
+            { barcode: `E2E-${bookId}-001` },
+            { barcode: `E2E-${bookId}-002` },
+          ],
+        },
       },
     });
     await prisma.book.create({
@@ -322,6 +328,7 @@ describe('AppController (e2e)', () => {
         categoryId,
         totalCopies: 1,
         availableCopies: 1,
+        copies: { create: { barcode: `E2E-${cartBookId}-001` } },
       },
     });
 
@@ -363,6 +370,10 @@ describe('AppController (e2e)', () => {
       where: { id: bookId },
       data: { availableCopies: 0, isAvailable: false },
     });
+    await prisma.bookCopy.updateMany({
+      where: { bookId },
+      data: { status: 'DAMAGED' },
+    });
 
     await request(app.getHttpServer())
       .post('/loans/from-cart')
@@ -377,6 +388,10 @@ describe('AppController (e2e)', () => {
       where: { id: bookId },
       data: { availableCopies: 2, isAvailable: true },
     });
+    await prisma.bookCopy.updateMany({
+      where: { bookId },
+      data: { status: 'AVAILABLE' },
+    });
     await request(app.getHttpServer())
       .delete(`/api/cart/items/${rollbackItem.id}`)
       .set('Authorization', authorization)
@@ -387,8 +402,16 @@ describe('AppController (e2e)', () => {
       .set('Authorization', authorization)
       .send({ durationDays: 3 })
       .expect(201);
-    const cartLoan = (cartCheckout.body as Array<{ id: number }>)[0];
+    const cartLoan = (
+      cartCheckout.body as Array<{
+        id: number;
+        bookCopyId: number;
+        bookCopy: { barcode: string; status: string };
+      }>
+    )[0];
     expect(cartLoan).toBeDefined();
+    expect(cartLoan.bookCopyId).toEqual(expect.any(Number));
+    expect(cartLoan.bookCopy).toMatchObject({ status: 'LOANED' });
 
     await request(app.getHttpServer())
       .delete(`/api/cart/items/${cartItem.id}`)
@@ -446,15 +469,26 @@ describe('AppController (e2e)', () => {
       .set('Authorization', authorization)
       .send({ bookId })
       .expect(201);
-    const loan = borrowing.body as { id: number; status: string };
+    const loan = borrowing.body as {
+      id: number;
+      status: string;
+      bookCopyId: number;
+      bookCopy: { barcode: string; status: string };
+    };
     expect(loan.status).toBe('ACTIVE');
+    expect(loan.bookCopyId).toEqual(expect.any(Number));
+    expect(loan.bookCopy.status).toBe('LOANED');
 
     const secondBorrowing = await request(app.getHttpServer())
       .post('/loans')
       .set('Authorization', authorization)
       .send({ bookId })
       .expect(201);
-    const secondLoan = secondBorrowing.body as { id: number; status: string };
+    const secondLoan = secondBorrowing.body as {
+      id: number;
+      status: string;
+      bookCopy: { barcode: string };
+    };
 
     await request(app.getHttpServer())
       .post('/loans')
@@ -557,8 +591,16 @@ describe('AppController (e2e)', () => {
       .set('Authorization', authorization)
       .expect(200)
       .expect(({ body }: { body: { status: string } }) => {
-        expect(body.status).toBe('RETURNED');
+        expect(body.status).toBe('RETURN_REQUESTED');
       });
+    await expect(
+      prisma.bookCopy.findUniqueOrThrow({ where: { id: loan.bookCopyId } }),
+    ).resolves.toMatchObject({ status: 'LOANED' });
+
+    await request(app.getHttpServer())
+      .get(`/book-copies?bookId=${bookId}`)
+      .set('Authorization', authorization)
+      .expect(403);
 
     await prisma.user.update({
       where: { id: registrationBody.user.id },
@@ -570,6 +612,118 @@ describe('AppController (e2e)', () => {
       .expect(200);
     const adminBody = adminLogin.body as AuthTokenPair;
     const adminAuthorization = `Bearer ${adminBody.accessToken}`;
+
+    await request(app.getHttpServer())
+      .patch(`/admin/loans/${loan.id}`)
+      .set('Authorization', adminAuthorization)
+      .send({ status: 'RETURNED' })
+      .expect(200)
+      .expect(
+        ({
+          body,
+        }: {
+          body: {
+            status: string;
+            returnedAt: string;
+            returnedByAdminId: number;
+          };
+        }) => {
+          expect(body.status).toBe('RETURNED');
+          expect(body.returnedAt).toEqual(expect.any(String));
+          expect(body.returnedByAdminId).toBe(registrationBody.user.id);
+        },
+      );
+    await expect(
+      prisma.bookCopy.findUniqueOrThrow({ where: { id: loan.bookCopyId } }),
+    ).resolves.toMatchObject({ status: 'AVAILABLE' });
+
+    await request(app.getHttpServer())
+      .get(`/book-copies?bookId=${bookId}&page=1&limit=10`)
+      .set('Authorization', adminAuthorization)
+      .expect(200)
+      .expect(({ body }: { body: { data: Array<{ barcode: string }> } }) => {
+        expect(body.data).toHaveLength(2);
+        expect(body.data[0]?.barcode).toEqual(expect.any(String));
+      });
+
+    const createdCopy = await request(app.getHttpServer())
+      .post('/book-copies')
+      .set('Authorization', adminAuthorization)
+      .send({
+        bookId,
+        barcode: `E2E-${bookId}-003`,
+        shelfCode: 'QA-01',
+      })
+      .expect(201);
+    const createdCopyBody = createdCopy.body as {
+      id: number;
+      barcode: string;
+    };
+
+    await request(app.getHttpServer())
+      .patch(`/book-copies/${createdCopyBody.id}/status`)
+      .set('Authorization', adminAuthorization)
+      .send({ status: 'DAMAGED', shelfCode: 'REPAIR' })
+      .expect(200)
+      .expect(({ body }: { body: { status: string; shelfCode: string } }) => {
+        expect(body).toMatchObject({ status: 'DAMAGED', shelfCode: 'REPAIR' });
+      });
+
+    await request(app.getHttpServer())
+      .patch(`/book-copies/${createdCopyBody.id}/status`)
+      .set('Authorization', adminAuthorization)
+      .send({ status: 'LOANED' })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .patch(`/book-copies/${createdCopyBody.id}/status`)
+      .set('Authorization', adminAuthorization)
+      .send({
+        status: 'AVAILABLE',
+        shelfCode: 'QA-01',
+        note: 'Copy passed inspection',
+      })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get(
+        `/book-copies/barcode/${encodeURIComponent(createdCopyBody.barcode)}`,
+      )
+      .set('Authorization', adminAuthorization)
+      .expect(200)
+      .expect(({ body }: { body: { id: number; barcode: string } }) => {
+        expect(body).toMatchObject({
+          id: createdCopyBody.id,
+          barcode: createdCopyBody.barcode,
+        });
+      });
+
+    await request(app.getHttpServer())
+      .get(`/book-copies/${createdCopyBody.id}/history`)
+      .set('Authorization', adminAuthorization)
+      .expect(200)
+      .expect(
+        ({
+          body,
+        }: {
+          body: Array<{
+            previousStatus: string;
+            newStatus: string;
+            note: string | null;
+            actorAdmin: { email: string };
+          }>;
+        }) => {
+          const restoredEvent = body.find(
+            (event) =>
+              event.previousStatus === 'DAMAGED' &&
+              event.newStatus === 'AVAILABLE',
+          );
+          expect(restoredEvent).toMatchObject({
+            note: 'Copy passed inspection',
+          });
+          expect(restoredEvent?.actorAdmin.email).toBe(testEmail);
+        },
+      );
 
     await request(app.getHttpServer())
       .delete(`/authors/${authorId}`)
@@ -594,10 +748,18 @@ describe('AppController (e2e)', () => {
         ({
           body,
         }: {
-          body: { books: number; users: number; topBorrowedBooks: unknown[] };
+          body: {
+            books: number;
+            users: number;
+            totalPhysicalCopies: number;
+            loanedCopies: number;
+            topBorrowedBooks: unknown[];
+          };
         }) => {
           expect(body.books).toBeGreaterThan(0);
           expect(body.users).toBeGreaterThan(0);
+          expect(body.totalPhysicalCopies).toBeGreaterThan(0);
+          expect(body.loanedCopies).toBeGreaterThan(0);
           expect(body.topBorrowedBooks).toBeInstanceOf(Array);
         },
       );
@@ -631,9 +793,14 @@ describe('AppController (e2e)', () => {
       );
 
     await request(app.getHttpServer())
-      .patch(`/loans/${secondLoan.id}/return`)
+      .patch(
+        `/book-copies/barcode/${encodeURIComponent(secondLoan.bookCopy.barcode)}/return`,
+      )
       .set('Authorization', adminAuthorization)
-      .expect(200);
+      .expect(200)
+      .expect(({ body }: { body: { id: number; status: string } }) => {
+        expect(body).toMatchObject({ id: secondLoan.id, status: 'RETURNED' });
+      });
 
     await request(app.getHttpServer())
       .patch(`/admin/loans/${cartLoan.id}`)
@@ -713,6 +880,12 @@ describe('AppController (e2e)', () => {
         where: { bookId: { in: [bookId, cartBookId] } },
       });
       await prisma.cartItem.deleteMany({
+        where: { bookId: { in: [bookId, cartBookId] } },
+      });
+      await prisma.bookCopyAuditLog.deleteMany({
+        where: { bookCopy: { bookId: { in: [bookId, cartBookId] } } },
+      });
+      await prisma.bookCopy.deleteMany({
         where: { bookId: { in: [bookId, cartBookId] } },
       });
       await prisma.book.deleteMany({

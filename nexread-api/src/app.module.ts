@@ -15,6 +15,7 @@ import { LoansModule } from './loans/loans.module';
 import { AdminModule } from './admin/admin.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { CartModule } from './cart/cart.module';
+import { BookCopiesModule } from './book-copies/book-copies.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { CartModule } from './cart/cart.module';
     AdminModule,
     ReviewsModule,
     CartModule,
+    BookCopiesModule,
   ],
   controllers: [AppController],
   providers: [

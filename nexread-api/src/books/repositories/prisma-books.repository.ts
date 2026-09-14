@@ -1,5 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { LoanStatus } from '../../../generated/prisma/enums';
+import { randomUUID } from 'node:crypto';
+import { BookCopyStatus, LoanStatus } from '../../../generated/prisma/enums';
 import type { BookModel } from '../../../generated/prisma/models';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { CreateBookDto } from '../dto/create-book.dto';
@@ -23,7 +24,16 @@ export class PrismaBooksRepository implements BooksRepository {
     return this.prisma.$transaction(async (transaction) => {
       const totalCopies = data.totalCopies ?? 1;
       const book = await transaction.book.create({
-        data: { ...data, totalCopies, availableCopies: totalCopies },
+        data: {
+          ...data,
+          totalCopies,
+          availableCopies: totalCopies,
+          copies: {
+            create: Array.from({ length: totalCopies }, (_, index) => ({
+              barcode: this.generatedBarcode(index + 1),
+            })),
+          },
+        },
       });
       await transaction.author.update({
         where: { id: data.authorId },
@@ -89,7 +99,10 @@ export class PrismaBooksRepository implements BooksRepository {
 
   countActiveLoans(id: string): Promise<number> {
     return this.prisma.loan.count({
-      where: { bookId: id, status: LoanStatus.ACTIVE },
+      where: {
+        bookId: id,
+        status: { in: [LoanStatus.ACTIVE, LoanStatus.RETURN_REQUESTED] },
+      },
     });
   }
 
@@ -102,17 +115,55 @@ export class PrismaBooksRepository implements BooksRepository {
       let inventoryData = {};
 
       if (totalCopies !== undefined) {
-        const activeLoans = await transaction.loan.count({
-          where: { bookId: id, status: LoanStatus.ACTIVE },
+        const copies = await transaction.bookCopy.findMany({
+          where: { bookId: id, status: { not: BookCopyStatus.ARCHIVED } },
+          orderBy: { id: 'desc' },
         });
-        if (totalCopies < activeLoans) {
+        const difference = totalCopies - copies.length;
+        if (difference > 0) {
+          await transaction.bookCopy.createMany({
+            data: Array.from({ length: difference }, (_, index) => ({
+              bookId: id,
+              barcode: this.generatedBarcode(index + 1),
+            })),
+          });
+        } else if (difference < 0) {
+          const removableCopies = copies.filter(
+            (copy) => copy.status !== BookCopyStatus.LOANED,
+          );
+          if (removableCopies.length < Math.abs(difference)) {
+            const activeLoans = copies.length - removableCopies.length;
+            throw new ConflictException(
+              `totalCopies cannot be lower than ${activeLoans} loaned physical copies`,
+            );
+          }
+          await transaction.bookCopy.updateMany({
+            where: {
+              id: {
+                in: removableCopies
+                  .slice(0, Math.abs(difference))
+                  .map((copy) => copy.id),
+              },
+            },
+            data: { status: BookCopyStatus.ARCHIVED },
+          });
+        }
+
+        const [physicalTotal, availableCopies] = await Promise.all([
+          transaction.bookCopy.count({
+            where: { bookId: id, status: { not: BookCopyStatus.ARCHIVED } },
+          }),
+          transaction.bookCopy.count({
+            where: { bookId: id, status: BookCopyStatus.AVAILABLE },
+          }),
+        ]);
+        if (physicalTotal !== totalCopies) {
           throw new ConflictException(
-            `totalCopies cannot be lower than ${activeLoans} active loans`,
+            'Physical copy inventory could not be reconciled',
           );
         }
-        const availableCopies = totalCopies - activeLoans;
         inventoryData = {
-          totalCopies,
+          totalCopies: physicalTotal,
           availableCopies,
           isAvailable: availableCopies > 0,
         };
@@ -140,29 +191,48 @@ export class PrismaBooksRepository implements BooksRepository {
 
   deleteOrArchive(id: string): Promise<BookModel> {
     return this.prisma.$transaction(async (transaction) => {
-      const historicalReferences = await transaction.book.findUniqueOrThrow({
-        where: { id },
-        select: { _count: { select: { loans: true, reviews: true } } },
-      });
+      const [historicalReferences, copyAuditCount] = await Promise.all([
+        transaction.book.findUniqueOrThrow({
+          where: { id },
+          select: { _count: { select: { loans: true, reviews: true } } },
+        }),
+        transaction.bookCopyAuditLog.count({
+          where: { bookCopy: { bookId: id } },
+        }),
+      ]);
       const hasHistory =
         historicalReferences._count.loans > 0 ||
-        historicalReferences._count.reviews > 0;
+        historicalReferences._count.reviews > 0 ||
+        copyAuditCount > 0;
       const book = hasHistory
-        ? await transaction.book.update({
-            where: { id },
-            data: {
-              deletedAt: new Date(),
-              isAvailable: false,
-              availableCopies: 0,
-            },
-          })
-        : await transaction.book.delete({ where: { id } });
+        ? await (async () => {
+            await transaction.bookCopy.updateMany({
+              where: { bookId: id },
+              data: { status: BookCopyStatus.ARCHIVED },
+            });
+            return transaction.book.update({
+              where: { id },
+              data: {
+                deletedAt: new Date(),
+                isAvailable: false,
+                availableCopies: 0,
+              },
+            });
+          })()
+        : await (async () => {
+            await transaction.bookCopy.deleteMany({ where: { bookId: id } });
+            return transaction.book.delete({ where: { id } });
+          })();
       await transaction.author.update({
         where: { id: book.authorId },
         data: { booksCount: { decrement: 1 } },
       });
       return book;
     });
+  }
+
+  private generatedBarcode(copyNumber: number): string {
+    return `BK-${randomUUID().slice(0, 8).toUpperCase()}-${String(copyNumber).padStart(3, '0')}`;
   }
 
   private bookWhere(query: QueryBooksDto) {

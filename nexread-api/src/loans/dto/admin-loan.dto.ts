@@ -23,6 +23,16 @@ export class AdminCreateLoanDto {
   @IsNotEmpty()
   bookId: string;
 
+  @ApiPropertyOptional({
+    example: 1,
+    description: 'Specific physical copy; defaults to the first available copy',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  bookCopyId?: number;
+
   @ApiPropertyOptional({ type: String, format: 'date-time' })
   @IsOptional()
   @IsDateString()
