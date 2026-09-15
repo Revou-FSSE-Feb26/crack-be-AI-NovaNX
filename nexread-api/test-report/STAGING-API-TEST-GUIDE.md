@@ -124,7 +124,7 @@ Urutan penting karena cart, loan, review, inventory, dan penghapusan catalog sal
 | 1 | `GET /` | — | `200`, body `Hello World!` |
 | 2 | `GET /health/live` | — | `200`, `status: "ok"` |
 | 3 | `GET /health/ready` | — | `200`, `status: "ok"`; membuktikan DB siap |
-| 4 | `GET /authors?q=QA&page=1&limit=10` | — | `200`, objek `data` dan `meta` |
+| 4 | `GET /authors?search=QA&page=1&limit=10` | — | `200`, objek `data` dan `meta`; `q` tetap didukung sebagai alias lama |
 | 5 | `GET /authors/popular?page=1&limit=5` | — | `200`, data terurut menurut popularity |
 | 6 | `GET /categories` | — | `200`, array |
 | 7 | `GET /books?page=1&limit=10&sortBy=title&order=asc` | — | `200`, objek `data` dan `meta` |
@@ -169,7 +169,7 @@ Semua mutasi memakai bearer admin.
 
 | No. | Request | Body | Expected |
 | ---: | --- | --- | --- |
-| 26 | `POST /authors` | payload author | `201`; id sesuai `authorId` |
+| 26 | `POST /authors` | `{"name":"QA Author {{runId}}"}` (`id` opsional) | `201`; simpan `id` respons sebagai `authorId` untuk `POST /books` |
 | 27 | `GET /authors/{{authorId}}` | — | `200` |
 | 28 | `PATCH /authors/{{authorId}}` | `{"name":"QA Author Updated {{runId}}","rating":4.4}` | `200`; perubahan tersimpan |
 | 29 | `POST /categories` | payload category | `201` |
@@ -331,6 +331,16 @@ Format pencatatan defect minimum: waktu WIB, environment/revision, method/path, 
 - Endpoint cart memakai prefix `/api/cart`, sedangkan endpoint lain tidak memakai global `/api`; `/api` sendiri adalah Swagger UI.
 
 ### Add Book dengan cover lokal
+
+Alur pemilihan author pada form Add Book:
+
+1. Cari berdasarkan nama melalui `GET /authors?search=<nama>&page=1&limit=10`.
+2. Jika author ditemukan, gunakan nilai `data[].id` sebagai `authorId`.
+3. Jika belum ditemukan, buat melalui `POST /authors` dengan body minimal
+   `{"name":"Nama Author"}`. Field `id` boleh tetap dikirim untuk kompatibilitas,
+   tetapi bila dihilangkan API membuat ID slug yang unik.
+4. Gunakan `id` dari respons `POST /authors` sebagai `authorId` ketika memanggil
+   `POST /books`.
 
 Setelah versi yang mendukung upload Add Book dideploy, gunakan `POST /books`
 dengan bearer token admin dan body `multipart/form-data`:

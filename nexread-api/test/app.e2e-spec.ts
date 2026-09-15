@@ -475,6 +475,15 @@ describe('AppController (e2e)', () => {
       );
 
     await request(app.getHttpServer())
+      .get(`/authors?search=loan author&page=1&limit=1`)
+      .expect(200)
+      .expect(({ body }: { body: { data: Array<{ id: string }> } }) => {
+        expect(body.data).toContainEqual(
+          expect.objectContaining({ id: authorId }),
+        );
+      });
+
+    await request(app.getHttpServer())
       .get(`/authors/${authorId}/books?page=1&limit=5`)
       .expect(200)
       .expect(({ body }: { body: { data: Array<{ authorId: string }> } }) => {

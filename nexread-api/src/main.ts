@@ -30,7 +30,7 @@ async function bootstrap() {
     prefix: '/avatars/',
     maxAge: '7d',
   });
-  app.useStaticAssets(join(process.cwd(), 'public'), {
+  app.useStaticAssets(join(process.cwd(), 'public', 'covers'), {
     prefix: '/covers/',
     maxAge: '7d',
   });

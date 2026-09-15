@@ -47,7 +47,11 @@ export class AuthorsController {
   constructor(private readonly authorsService: AuthorsService) {}
 
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create an author (admin only)' })
+  @ApiOperation({
+    summary: 'Create an author (admin only)',
+    description:
+      'The id is optional. When omitted, it is generated from the author name and returned for use as authorId when creating a book.',
+  })
   @ApiCreatedResponse({
     description: 'Author created successfully',
     type: AuthorResponseDto,
@@ -76,7 +80,11 @@ export class AuthorsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Search and paginate authors' })
+  @ApiOperation({
+    summary: 'Search and paginate authors',
+    description:
+      'Use search (or the legacy q alias) for case-insensitive author name search.',
+  })
   @ApiOkResponse({
     description: 'Authors returned successfully',
     type: PaginatedAuthorsResponseDto,

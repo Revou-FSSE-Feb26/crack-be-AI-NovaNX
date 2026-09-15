@@ -14,11 +14,12 @@ import type { UpdateAuthorDto } from '../dto/update-author.dto';
  * different ORM/data source) without touching business logic.
  */
 export abstract class AuthorsRepository {
-  abstract create(data: CreateAuthorDto): Promise<AuthorModel>;
+  abstract create(data: CreateAuthorDto & { id: string }): Promise<AuthorModel>;
   abstract findAll(query?: QueryAuthorsDto): Promise<PaginatedAuthors>;
   abstract findPopular(
     query?: QueryPopularAuthorsDto,
   ): Promise<PaginatedPopularAuthors>;
+  abstract idExists(id: string): Promise<boolean>;
   abstract findById(id: string): Promise<AuthorModel | null>;
   abstract countVisibleBooks(id: string): Promise<number>;
   abstract update(id: string, data: UpdateAuthorDto): Promise<AuthorModel>;

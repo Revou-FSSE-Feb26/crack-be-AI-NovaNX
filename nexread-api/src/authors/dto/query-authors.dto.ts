@@ -8,6 +8,13 @@ export class QueryAuthorsDto {
   @IsString()
   q?: string;
 
+  @ApiPropertyOptional({
+    description: 'Alias for q (case-insensitive author name search)',
+  })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @ApiPropertyOptional({ minimum: 1, default: 1 })
   @IsOptional()
   @Type(() => Number)

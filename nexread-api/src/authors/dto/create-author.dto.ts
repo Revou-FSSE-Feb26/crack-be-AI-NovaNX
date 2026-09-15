@@ -9,10 +9,15 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateAuthorDto {
-  @ApiProperty()
+  @ApiPropertyOptional({
+    description:
+      'Unique author ID. If omitted, will be automatically generated as a slug from the author name.',
+    example: 'andrea-hirata',
+  })
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  id: string;
+  id?: string;
 
   @ApiProperty()
   @IsString()

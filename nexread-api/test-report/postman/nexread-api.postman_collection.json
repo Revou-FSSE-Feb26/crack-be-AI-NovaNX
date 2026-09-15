@@ -249,9 +249,15 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/authors",
+              "raw": "{{baseUrl}}/authors?search=QA",
               "host": ["{{baseUrl}}"],
-              "path": ["authors"]
+              "path": ["authors"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "QA"
+                }
+              ]
             }
           },
           "response": []
@@ -1167,7 +1173,7 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\"id\":\"crud-author-{{runId}}\",\"name\":\"CRUD Author {{runId}}\"}",
+                      "raw": "{\"name\":\"CRUD Author {{runId}}\"}",
                       "options": {
                         "raw": {
                           "language": "json"

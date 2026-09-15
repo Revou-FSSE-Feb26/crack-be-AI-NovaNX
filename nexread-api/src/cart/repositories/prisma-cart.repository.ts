@@ -15,6 +15,7 @@ const safeUserFields = {
   id: true,
   fullName: true,
   email: true,
+  phoneNumber: true,
   role: true,
   createdAt: true,
   updatedAt: true,

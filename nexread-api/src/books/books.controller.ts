@@ -29,6 +29,7 @@ import {
 } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import { mkdirSync } from 'node:fs';
+import { unlink } from 'node:fs/promises';
 import { Role } from '../../generated/prisma/enums';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -110,14 +111,19 @@ export class BooksController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Post()
   @UseInterceptors(BookCoverInterceptor)
-  create(
+  async create(
     @Body() createBookDto: CreateBookDto,
     @UploadedFile() cover?: Express.Multer.File,
   ) {
-    return this.booksService.create(
-      createBookDto,
-      cover ? `/covers/books/${cover.filename}` : undefined,
-    );
+    try {
+      return await this.booksService.create(
+        createBookDto,
+        cover ? `/covers/books/${cover.filename}` : undefined,
+      );
+    } catch (error) {
+      if (cover) await unlink(cover.path).catch(() => undefined);
+      throw error;
+    }
   }
 
   @Get()
@@ -185,16 +191,21 @@ export class BooksController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @UseInterceptors(BookCoverInterceptor)
   @Patch(':id')
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updateBookDto: UpdateBookDto,
     @UploadedFile() cover?: Express.Multer.File,
   ) {
-    return this.booksService.update(
-      id,
-      updateBookDto,
-      cover ? `/covers/books/${cover.filename}` : undefined,
-    );
+    try {
+      return await this.booksService.update(
+        id,
+        updateBookDto,
+        cover ? `/covers/books/${cover.filename}` : undefined,
+      );
+    } catch (error) {
+      if (cover) await unlink(cover.path).catch(() => undefined);
+      throw error;
+    }
   }
 
   @ApiBearerAuth()
