@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -7,11 +8,16 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
@@ -21,6 +27,8 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { diskStorage } from 'multer';
+import { mkdirSync } from 'node:fs';
 import { Role } from '../../generated/prisma/enums';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -35,6 +43,24 @@ import {
 import { CreateBookDto } from './dto/create-book.dto';
 import { QueryBooksDto } from './dto/query-books.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
+
+const bookCoverUploadDir = 'public/covers/books';
+const coverExtensionsByMimeType = new Map([
+  ['image/jpeg', 'jpg'],
+  ['image/png', 'png'],
+  ['image/webp', 'webp'],
+]);
+const bookCoverStorage = diskStorage({
+  destination: (_request, _file, callback) => {
+    mkdirSync(bookCoverUploadDir, { recursive: true });
+    callback(null, bookCoverUploadDir);
+  },
+  filename: (_request, file, callback) => {
+    const extension = coverExtensionsByMimeType.get(file.mimetype) ?? 'img';
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    callback(null, `book-cover-${uniqueSuffix}.${extension}`);
+  },
+});
 
 @ApiTags('Books')
 @Controller('books')
@@ -102,7 +128,11 @@ export class BooksController {
   }
 
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update a book (admin only)' })
+  @ApiOperation({
+    summary: 'Update a book or upload its cover image (admin only)',
+  })
+  @ApiConsumes('application/json', 'multipart/form-data')
+  @ApiBody({ type: UpdateBookDto })
   @ApiOkResponse({
     description: 'Book updated successfully',
     type: BookResponseDto,
@@ -129,9 +159,33 @@ export class BooksController {
   })
   @Roles(Role.ADMIN)
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseInterceptors(
+    FileInterceptor('cover', {
+      storage: bookCoverStorage,
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_request, file, callback) => {
+        if (!coverExtensionsByMimeType.has(file.mimetype)) {
+          callback(
+            new BadRequestException('cover must be a JPG, PNG, or WEBP image'),
+            false,
+          );
+          return;
+        }
+        callback(null, true);
+      },
+    }),
+  )
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBookDto: UpdateBookDto) {
-    return this.booksService.update(id, updateBookDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateBookDto: UpdateBookDto,
+    @UploadedFile() cover?: Express.Multer.File,
+  ) {
+    return this.booksService.update(
+      id,
+      updateBookDto,
+      cover ? `/covers/books/${cover.filename}` : undefined,
+    );
   }
 
   @ApiBearerAuth()

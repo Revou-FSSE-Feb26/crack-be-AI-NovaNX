@@ -41,7 +41,11 @@ export class BooksService {
     return { ...detail, reviewCount: _count?.reviews ?? 0 };
   }
 
-  async update(id: string, updateBookDto: UpdateBookDto) {
+  async update(
+    id: string,
+    updateBookDto: UpdateBookDto,
+    uploadedCoverUrl?: string,
+  ) {
     await this.findOne(id);
 
     if (updateBookDto.totalCopies !== undefined) {
@@ -53,7 +57,12 @@ export class BooksService {
       }
     }
 
-    return this.booksRepository.update(id, updateBookDto);
+    const { cover, ...bookData } = updateBookDto;
+    void cover;
+    return this.booksRepository.update(id, {
+      ...bookData,
+      coverUrl: uploadedCoverUrl ?? bookData.coverUrl,
+    });
   }
 
   async remove(id: string) {
