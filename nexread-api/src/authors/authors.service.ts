@@ -21,8 +21,26 @@ export class AuthorsService {
   ) {}
 
   async create(createAuthorDto: CreateAuthorDto) {
+    let id = createAuthorDto.id?.trim();
+    if (!id) {
+      const baseSlug =
+        createAuthorDto.name
+          .normalize('NFKD')
+          .toLowerCase()
+          .trim()
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/[\s_-]+/g, '-')
+          .replace(/^-+|-+$/g, '') || 'author';
+      id = baseSlug;
+      let counter = 1;
+      while (await this.authorsRepository.idExists(id)) {
+        counter++;
+        id = `${baseSlug}-${counter}`;
+      }
+    }
     return this.toPublicAuthor(
-      await this.authorsRepository.create(createAuthorDto),
+      await this.authorsRepository.create({ ...createAuthorDto, id }),
     );
   }
 

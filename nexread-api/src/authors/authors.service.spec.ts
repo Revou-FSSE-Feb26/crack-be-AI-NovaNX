@@ -26,6 +26,7 @@ describe('AuthorsService', () => {
       create: jest.fn(),
       findAll: jest.fn(),
       findPopular: jest.fn(),
+      idExists: jest.fn(),
       findById: jest.fn(),
       countVisibleBooks: jest.fn(),
       update: jest.fn(),
@@ -36,6 +37,68 @@ describe('AuthorsService', () => {
       repository,
       booksService as unknown as BooksService,
     );
+  });
+
+  it('creates an author with the provided id', async () => {
+    repository.create.mockResolvedValue(author);
+
+    await service.create({ id: 'author-1', name: 'Author One' });
+
+    expect(repository.create.mock.calls).toEqual([
+      [{ id: 'author-1', name: 'Author One' }],
+    ]);
+  });
+
+  it('automatically generates slug id from name when id is omitted', async () => {
+    repository.idExists.mockResolvedValue(false);
+    repository.create.mockResolvedValue({
+      ...author,
+      id: 'tere-liye',
+      name: 'Tere Liye',
+    });
+
+    await service.create({ name: 'Tere Liye' });
+
+    expect(repository.create.mock.calls).toEqual([
+      [{ id: 'tere-liye', name: 'Tere Liye' }],
+    ]);
+  });
+
+  it('resolves slug collision by appending a counter', async () => {
+    repository.idExists
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(false);
+    repository.create.mockResolvedValue({
+      ...author,
+      id: 'author-one-2',
+      name: 'Author One',
+    });
+
+    await service.create({ name: 'Author One' });
+
+    expect(repository.create.mock.calls).toEqual([
+      [{ id: 'author-one-2', name: 'Author One' }],
+    ]);
+  });
+
+  it('normalizes accented names when generating an id', async () => {
+    repository.idExists.mockResolvedValue(false);
+    repository.create.mockResolvedValue({
+      ...author,
+      id: 'pramoedya-ananta-toer',
+      name: 'Pramoedya Ananta Toër',
+    });
+
+    await service.create({ name: 'Pramoedya Ananta Toër' });
+
+    expect(repository.create.mock.calls).toEqual([
+      [
+        {
+          id: 'pramoedya-ananta-toer',
+          name: 'Pramoedya Ananta Toër',
+        },
+      ],
+    ]);
   });
 
   it('returns searched authors with pagination metadata', async () => {
@@ -52,6 +115,23 @@ describe('AuthorsService', () => {
       data: [publicAuthor],
       meta: { page: 1, limit: 10, total: 1, totalPages: 1 },
     });
+  });
+
+  it('supports search alias for q when listing authors', async () => {
+    repository.findAll.mockResolvedValue({
+      data: [author],
+      total: 1,
+      page: 1,
+      limit: 10,
+    });
+    const publicAuthor: Partial<AuthorModel> = { ...author };
+    delete publicAuthor.deletedAt;
+
+    await expect(service.findAll({ search: 'one' })).resolves.toEqual({
+      data: [publicAuthor],
+      meta: { page: 1, limit: 10, total: 1, totalPages: 1 },
+    });
+    expect(repository.findAll.mock.calls).toEqual([[{ search: 'one' }]]);
   });
 
   it('forces the path author id when listing books', async () => {

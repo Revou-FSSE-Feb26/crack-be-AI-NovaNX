@@ -21,17 +21,18 @@ import {
 export class PrismaAuthorsRepository implements AuthorsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(data: CreateAuthorDto): Promise<AuthorModel> {
+  create(data: CreateAuthorDto & { id: string }): Promise<AuthorModel> {
     return this.prisma.author.create({ data });
   }
 
   async findAll(query: QueryAuthorsDto = {}): Promise<PaginatedAuthors> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
+    const searchTerm = (query.search ?? query.q)?.trim();
     const where = {
       deletedAt: null,
-      name: query.q
-        ? { contains: query.q, mode: 'insensitive' as const }
+      name: searchTerm
+        ? { contains: searchTerm, mode: 'insensitive' as const }
         : undefined,
     };
     const [data, total] = await this.prisma.$transaction([
@@ -128,6 +129,10 @@ export class PrismaAuthorsRepository implements AuthorsRepository {
       page,
       limit,
     };
+  }
+
+  async idExists(id: string): Promise<boolean> {
+    return (await this.prisma.author.count({ where: { id } })) > 0;
   }
 
   findById(id: string): Promise<AuthorModel | null> {

@@ -15,7 +15,13 @@ export type LoanWithBook = LoanModel & {
 
 export type SafeLoanUser = Pick<
   UserModel,
-  'id' | 'fullName' | 'email' | 'role' | 'createdAt' | 'updatedAt'
+  | 'id'
+  | 'fullName'
+  | 'email'
+  | 'phoneNumber'
+  | 'role'
+  | 'createdAt'
+  | 'updatedAt'
 >;
 export type LoanWithRelations = LoanWithBook & { user: SafeLoanUser };
 export type PaginatedLoans<T> = {
