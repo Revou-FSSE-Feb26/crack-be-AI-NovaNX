@@ -62,6 +62,21 @@ const bookCoverStorage = diskStorage({
   },
 });
 
+const BookCoverInterceptor = FileInterceptor('cover', {
+  storage: bookCoverStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_request, file, callback) => {
+    if (!coverExtensionsByMimeType.has(file.mimetype)) {
+      callback(
+        new BadRequestException('cover must be a JPG, PNG, or WEBP image'),
+        false,
+      );
+      return;
+    }
+    callback(null, true);
+  },
+});
+
 @ApiTags('Books')
 @Controller('books')
 export class BooksController {
@@ -69,6 +84,8 @@ export class BooksController {
 
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a book (admin only)' })
+  @ApiConsumes('application/json', 'multipart/form-data')
+  @ApiBody({ type: CreateBookDto })
   @ApiCreatedResponse({
     description: 'Book created successfully',
     type: BookResponseDto,
@@ -92,8 +109,15 @@ export class BooksController {
   @Roles(Role.ADMIN)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Post()
-  create(@Body() createBookDto: CreateBookDto) {
-    return this.booksService.create(createBookDto);
+  @UseInterceptors(BookCoverInterceptor)
+  create(
+    @Body() createBookDto: CreateBookDto,
+    @UploadedFile() cover?: Express.Multer.File,
+  ) {
+    return this.booksService.create(
+      createBookDto,
+      cover ? `/covers/books/${cover.filename}` : undefined,
+    );
   }
 
   @Get()
@@ -159,22 +183,7 @@ export class BooksController {
   })
   @Roles(Role.ADMIN)
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @UseInterceptors(
-    FileInterceptor('cover', {
-      storage: bookCoverStorage,
-      limits: { fileSize: 5 * 1024 * 1024 },
-      fileFilter: (_request, file, callback) => {
-        if (!coverExtensionsByMimeType.has(file.mimetype)) {
-          callback(
-            new BadRequestException('cover must be a JPG, PNG, or WEBP image'),
-            false,
-          );
-          return;
-        }
-        callback(null, true);
-      },
-    }),
-  )
+  @UseInterceptors(BookCoverInterceptor)
   @Patch(':id')
   update(
     @Param('id') id: string,

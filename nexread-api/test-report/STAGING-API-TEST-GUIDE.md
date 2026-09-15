@@ -175,7 +175,7 @@ Semua mutasi memakai bearer admin.
 | 29 | `POST /categories` | payload category | `201` |
 | 30 | `GET /categories/{{categoryId}}` | — | `200` |
 | 31 | `PATCH /categories/{{categoryId}}` | `{"subtitle":"Updated on staging"}` | `200` |
-| 32 | `POST /books` | payload book | `201`; `totalCopies=1`, `availableCopies=1` |
+| 32 | `POST /books` | payload book (JSON atau multipart, optional file `cover`) | `201`; `totalCopies=1`, `availableCopies=1` |
 | 33 | `GET /books/{{bookId}}` | — | `200`; author/category nested benar |
 | 34 | `GET /authors/{{authorId}}/books?page=1&limit=5` | — | `200`; book uji ada di `data` |
 | 35 | `GET /books?title=QA&authorId={{authorId}}&categoryId={{categoryId}}&minRating=0&available=true&sortBy=createdAt&order=desc&page=1&limit=10` | — | `200`; filter dan pagination benar |
@@ -329,3 +329,23 @@ Format pencatatan defect minimum: waktu WIB, environment/revision, method/path, 
 - Logout mencabut refresh token; access token yang sudah diterbitkan dapat tetap hidup sampai expiry, jadi client harus membuang keduanya.
 - Perubahan password/role dan soft delete menginvalidasi akses sesuai state user terbaru.
 - Endpoint cart memakai prefix `/api/cart`, sedangkan endpoint lain tidak memakai global `/api`; `/api` sendiri adalah Swagger UI.
+
+### Add Book dengan cover lokal
+
+Setelah versi yang mendukung upload Add Book dideploy, gunakan `POST /books`
+dengan bearer token admin dan body `multipart/form-data`:
+
+- Text: `id`, `title`, `authorId`, `categoryId` (wajib).
+- Text opsional: `description`, `pageCount`, `totalCopies`, `rating`, `coverUrl`, `coverClassName`.
+- File opsional: `cover` (JPG/JPEG, PNG, WEBP; maksimal 5 MB).
+
+Biarkan client/Postman mengatur header Content-Type beserta boundary. File
+`cover` diprioritaskan jika `coverUrl` juga dikirim. Respons `201` berisi
+`coverUrl` berupa path `/covers/books/...`, relatif terhadap origin API.
+JSON dengan `coverUrl` tetap didukung.
+
+Periksa: file valid menghasilkan `201`; format tidak didukung menghasilkan
+`400`; file melebihi 5 MB menghasilkan `413`; nilai angka tidak valid
+menghasilkan `400`; user non-admin menghasilkan `403`.
+Pada UI Add Book, pilih Browse image, periksa preview, lalu Save. File baru
+diunggah bersamaan dengan data buku saat Save.
