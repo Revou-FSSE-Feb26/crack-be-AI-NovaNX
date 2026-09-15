@@ -1,4 +1,5 @@
 import {
+  Allow,
   IsInt,
   IsNotEmpty,
   IsNumber,
@@ -10,6 +11,7 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class CreateBookDto {
   @ApiProperty()
@@ -24,6 +26,7 @@ export class CreateBookDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   @Max(5)
@@ -49,6 +52,16 @@ export class CreateBookDto {
   coverUrl?: string | null;
 
   @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary',
+    description:
+      'Cover image file (JPG, PNG, WEBP), maximum 5 MB. Overrides coverUrl.',
+  })
+  @IsOptional()
+  @Allow()
+  cover?: unknown;
+
+  @ApiPropertyOptional({
     type: String,
     nullable: true,
     maxLength: 5000,
@@ -66,6 +79,7 @@ export class CreateBookDto {
     example: 320,
   })
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   pageCount?: number | null;
@@ -82,6 +96,7 @@ export class CreateBookDto {
 
   @ApiPropertyOptional({ minimum: 1, default: 1, example: 3 })
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   totalCopies?: number;

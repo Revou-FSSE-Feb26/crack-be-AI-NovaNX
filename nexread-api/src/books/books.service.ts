@@ -12,8 +12,13 @@ import { BooksRepository } from './repositories/books.repository';
 export class BooksService {
   constructor(private readonly booksRepository: BooksRepository) {}
 
-  create(createBookDto: CreateBookDto) {
-    return this.booksRepository.create(createBookDto);
+  create(createBookDto: CreateBookDto, uploadedCoverUrl?: string) {
+    const { cover, ...bookData } = createBookDto;
+    void cover;
+    return this.booksRepository.create({
+      ...bookData,
+      coverUrl: uploadedCoverUrl ?? bookData.coverUrl,
+    });
   }
 
   async findAll(query: QueryBooksDto = new QueryBooksDto()) {
