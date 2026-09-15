@@ -639,6 +639,18 @@ describe('AppController (e2e)', () => {
     const adminBody = adminLogin.body as AuthTokenPair;
     const adminAuthorization = `Bearer ${adminBody.accessToken}`;
 
+    const coverUpdate = await request(app.getHttpServer())
+      .patch(`/books/${bookId}`)
+      .set('Authorization', adminAuthorization)
+      .attach('cover', Buffer.from('test-cover'), {
+        filename: 'book-cover.png',
+        contentType: 'image/png',
+      })
+      .expect(200);
+    const coverUrl = (coverUpdate.body as { coverUrl: string }).coverUrl;
+    expect(coverUrl).toMatch(/^\/covers\/books\/book-cover-\d+-\d+\.png$/);
+    await request(app.getHttpServer()).get(coverUrl).expect(200);
+
     await request(app.getHttpServer())
       .patch(`/admin/loans/${loan.id}`)
       .set('Authorization', adminAuthorization)
