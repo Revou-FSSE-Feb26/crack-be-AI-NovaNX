@@ -51,6 +51,8 @@ export class LoansController {
   constructor(private readonly loansService: LoansService) {}
 
   @Post()
+  @Roles(Role.USER)
+  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Borrow an available book' })
   @ApiCreatedResponse({ type: LoanResponseDto })
   @ApiBadRequestResponse({
@@ -63,6 +65,10 @@ export class LoansController {
   })
   @ApiConflictResponse({
     description: 'Book is unavailable or due date is invalid',
+    type: ErrorResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Admin accounts must borrow with a separate user account',
     type: ErrorResponseDto,
   })
   borrow(
@@ -83,6 +89,8 @@ export class LoansController {
   }
 
   @Post('from-cart')
+  @Roles(Role.USER)
+  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Atomically borrow every available cart book' })
   @ApiCreatedResponse({ type: [LoanResponseDto] })
   @ApiBadRequestResponse({
@@ -91,6 +99,10 @@ export class LoansController {
   })
   @ApiConflictResponse({
     description: 'One or more cart books cannot be borrowed',
+    type: ErrorResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Admin accounts must borrow with a separate user account',
     type: ErrorResponseDto,
   })
   checkoutCart(
@@ -142,6 +154,10 @@ export class AdminLoansController {
   @ApiCreatedResponse({ type: LoanResponseDto })
   @ApiBadRequestResponse({ type: ErrorResponseDto })
   @ApiNotFoundResponse({ type: ErrorResponseDto })
+  @ApiForbiddenResponse({
+    description: 'The target borrower must be a user account',
+    type: ErrorResponseDto,
+  })
   @ApiConflictResponse({ type: ErrorResponseDto })
   create(@Body() data: AdminCreateLoanDto) {
     return this.loansService.adminBorrow(data);
