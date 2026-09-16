@@ -890,10 +890,21 @@ describe('AppController (e2e)', () => {
       .send({ status: 'RETURNED' })
       .expect(200);
 
+    secondaryTestEmail = `loan-member-e2e-${testResourceSuffix}@example.com`;
+    const memberRegistration = await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        fullName: 'Loan Member E2E',
+        email: secondaryTestEmail,
+        password,
+      })
+      .expect(201);
+    const memberId = (memberRegistration.body as AuthTokenPair).user.id;
+
     const adminCreatedLoan = await request(app.getHttpServer())
       .post('/admin/loans')
       .set('Authorization', adminAuthorization)
-      .send({ userId: registrationBody.user.id, bookId: cartBookId })
+      .send({ userId: memberId, bookId: cartBookId })
       .expect(201);
 
     await request(app.getHttpServer())
