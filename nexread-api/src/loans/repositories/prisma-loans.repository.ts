@@ -3,7 +3,11 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
-import { BookCopyStatus, LoanStatus } from '../../../generated/prisma/enums';
+import {
+  BookCopyStatus,
+  LoanStatus,
+  Role,
+} from '../../../generated/prisma/enums';
 import type { Prisma } from '../../../generated/prisma/client';
 import type { BookModel } from '../../../generated/prisma/models';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -43,8 +47,12 @@ export class PrismaLoansRepository implements LoansRepository {
     return this.prisma.book.findFirst({ where: { id, deletedAt: null } });
   }
 
-  async userExists(id: number): Promise<boolean> {
-    return (await this.prisma.user.count({ where: { id } })) === 1;
+  async findUserRole(id: number): Promise<Role | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { role: true },
+    });
+    return user?.role ?? null;
   }
 
   findById(id: number): Promise<LoanWithRelations | null> {

@@ -211,8 +211,11 @@ Ulangi checkout dengan `durationDays: 4`; expected `400` karena hanya `3`, `5`, 
 | 49 | `POST /loans` | `{"bookId":"{{bookId}}"}` / user kedua | `409`; satu-satunya copy sedang dipinjam |
 | 50 | `DELETE /books/{{bookId}}` | admin | `409`; masih ada active loan |
 | 51 | `PATCH /loans/{{loanId}}/return` | user kedua | `403`; loan milik user utama |
-| 52 | `PATCH /loans/{{loanId}}/return` | user utama | `200`; status `RETURNED`, `returnedAt` terisi |
+| 52 | `PATCH /loans/{{loanId}}/return` | user utama | `200`; status `RETURN_REQUESTED`, `returnRequestedAt` terisi; copy masih `LOANED` |
 | 53 | request return yang sama | user utama | `409` |
+| 53a | `POST /loans` dan `POST /loans/from-cart` | akun admin | `403`; admin tidak dapat meminjam dengan akun admin |
+| 53b | `POST /admin/loans` | `{"userId":{{adminUserId}},"bookId":"{{bookId}}"}` / admin | `403`; akun admin tidak boleh menjadi peminjam |
+| 53c | `PATCH /admin/loans/{{loanId}}` | `{"status":"RETURNED"}` / admin | `200`; status `RETURNED`, `returnedAt` dan `returnedByAdminId` terisi; copy kembali `AVAILABLE` |
 | 54 | `POST /admin/loans` | `{"userId":{{otherUserId}},"bookId":"{{bookId}}","dueAt":"{{futureDueAt}}"}` / admin | `201`; simpan `adminLoanId` |
 | 55 | `GET /admin/loans?status=ACTIVE&q=QA&page=1&limit=10` | admin | `200`; loan admin ada dan memiliki nested user/book |
 | 56 | `PATCH /admin/loans/{{adminLoanId}}` | buat `futureDueAt` baru (mis. now + 21 hari), lalu `{"dueAt":"{{futureDueAt}}"}` / admin | `200`; due date berubah |

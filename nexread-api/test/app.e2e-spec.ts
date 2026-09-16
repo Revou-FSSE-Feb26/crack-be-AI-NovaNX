@@ -291,6 +291,42 @@ describe('AppController (e2e)', () => {
     ).resolves.toBe(3);
   });
 
+  it('prevents admin accounts from borrowing through every checkout route', async () => {
+    testEmail = `admin-borrow-e2e-${Date.now()}@example.com`;
+    const password = 'strong-password';
+    const registration = await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({ fullName: 'Admin Borrow E2E', email: testEmail, password })
+      .expect(201);
+    const adminId = (registration.body as AuthTokenPair).user.id;
+    await prisma.user.update({
+      where: { id: adminId },
+      data: { role: 'ADMIN' },
+    });
+    const login = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: testEmail, password })
+      .expect(200);
+    const authorization = `Bearer ${(login.body as AuthTokenPair).accessToken}`;
+
+    await request(app.getHttpServer())
+      .post('/loans')
+      .set('Authorization', authorization)
+      .send({ bookId: 'atomic-habits' })
+      .expect(403);
+    await request(app.getHttpServer())
+      .post('/loans/from-cart')
+      .set('Authorization', authorization)
+      .send({ durationDays: 5 })
+      .expect(403);
+    await request(app.getHttpServer())
+      .post('/admin/loans')
+      .set('Authorization', authorization)
+      .send({ userId: adminId, bookId: 'atomic-habits' })
+      .expect(403);
+    expect(await prisma.loan.count({ where: { userId: adminId } })).toBe(0);
+  });
+
   it('borrows and returns a book atomically and exposes admin analytics', async () => {
     testResourceSuffix = `${Date.now()}`;
     const authorId = `loan-author-${testResourceSuffix}`;
@@ -854,10 +890,21 @@ describe('AppController (e2e)', () => {
       .send({ status: 'RETURNED' })
       .expect(200);
 
+    secondaryTestEmail = `loan-member-e2e-${testResourceSuffix}@example.com`;
+    const memberRegistration = await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        fullName: 'Loan Member E2E',
+        email: secondaryTestEmail,
+        password,
+      })
+      .expect(201);
+    const memberId = (memberRegistration.body as AuthTokenPair).user.id;
+
     const adminCreatedLoan = await request(app.getHttpServer())
       .post('/admin/loans')
       .set('Authorization', adminAuthorization)
-      .send({ userId: registrationBody.user.id, bookId: cartBookId })
+      .send({ userId: memberId, bookId: cartBookId })
       .expect(201);
 
     await request(app.getHttpServer())

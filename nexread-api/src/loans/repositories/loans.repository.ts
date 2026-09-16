@@ -6,6 +6,7 @@ import type {
   LoanModel,
   UserModel,
 } from '../../../generated/prisma/models';
+import type { Role } from '../../../generated/prisma/enums';
 import type { QueryLoansDto } from '../dto/query-loans.dto';
 
 export type LoanWithBook = LoanModel & {
@@ -33,7 +34,7 @@ export type PaginatedLoans<T> = {
 
 export abstract class LoansRepository {
   abstract findBookById(id: string): Promise<BookModel | null>;
-  abstract userExists(id: number): Promise<boolean>;
+  abstract findUserRole(id: number): Promise<Role | null>;
   abstract findById(id: number): Promise<LoanWithRelations | null>;
   abstract findByUser(
     userId: number,

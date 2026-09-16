@@ -68,8 +68,12 @@ export class LoansService {
   }
 
   async adminBorrow(data: AdminCreateLoanDto) {
-    if (!(await this.loansRepository.userExists(data.userId))) {
+    const borrowerRole = await this.loansRepository.findUserRole(data.userId);
+    if (!borrowerRole) {
       throw new NotFoundException(`User with id "${data.userId}" not found`);
+    }
+    if (borrowerRole !== Role.USER) {
+      throw new ForbiddenException('Admin accounts cannot borrow books');
     }
     return this.borrow(data.userId, {
       bookId: data.bookId,

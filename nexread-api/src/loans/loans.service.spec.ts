@@ -46,7 +46,7 @@ describe('LoansService', () => {
   beforeEach(() => {
     repository = {
       findBookById: jest.fn(),
-      userExists: jest.fn(),
+      findUserRole: jest.fn(),
       findById: jest.fn(),
       findByUser: jest.fn(),
       findAll: jest.fn(),
@@ -128,10 +128,26 @@ describe('LoansService', () => {
   });
 
   it('requires an existing user for an admin-created loan', async () => {
-    repository.userExists.mockResolvedValue(false);
+    repository.findUserRole.mockResolvedValue(null);
     await expect(
       service.adminBorrow({ userId: 99, bookId: book.id }),
     ).rejects.toThrow(NotFoundException);
+  });
+
+  it('rejects an admin account as the target of an admin-created loan', async () => {
+    repository.findUserRole.mockResolvedValue(Role.ADMIN);
+    await expect(
+      service.adminBorrow({ userId: 99, bookId: book.id }),
+    ).rejects.toThrow(ForbiddenException);
+    expect(repository.borrow.mock.calls).toHaveLength(0);
+  });
+
+  it('allows an admin to create a loan for a user account', async () => {
+    repository.findUserRole.mockResolvedValue(Role.USER);
+    repository.findBookById.mockResolvedValue(book);
+    repository.borrow.mockResolvedValue(loan);
+    await service.adminBorrow({ userId: loan.userId, bookId: book.id });
+    expect(repository.borrow.mock.calls).toHaveLength(1);
   });
 
   it('only requests approval when a borrower returns their own loan', async () => {
