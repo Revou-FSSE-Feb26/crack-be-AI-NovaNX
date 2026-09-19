@@ -10,8 +10,13 @@ The API is deployed on [Railway](https://railway.app) and publicly reachable at:
 
 - **Base URL**: https://crack-be-ai-novanx-production.up.railway.app
 - **API reference (Swagger UI)**: https://crack-be-ai-novanx-production.up.railway.app/api
+- **Staging deployment (Book Reviews API)**: [https://crack-be-ai-novanx-staging.up.railway.app/api#/Reviews/BookReviewsController_findByBook](https://crack-be-ai-novanx-staging.up.railway.app/api#/Reviews/BookReviewsController_findByBook)
 
 The Swagger UI documents every endpoint (request/response shapes, DTOs, status codes) and includes an **Authorize** button to try protected routes with a JWT obtained from `POST /auth/login`.
+
+### Backend Application Screenshot
+
+[![NexRead API Swagger UI](docs/swagger.png)](https://crack-be-ai-novanx-staging.up.railway.app/api)
 
 ## Current Progress
 
