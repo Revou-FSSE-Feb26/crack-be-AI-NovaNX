@@ -14,6 +14,10 @@ The API is deployed on [Railway](https://railway.app) and publicly reachable at:
 
 The Swagger UI documents every endpoint (request/response shapes, DTOs, status codes) and includes an **Authorize** button to try protected routes with a JWT obtained from `POST /auth/login`.
 
+### Backend Application Screenshot
+
+[![NexRead API Swagger UI](docs/swagger.png)](https://crack-be-ai-novanx-staging.up.railway.app/api)
+
 ## Current Progress
 
 - Base NestJS application
