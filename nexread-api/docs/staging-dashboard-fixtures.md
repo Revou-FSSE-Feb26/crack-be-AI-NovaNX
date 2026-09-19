@@ -15,11 +15,16 @@ as the verifier of historical returned loans.
 - 2 `RETURN_REQUESTED` loans;
 - 10 `RETURNED` loan records;
 - 13 available, 7 loaned, 2 damaged, 1 lost, and 2 archived copies;
+- at least 3 varied reviews per active catalog book, written by the registered
+  staging demo users, with each affected book rating recalculated from all of
+  its reviews;
 - ranked loan history for `topBorrowedBooks`.
 
-The script is idempotent for records prefixed with `staging-demo`. Re-running it
-refreshes the fixture loans and copy statuses while leaving normal catalog and
-user data untouched.
+The script is idempotent for fixture records. Re-running it refreshes the
+fixture loans and copy statuses, upserts three deterministic demo-user reviews
+for every active book, and preserves reviews written by other users. Demo-user
+reviews may be refreshed by later fixture runs so their ratings and comments
+remain deterministic.
 
 ## Required staging variables
 
