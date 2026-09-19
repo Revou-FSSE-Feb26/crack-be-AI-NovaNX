@@ -9,7 +9,8 @@ as the verifier of historical returned loans.
 
 - 10 active `USER` accounts: `staging-demo.user01@nexread.test` through
   `staging-demo.user10@nexread.test`;
-- 5 staging-only books and 25 physical copies;
+- 5 staging-only books distributed across the existing seeded categories and
+  25 physical copies;
 - 5 `ACTIVE` loans, including 2 overdue loans;
 - 2 `RETURN_REQUESTED` loans;
 - 10 `RETURNED` loan records;
