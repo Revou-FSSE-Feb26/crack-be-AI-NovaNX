@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Body,
   Controller,
-  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -153,23 +152,5 @@ export class MeController {
       request.user.userId,
       changePasswordDto,
     );
-  }
-
-  @Delete()
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Soft-delete the authenticated user account' })
-  @ApiNoContentResponse({
-    description: 'User account soft-deleted successfully',
-  })
-  @ApiConflictResponse({
-    description: 'Administrators cannot delete their own account',
-    type: ErrorResponseDto,
-  })
-  @ApiNotFoundResponse({
-    description: 'Authenticated user was not found',
-    type: ErrorResponseDto,
-  })
-  removeMe(@Req() request: AuthenticatedRequest) {
-    return this.usersService.remove(request.user.userId);
   }
 }

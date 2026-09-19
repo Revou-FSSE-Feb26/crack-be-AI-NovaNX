@@ -7,7 +7,6 @@ describe('MeController', () => {
     findMe: jest.fn(),
     update: jest.fn(),
     changePassword: jest.fn(),
-    remove: jest.fn(),
   };
   const controller = new MeController(usersService as unknown as UsersService);
   const request = {
@@ -21,11 +20,9 @@ describe('MeController', () => {
 
     await controller.findMe(request);
     await controller.updateMe(request, update);
-    await controller.removeMe(request);
 
     expect(usersService.findMe).toHaveBeenCalledWith(42);
     expect(usersService.update).toHaveBeenCalledWith(42, update, undefined);
-    expect(usersService.remove).toHaveBeenCalledWith(42);
   });
 
   it('uses the authenticated JWT user id when changing a password', async () => {

@@ -151,11 +151,6 @@ export class UsersService {
     return this.usersRepository.updateRefreshTokenHash(id, refreshTokenHash);
   }
 
-  async remove(id: number) {
-    await this.findExistingOrThrow(id);
-    await this.usersRepository.delete(id);
-  }
-
   async adminRemove(actorAdminId: number, id: number) {
     const user = await this.findExistingOrThrow(id);
     if (actorAdminId === id) {

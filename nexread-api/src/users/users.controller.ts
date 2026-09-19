@@ -125,7 +125,8 @@ export class UsersController {
     type: ErrorResponseDto,
   })
   @ApiConflictResponse({
-    description: 'The operation would delete the acting or last administrator',
+    description:
+      'The operation would delete the acting/last administrator, or the user has an active loan or pending return request',
     type: ErrorResponseDto,
   })
   remove(

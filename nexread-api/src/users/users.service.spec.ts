@@ -21,7 +21,6 @@ describe('UsersService', () => {
       countActiveAdmins: jest.fn(),
       updateRole: jest.fn(),
       adminDelete: jest.fn(),
-      delete: jest.fn(),
     };
     service = new UsersService(repository);
   });

@@ -56,5 +56,4 @@ export abstract class UsersRepository {
     role: Role,
   ): Promise<UserModel>;
   abstract adminDelete(actorAdminId: number, id: number): Promise<UserModel>;
-  abstract delete(id: number): Promise<UserModel>;
 }

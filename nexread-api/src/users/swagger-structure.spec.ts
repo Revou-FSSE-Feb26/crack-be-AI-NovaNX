@@ -32,7 +32,7 @@ describe('User Swagger structure', () => {
 
     expect(document.paths['/me']?.get?.tags).toEqual(['Me']);
     expect(document.paths['/me']?.patch?.tags).toEqual(['Me']);
-    expect(document.paths['/me']?.delete?.tags).toEqual(['Me']);
+    expect(document.paths['/me']?.delete).toBeUndefined();
     expect(document.paths['/me/password']?.patch?.tags).toEqual(['Me']);
 
     expect(document.paths['/users']?.get?.tags).toEqual(['Admin']);
