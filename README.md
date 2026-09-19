@@ -8,6 +8,8 @@ NexRead is a backend project developed for the RevoU FSSE assignment. The API is
 
 The API is deployed on [Railway](https://railway.app). Staging receives every revision that passes the `main` CI pipeline, while production remains protected by manual approval.
 
+- **Frontend application**: [https://nexread.ai-novanx.online/](https://nexread.ai-novanx.online/)
+
 | Environment | Base URL                                             | Swagger UI                                                                                                                    |
 | ----------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | Staging     | https://crack-be-ai-novanx-staging.up.railway.app    | [Open staging API reference](https://crack-be-ai-novanx-staging.up.railway.app/api#/Reviews/BookReviewsController_findByBook) |
