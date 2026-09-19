@@ -527,14 +527,14 @@
           "response": []
         },
         {
-          "name": "Cleanup - Delete Smoke User (204)",
+          "name": "Self-deactivation Is Not Available (404)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code is 204', function () { pm.response.to.have.status(204); });"
+                  "pm.test('Status code is 404', function () { pm.response.to.have.status(404); });"
                 ]
               }
             }
@@ -4051,7 +4051,7 @@
               "response": []
             },
             {
-              "name": "Delete Regression User (204)",
+              "name": "Admin Deactivates Regression User (204)",
               "event": [
                 {
                   "listen": "test",
@@ -4068,13 +4068,13 @@
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{accessToken}}"
+                    "value": "Bearer {{adminAccessToken}}"
                   }
                 ],
                 "url": {
-                  "raw": "{{baseUrl}}/me",
+                  "raw": "{{baseUrl}}/users/{{regressionUserId}}",
                   "host": ["{{baseUrl}}"],
-                  "path": ["me"]
+                  "path": ["users", "{{regressionUserId}}"]
                 }
               },
               "response": []

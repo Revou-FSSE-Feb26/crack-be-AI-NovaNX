@@ -198,6 +198,18 @@ export class PrismaUsersRepository implements UsersRepository {
         }
       }
 
+      const outstandingLoans = await transaction.loan.count({
+        where: {
+          userId: id,
+          status: { in: [LoanStatus.ACTIVE, LoanStatus.RETURN_REQUESTED] },
+        },
+      });
+      if (outstandingLoans > 0) {
+        throw new ConflictException(
+          'Users with active loans or pending return requests cannot be deactivated',
+        );
+      }
+
       const deleted = await transaction.user.update({
         where: { id },
         data: {
@@ -215,32 +227,6 @@ export class PrismaUsersRepository implements UsersRepository {
           previousRole: user.role,
         },
       });
-      return deleted;
-    });
-  }
-
-  delete(id: number): Promise<UserModel> {
-    return this.prisma.$transaction(async (transaction) => {
-      const user = await transaction.user.findFirst({
-        where: { id, deletedAt: null },
-      });
-      if (!user) {
-        throw new NotFoundException(`User with id "${id}" not found`);
-      }
-      if (user.role === Role.ADMIN) {
-        throw new ConflictException(
-          'Administrators cannot delete their own account',
-        );
-      }
-      const deleted = await transaction.user.update({
-        where: { id },
-        data: {
-          deletedAt: new Date(),
-          refreshTokenHash: null,
-          tokenVersion: { increment: 1 },
-        },
-      });
-      await transaction.cartItem.deleteMany({ where: { userId: id } });
       return deleted;
     });
   }

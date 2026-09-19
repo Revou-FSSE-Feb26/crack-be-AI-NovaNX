@@ -30,8 +30,8 @@ The Swagger UI documents every endpoint (request/response shapes, DTOs, status c
 - Separate `GET /health/live` and database-aware `GET /health/ready` probes; Railway only promotes a deployment after the readiness probe succeeds
 - GitHub Actions CI/CD with formatting, lint, type, coverage, build, migration, E2E, Newman, and production dependency gates; successful `main` revisions progress through staging, approval-protected production, and automated smoke tests
 - Role-based access control (RBAC): `User.role` (`USER` / `ADMIN`), included in the JWT payload, enforced via a `RolesGuard` + `@Roles()` decorator
-- Self-service account endpoints use the authenticated JWT identity: `GET/PATCH/DELETE /me` and `PATCH /me/password`. Admin account management remains under `/users`, and every `/users` endpoint is admin-only. Password and role changes use dedicated DTOs/endpoints to prevent privilege escalation through mass assignment.
-- User deletion is a soft delete that preserves loan/review history, revokes refresh access, and removes pending cart items. Admin role/deletion actions are stored in an immutable audit trail; self-demotion, self-deletion, and removal of the last active admin are rejected.
+- Self-service account endpoints use the authenticated JWT identity: `GET/PATCH /me` and `PATCH /me/password`. Account deactivation is reserved for administrators under `DELETE /users/:id`; every `/users` endpoint is admin-only. Password and role changes use dedicated DTOs/endpoints to prevent privilege escalation through mass assignment.
+- Admin-managed user deletion is a soft delete that preserves loan/review history, revokes refresh access, and removes pending cart items. Users with active loans or pending return requests cannot be deactivated. Admin role/deletion actions are stored in an immutable audit trail; self-demotion, self-deletion, and removal of the last active admin are rejected.
 - Atomic loan lifecycle: authenticated users borrow/return books under `/loans`; conditional inventory updates prevent over-borrowing while allowing concurrent loans up to `totalCopies`.
 - Paginated catalog and rating-based recommendations; inventory counters allow multiple copies of a title to be loaned concurrently.
 - One review per user/book with owner/admin moderation and transactional book-rating recalculation.
@@ -193,11 +193,10 @@ By default, the API runs at `http://localhost:3000`. The interactive Swagger API
 | GET    | `/me/reviews`                  | Paginated reviews written by the user           | Yes                |
 | PATCH  | `/me`                          | Update the authenticated user's name/email      | Yes                |
 | PATCH  | `/me/password`                 | Change the authenticated user's password        | Yes                |
-| DELETE | `/me`                          | Soft-delete the authenticated user's account    | Yes                |
 | GET    | `/users`                       | Search and paginate all users                   | Yes (Admin only)   |
 | GET    | `/users/:id`                   | Get a user by id                                | Yes (Admin only)   |
 | PATCH  | `/users/:id/role`              | Promote/demote a user's role                    | Yes (Admin only)   |
-| DELETE | `/users/:id`                   | Soft-delete a user with admin-lockout protection | Yes (Admin only)   |
+| DELETE | `/users/:id`                   | Deactivate a user without outstanding loans     | Yes (Admin only)   |
 | POST   | `/loans`                       | Borrow an available book                        | Yes                |
 | GET    | `/loans`                       | Filter and paginate authenticated user loans    | Yes                |
 | POST   | `/loans/from-cart`             | Atomically borrow all books in the cart         | Yes                |

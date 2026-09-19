@@ -182,7 +182,7 @@ describe('AppController (e2e)', () => {
     await request(app.getHttpServer())
       .delete('/me')
       .set('Authorization', `Bearer ${loginBody.accessToken}`)
-      .expect(204);
+      .expect(404);
   });
 
   it('secures admin user management, soft deletes users, and records audit events', async () => {
@@ -270,6 +270,41 @@ describe('AppController (e2e)', () => {
       .set('Authorization', `Bearer ${target.accessToken}`)
       .expect(401);
 
+    const catalogBook = await prisma.book.findFirstOrThrow({
+      where: { deletedAt: null },
+      select: { id: true },
+    });
+    const outstandingLoan = await prisma.loan.create({
+      data: {
+        userId: target.user.id,
+        bookId: catalogBook.id,
+        dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    await request(app.getHttpServer())
+      .delete(`/users/${target.user.id}`)
+      .set('Authorization', authorization)
+      .expect(409)
+      .expect(({ body }: { body: { message: string } }) => {
+        expect(body.message).toContain('active loans');
+      });
+
+    await prisma.loan.update({
+      where: { id: outstandingLoan.id },
+      data: { status: 'RETURN_REQUESTED', returnRequestedAt: new Date() },
+    });
+
+    await request(app.getHttpServer())
+      .delete(`/users/${target.user.id}`)
+      .set('Authorization', authorization)
+      .expect(409);
+
+    await prisma.loan.update({
+      where: { id: outstandingLoan.id },
+      data: { status: 'RETURNED', returnedAt: new Date() },
+    });
+
     await request(app.getHttpServer())
       .delete(`/users/${target.user.id}`)
       .set('Authorization', authorization)
@@ -289,6 +324,7 @@ describe('AppController (e2e)', () => {
         where: { actorAdminId: actor.user.id, targetUserId: target.user.id },
       }),
     ).resolves.toBe(3);
+    await prisma.loan.delete({ where: { id: outstandingLoan.id } });
   });
 
   it('prevents admin accounts from borrowing through every checkout route', async () => {

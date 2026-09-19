@@ -257,7 +257,7 @@ Validasi negatif: rating `0`/`6` atau comment lebih dari 1000 karakter → `400`
 
 Untuk ketiganya: tanpa token → `401`, token user → `403`.
 
-### I. Password, logout, delete user, dan cleanup
+### I. Password, logout, penonaktifan user oleh admin, dan cleanup
 
 Jalankan tahap ini paling akhir karena token akan dicabut dan akun dihapus.
 
@@ -268,16 +268,16 @@ Jalankan tahap ini paling akhir karena token akan dicabut dan akun dihapus.
 | 73 | `POST /auth/login` | password baru | `200`; simpan token pair baru |
 | 74 | `POST /auth/logout` | bearer user utama | `204`; discard token pair di client |
 | 75 | `POST /auth/refresh` | refresh dari langkah 73 | `401`; sudah dicabut logout |
-| 76 | login lagi, lalu `DELETE /me` | user utama | login `200`, delete `204` |
-| 77 | `POST /auth/login` | kredensial user utama | `401`; akun soft-deleted |
-| 78 | `DELETE /users/{{targetUserId}}` | admin | `204` |
+| 76 | login lagi, lalu `DELETE /me` | user utama | login `200`, delete `404`; self-delete tidak tersedia |
+| 77 | `POST /auth/login` | kredensial user utama | `200`; akun tetap aktif |
+| 78 | `DELETE /users/{{targetUserId}}` | admin | `409` bila masih ada loan `ACTIVE`/`RETURN_REQUESTED`; setelah seluruhnya `RETURNED`, hasilnya `204` |
 | 79 | `GET /users/{{targetUserId}}` | admin | `404` |
 | 80 | `DELETE /users/{{adminUserId}}` | admin | `409`; self-delete admin dilarang |
 | 81 | `DELETE /books/{{bookId}}` | admin | `200` setelah semua loan returned |
 | 82 | `GET /books/{{bookId}}` | publik | `404` |
 | 83 | `DELETE /authors/{{authorId}}` | admin | `200` |
 | 84 | `DELETE /categories/{{categoryId}}` | admin | `409` bila book di langkah 81 diarsipkan karena memiliki riwayat loan/review; soft-deleted book masih mereferensikan category |
-| 85 | `DELETE /me` | login sebagai user kedua | `204` |
+| 85 | `DELETE /users/{{secondUserId}}` | admin | `204` setelah seluruh loan user kedua `RETURNED` |
 | 86 | `POST /auth/logout` | admin | `204`; refresh admin dicabut |
 
 Jika `bookId2`/author/category kedua dibuat untuk skenario overdue, return seluruh loan lalu hapus melalui API dengan urutan book → author → category. Book yang memiliki riwayat akan menjadi soft-deleted; category terkait tetap tidak dapat dihapus melalui API karena relasi historis masih ada. Bersihkan fixture tersebut langsung dari database hanya pada staging disposable dan hanya dengan target ID `qa-{{runId}}`. Jangan menghapus seeded catalog.
