@@ -7,6 +7,28 @@ import { BookCopyStatus, LoanStatus, Role } from '../generated/prisma/enums';
 const FIXTURE_PREFIX = 'staging-demo';
 const SALT_ROUNDS = 10;
 const COPY_COUNT_PER_BOOK = 5;
+const reviewFixtures = [
+  {
+    rating: 5,
+    comment: 'Sangat menarik dan mudah diikuti dari awal sampai akhir.',
+  },
+  {
+    rating: 4,
+    comment: 'Isi bukunya bagus dan memberikan banyak wawasan baru.',
+  },
+  {
+    rating: 3,
+    comment: 'Cukup informatif, meskipun beberapa bagian terasa lambat.',
+  },
+  {
+    rating: 5,
+    comment: 'Salah satu buku yang layak dibaca dan direkomendasikan.',
+  },
+  {
+    rating: 2,
+    comment: 'Idenya menarik, tetapi penyajiannya belum sesuai ekspektasi.',
+  },
+] as const;
 
 const demoBooks = [
   {
@@ -299,10 +321,49 @@ async function main(): Promise<void> {
         },
       });
     }
+
+    const activeBooks = await transaction.book.findMany({
+      where: { deletedAt: null },
+      select: { id: true },
+      orderBy: { id: 'asc' },
+    });
+    for (const [bookIndex, book] of activeBooks.entries()) {
+      for (let reviewIndex = 0; reviewIndex < 3; reviewIndex += 1) {
+        const user = users[(bookIndex + reviewIndex) % users.length]!;
+        const fixture =
+          reviewFixtures[
+            (bookIndex * 3 + reviewIndex) % reviewFixtures.length
+          ]!;
+        await transaction.review.upsert({
+          where: {
+            userId_bookId: { userId: user.id, bookId: book.id },
+          },
+          update: {
+            rating: fixture.rating,
+            comment: fixture.comment,
+          },
+          create: {
+            userId: user.id,
+            bookId: book.id,
+            rating: fixture.rating,
+            comment: fixture.comment,
+          },
+        });
+      }
+
+      const rating = await transaction.review.aggregate({
+        where: { bookId: book.id },
+        _avg: { rating: true },
+      });
+      await transaction.book.update({
+        where: { id: book.id },
+        data: { rating: rating._avg.rating ?? 0 },
+      });
+    }
   });
 
   console.log(
-    `Seeded staging dashboard fixtures using existing admin ${admin.email}: 10 users, 5 books, 25 copies, and 17 loans.`,
+    `Seeded staging dashboard fixtures using existing admin ${admin.email}: 10 users, 5 books, 25 copies, 17 loans, and at least 3 registered-user reviews per active book.`,
   );
 }
 
