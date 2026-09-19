@@ -3658,7 +3658,9 @@
                     "type": "text/javascript",
                     "exec": [
                       "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                      "pm.expect(pm.response.json().activeLoans).to.be.a('number');"
+                      "pm.expect(pm.response.json().activeLoans).to.be.a('number');",
+                      "pm.expect(pm.response.json().returnRequestedLoans).to.be.a('number');",
+                      "pm.expect(pm.response.json().overdueLoans).to.be.a('number');"
                     ]
                   }
                 }

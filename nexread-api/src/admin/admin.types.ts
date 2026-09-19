@@ -5,6 +5,7 @@ export interface DashboardSummary {
   books: number;
   availableBooks: number;
   activeLoans: number;
+  returnRequestedLoans: number;
   overdueLoans: number;
   totalPhysicalCopies: number;
   availableCopies: number;
