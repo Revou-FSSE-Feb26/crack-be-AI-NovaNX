@@ -224,6 +224,11 @@ Ulangi checkout dengan `durationDays: 4`; expected `400` karena hanya `3`, `5`, 
 
 API memang menolak due date lampau dan due date lebih dari 365 hari (`409`). Untuk membuktikan endpoint overdue dengan hasil non-kosong, siapkan loan overdue melalui seed/fixture khusus staging, verifikasi muncul di `/overdue`, lalu return melalui endpoint admin. Tanpa fixture, endpoint tetap dapat diverifikasi untuk status/schema `200` dan aturan bahwa semua item yang dikembalikan (jika ada) berstatus aktif dengan `dueAt < now`.
 
+Fixture KPI dashboard yang aman dan dapat dijalankan ulang tersedia di
+[`docs/staging-dashboard-fixtures.md`](../docs/staging-dashboard-fixtures.md).
+Fixture tersebut tidak membuat admin baru dan hanya boleh dijalankan terhadap
+database staging.
+
 ### G. Reviews
 
 Book tetap boleh direview setelah loan dikembalikan.
