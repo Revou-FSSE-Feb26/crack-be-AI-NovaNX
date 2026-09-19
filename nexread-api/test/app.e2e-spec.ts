@@ -833,6 +833,9 @@ describe('AppController (e2e)', () => {
           body: {
             books: number;
             users: number;
+            activeLoans: number;
+            returnRequestedLoans: number;
+            overdueLoans: number;
             totalPhysicalCopies: number;
             loanedCopies: number;
             topBorrowedBooks: unknown[];
@@ -840,6 +843,9 @@ describe('AppController (e2e)', () => {
         }) => {
           expect(body.books).toBeGreaterThan(0);
           expect(body.users).toBeGreaterThan(0);
+          expect(body.activeLoans).toEqual(expect.any(Number));
+          expect(body.returnRequestedLoans).toEqual(expect.any(Number));
+          expect(body.overdueLoans).toEqual(expect.any(Number));
           expect(body.totalPhysicalCopies).toBeGreaterThan(0);
           expect(body.loanedCopies).toBeGreaterThan(0);
           expect(body.topBorrowedBooks).toBeInstanceOf(Array);

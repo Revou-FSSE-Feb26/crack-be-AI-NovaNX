@@ -251,7 +251,7 @@ Validasi negatif: rating `0`/`6` atau comment lebih dari 1000 karakter → `400`
 
 | No. | Request | Auth | Expected |
 | ---: | --- | --- | --- |
-| 68 | `GET /admin/dashboard` | admin | `200`; metrik numerik dan daftar top books valid |
+| 68 | `GET /admin/dashboard` | admin | `200`; `activeLoans` hanya status `ACTIVE`, `returnRequestedLoans` hanya `RETURN_REQUESTED`, `overdueLoans` berdasarkan `dueAt`, dan daftar top books valid |
 | 69 | `GET /admin/authors/statistics` | admin | `200`; array statistik author |
 | 70 | `GET /admin/categories/statistics` | admin | `200`; termasuk kategori dengan nol book |
 

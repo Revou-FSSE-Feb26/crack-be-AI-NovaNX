@@ -20,6 +20,9 @@ export class DashboardResponseDto {
   activeLoans: number;
 
   @ApiProperty({ example: 2 })
+  returnRequestedLoans: number;
+
+  @ApiProperty({ example: 2 })
   overdueLoans: number;
 
   @ApiProperty({ example: 60 })

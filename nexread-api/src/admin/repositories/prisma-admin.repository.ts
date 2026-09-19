@@ -21,6 +21,7 @@ export class PrismaAdminRepository implements AdminRepository {
       books,
       availableBooks,
       activeLoans,
+      returnRequestedLoans,
       overdueLoans,
       totalPhysicalCopies,
       availableCopies,
@@ -37,9 +38,10 @@ export class PrismaAdminRepository implements AdminRepository {
         where: { deletedAt: null, isAvailable: true },
       }),
       this.prisma.loan.count({
-        where: {
-          status: { in: [LoanStatus.ACTIVE, LoanStatus.RETURN_REQUESTED] },
-        },
+        where: { status: LoanStatus.ACTIVE },
+      }),
+      this.prisma.loan.count({
+        where: { status: LoanStatus.RETURN_REQUESTED },
       }),
       this.prisma.loan.count({
         where: {
@@ -89,6 +91,7 @@ export class PrismaAdminRepository implements AdminRepository {
       books,
       availableBooks,
       activeLoans,
+      returnRequestedLoans,
       overdueLoans,
       totalPhysicalCopies,
       availableCopies,
