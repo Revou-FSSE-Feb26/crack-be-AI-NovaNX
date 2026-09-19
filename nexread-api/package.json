@@ -33,7 +33,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:seed": "prisma db seed",
-    "prisma:seed:admin": "tsx prisma/seed-admin.ts"
+    "prisma:seed:admin": "tsx prisma/seed-admin.ts",
+    "prisma:seed:staging-dashboard": "tsx prisma/seed-staging-dashboard.ts"
   },
   "overrides": {
     "@nestjs/swagger": {
