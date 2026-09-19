@@ -9,11 +9,40 @@ const SALT_ROUNDS = 10;
 const COPY_COUNT_PER_BOOK = 5;
 
 const demoBooks = [
-  { id: `${FIXTURE_PREFIX}-book-01`, title: 'Dashboard Demo: Clean Code' },
-  { id: `${FIXTURE_PREFIX}-book-02`, title: 'Dashboard Demo: System Design' },
-  { id: `${FIXTURE_PREFIX}-book-03`, title: 'Dashboard Demo: Testing' },
-  { id: `${FIXTURE_PREFIX}-book-04`, title: 'Dashboard Demo: Databases' },
-  { id: `${FIXTURE_PREFIX}-book-05`, title: 'Dashboard Demo: DevOps' },
+  {
+    id: `${FIXTURE_PREFIX}-book-01`,
+    title: 'Dashboard Demo: Clean Code',
+    categoryId: 'cat-education',
+  },
+  {
+    id: `${FIXTURE_PREFIX}-book-02`,
+    title: 'Dashboard Demo: System Design',
+    categoryId: 'cat-science-technology',
+  },
+  {
+    id: `${FIXTURE_PREFIX}-book-03`,
+    title: 'Dashboard Demo: Testing',
+    categoryId: 'cat-self-improvement',
+  },
+  {
+    id: `${FIXTURE_PREFIX}-book-04`,
+    title: 'Dashboard Demo: Databases',
+    categoryId: 'cat-non-fiction',
+  },
+  {
+    id: `${FIXTURE_PREFIX}-book-05`,
+    title: 'Dashboard Demo: DevOps',
+    categoryId: 'cat-finance',
+  },
+] as const;
+
+const seededCategoryIds = [
+  'cat-fiction',
+  'cat-non-fiction',
+  'cat-self-improvement',
+  'cat-finance',
+  'cat-science-technology',
+  'cat-education',
 ] as const;
 
 const environmentName = (
@@ -115,20 +144,14 @@ async function main(): Promise<void> {
         rating: 4.5,
       },
     });
-    await transaction.category.upsert({
-      where: { id: `${FIXTURE_PREFIX}-category` },
-      update: {
-        name: 'Staging Dashboard',
-        slug: `${FIXTURE_PREFIX}-category`,
-        subtitle: 'Staging-only dashboard KPI fixtures',
-      },
-      create: {
-        id: `${FIXTURE_PREFIX}-category`,
-        name: 'Staging Dashboard',
-        slug: `${FIXTURE_PREFIX}-category`,
-        subtitle: 'Staging-only dashboard KPI fixtures',
-      },
+    const seededCategoryCount = await transaction.category.count({
+      where: { id: { in: [...seededCategoryIds] } },
     });
+    if (seededCategoryCount !== seededCategoryIds.length) {
+      throw new Error(
+        'All six seeded categories must exist before seeding dashboard fixtures.',
+      );
+    }
 
     for (const book of demoBooks) {
       await transaction.book.upsert({
@@ -136,7 +159,7 @@ async function main(): Promise<void> {
         update: {
           title: book.title,
           authorId: `${FIXTURE_PREFIX}-author`,
-          categoryId: `${FIXTURE_PREFIX}-category`,
+          categoryId: book.categoryId,
           rating: 4.5,
           description: 'Staging-only fixture for admin dashboard metrics.',
           pageCount: 240,
@@ -147,7 +170,7 @@ async function main(): Promise<void> {
           id: book.id,
           title: book.title,
           authorId: `${FIXTURE_PREFIX}-author`,
-          categoryId: `${FIXTURE_PREFIX}-category`,
+          categoryId: book.categoryId,
           rating: 4.5,
           description: 'Staging-only fixture for admin dashboard metrics.',
           pageCount: 240,
@@ -157,6 +180,10 @@ async function main(): Promise<void> {
         },
       });
     }
+
+    await transaction.category.deleteMany({
+      where: { id: `${FIXTURE_PREFIX}-category` },
+    });
 
     const bookIds = demoBooks.map((book) => book.id);
     const existingCopies = await transaction.bookCopy.findMany({
