@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import type { BookModel } from '../../generated/prisma/models';
 import { CartService } from './cart.service';
@@ -50,6 +51,43 @@ describe('CartService', () => {
     await expect(service.add(1, { bookId: book.id })).rejects.toThrow(
       ConflictException,
     );
+  });
+
+  it('returns cart and checkout summaries', async () => {
+    repository.findByUser.mockResolvedValue({ items: [] } as never);
+    repository.getCheckout.mockResolvedValue({ items: [book, book] } as never);
+    await expect(service.findMine(1)).resolves.toEqual({ items: [] });
+    await expect(service.getCheckout(1)).resolves.toEqual(
+      expect.objectContaining({ totalItems: 2 }),
+    );
+  });
+
+  it('rejects missing and unavailable books', async () => {
+    repository.findBookById.mockResolvedValueOnce(null);
+    await expect(service.add(1, { bookId: 'missing' })).rejects.toThrow(
+      NotFoundException,
+    );
+
+    repository.findBookById.mockResolvedValueOnce({
+      ...book,
+      isAvailable: false,
+    });
+    await expect(service.add(1, { bookId: book.id })).rejects.toThrow(
+      ConflictException,
+    );
+  });
+
+  it('adds, removes, and clears valid cart items', async () => {
+    repository.findBookById.mockResolvedValue(book);
+    repository.findItem.mockResolvedValue(null);
+    repository.add.mockResolvedValue({ id: 1 } as never);
+    await service.add(1, { bookId: book.id });
+    expect(repository.add).toHaveBeenCalledWith(1, book.id);
+
+    repository.remove.mockResolvedValue(true);
+    await service.remove(1, 1);
+    await service.clear(1);
+    expect(repository.clear).toHaveBeenCalledWith(1);
   });
 
   it('does not let a user remove another cart item', async () => {

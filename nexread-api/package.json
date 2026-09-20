@@ -114,15 +114,21 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.service.ts",
+      "auth/guards/*.ts",
+      "auth/strategies/*.ts",
+      "common/filters/*.ts",
+      "config/environment.ts",
+      "users/utils/*.ts",
+      "!prisma/prisma.service.ts"
     ],
     "coverageDirectory": "../coverage",
     "coverageThreshold": {
       "global": {
-        "branches": 25,
-        "functions": 15,
-        "lines": 35,
-        "statements": 35
+        "branches": 75,
+        "functions": 75,
+        "lines": 75,
+        "statements": 75
       }
     },
     "testEnvironment": "node"
