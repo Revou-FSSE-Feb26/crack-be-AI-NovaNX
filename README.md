@@ -17,6 +17,14 @@ The API is deployed on [Railway](https://railway.app). Staging receives every re
 
 The Swagger UI documents every endpoint, request/response DTO, and status code. Use its **Authorize** button with a JWT obtained from `POST /auth/login` to try protected routes. Frontend applications must use the appropriate environment base URL and send the access token as `Authorization: Bearer <accessToken>`.
 
+### Backend application screenshots
+
+The screenshots below are captured from the deployed Railway staging backend, not from a local mock.
+
+| Interactive API documentation | Database-aware readiness probe |
+| ----------------------------- | ------------------------------ |
+| ![NexRead Swagger UI on Railway staging](docs/screenshots/swagger-staging.png) | ![NexRead readiness endpoint on Railway staging](docs/screenshots/health-ready-staging.png) |
+
 ## Current Progress
 
 - Base NestJS application
@@ -324,6 +332,17 @@ npm run test:cov
 
 Unit tests are stored alongside source files in `src/*.spec.ts`. End-to-end tests and their Jest configuration are stored in `test/`.
 
+The enforced unit-test coverage scope is business services, authorization guards/strategy, environment validation, database-error translation, and response-safety utilities. DTO declarations, NestJS module wiring, bootstrap code, generated Prisma code, and Prisma adapters are intentionally covered by validation, build, integration, E2E, and Newman gates instead of being counted as unit-testable business logic.
+
+| Metric     | Current result | CI minimum |
+| ---------- | -------------: | ---------: |
+| Statements |         87.10% |        75% |
+| Branches   |         76.15% |        75% |
+| Functions  |         83.01% |        75% |
+| Lines      |         86.35% |        75% |
+
+The current suite contains 20 passing test suites and 92 passing unit tests. CI runs `npm test -- --runInBand --coverage`; a pull request fails automatically if any metric falls below 75%.
+
 ### API testing with Postman / Newman
 
 A Postman collection covering smoke tests and a full regression suite (request validation, JWT auth, CRUD lifecycle, route protection, error handling, data integrity/constraints, and integration testing against seeded data) is available in `nexread-api/test-report/postman/`. All test result documentation and generated reports live under `nexread-api/test-report/` — see [`test-report/README.md`](nexread-api/test-report/README.md) for the full breakdown.
@@ -398,6 +417,9 @@ Seeded covers are committed under `public/covers/books` and are therefore includ
 ```text
 .
 ├── README.md
+├── docs/
+│   ├── er-diagram.svg      # Current 10-model ERD
+│   └── screenshots/        # Evidence from the deployed backend
 └── nexread-api/
 	├── prisma/
 	│   ├── migrations/       # Database migration history
